@@ -6,3 +6,4 @@ Project containing drivers/classes for boards, sensors, motor controllers, mecha
 * Reese Peterson (rpeterson@ihmc.org)
 * Dexton Anderson (danderson@ihmc.org)
 * Robert Griffin (rgriffin@ihmc.org)
+* Duncan Calvert (dcalvert@ihmc.org)
