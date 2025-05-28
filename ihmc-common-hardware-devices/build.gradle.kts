@@ -14,11 +14,11 @@ ihmc {
 
 mainDependencies {
    api("us.ihmc:ihmc-robotics-tools-joint-kinematics:0.15.3")
-   api("us.ihmc:ihmc-robotics-toolkit:source")
-   api("us.ihmc:ihmc-realtime:1.7.0")
-   api("us.ihmc:ihmc-robot-models:0.21.9")
-   api("us.ihmc:open-alexander:source")
+   api("us.ihmc:ihmc-sensor-processing:0.14.0-241016")
+   api("us.ihmc:ihmc-robotics-toolkit:0.14.0-241016")
+   api("us.ihmc:ihmc-java-toolkit:0.14.0-241016")
    api("us.ihmc:ihmc-ethercat-master:0.16.0")
+   api("us.ihmc:scs2-simulation-construction-set:17-0.29.0")
 }
 
 testDependencies {
