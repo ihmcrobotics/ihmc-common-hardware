@@ -1,4 +1,4 @@
-# ihmc-common-hardware-modules
+# ihmc-common-hardware
 Project containing drivers/classes for boards, sensors, motor controllers, mechanisms, and other hardware commonly used on IHMC robots.
 
 ## Maintainers
