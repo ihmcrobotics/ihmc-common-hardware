@@ -5,7 +5,7 @@ plugins {
 ihmc {
    group = "us.ihmc"
    version = "0.0.1"
-   vcsUrl = "https://github.com/ihmcrobotics/ihmc-common-hardware-modules.git"
+   vcsUrl = "https://github.com/ihmcrobotics/ihmc-common-hardware.git"
    openSource = false
 
    configureDependencyResolution()
