@@ -11,10 +11,12 @@ import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
+import us.ihmc.robotics.math.filters.AlphaFilteredTuple3D;
 import us.ihmc.robotics.math.filters.YoIMUMahonyFilter;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.simulatedSensors.SensorDataContext;
+import us.ihmc.yoVariables.euclid.YoVector3D;
 import us.ihmc.yoVariables.euclid.filters.AlphaFilteredYoFrameVector3D;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameQuaternion;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameVector3D;
@@ -54,6 +56,8 @@ public class GeneralIMUManager implements IMUManagerInterface
 
    private final YoRegistry registry;
 
+   private final String name;
+
    public GeneralIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
    {
       this.imuDefinition = imuDefinition;
@@ -62,6 +66,7 @@ public class GeneralIMUManager implements IMUManagerInterface
       registry = new YoRegistry(imuDefinition.getName() + getClass().getSimpleName());
 
       imuFrame = imuDefinition.getIMUFrame();
+      name = imuDefinition.getName();
 
       String prefix = imuDefinition.getName();
 
@@ -100,7 +105,7 @@ public class GeneralIMUManager implements IMUManagerInterface
    }
 
    @Override
-   public void update(SensorDataContext sensorDataContext)
+   public void read(ImuData measuredIMUData)
    {
       yoIMU.update();
 
@@ -118,27 +123,25 @@ public class GeneralIMUManager implements IMUManagerInterface
       YoFrameVector3D mahoneyFilteredAngularVelocity = mahonyFilter.getEstimatedAngularVelocity();
       Vector3DReadOnly mahoneyFilteredLinearAcceleration = yoIMU.getUnbiasedLinearAcceleration();
 
-      ImuData imuMeasurement = sensorDataContext.getImuMeasurement(imuDefinition.getName());
-
       if (filterIMUReadings.getBooleanValue())
       {
-         imuMeasurement.setLinearAcceleration(filteredLinearAcceleration);
-         imuMeasurement.setAngularVelocity(filteredAngularVelocity);
+         measuredIMUData.setLinearAcceleration(filteredLinearAcceleration);
+         measuredIMUData.setAngularVelocity(filteredAngularVelocity);
       }
       else
       {
-         imuMeasurement.setLinearAcceleration(yoIMU.getUnbiasedLinearAcceleration());
-         imuMeasurement.setAngularVelocity(yoIMU.getUnbiasedAngularVelocity());
+         measuredIMUData.setLinearAcceleration(yoIMU.getUnbiasedLinearAcceleration());
+         measuredIMUData.setAngularVelocity(yoIMU.getUnbiasedAngularVelocity());
       }
 
       if (rootJointEstimate != null)
       {
          computeOrientationAtEstimateFrame(imuFrame, mahoneyFilteredOrientation, rootJointFrame, rootJointEstimate);
          rootJointEstimate.set(rootJointOrientation);
-         imuMeasurement.setOrientation(rootJointOrientation);
+         measuredIMUData.setOrientation(rootJointOrientation);
       }
       else
-         imuMeasurement.setOrientation(mahoneyFilteredOrientation);
+         measuredIMUData.setOrientation(mahoneyFilteredOrientation);
    }
 
    /**
@@ -163,5 +166,11 @@ public class GeneralIMUManager implements IMUManagerInterface
 
       // R_{estimateFrame}^{world} = R_{measurementFrame}^{world} * R_{estimateFrame}^{measurementFrame}
       orientationEstimateToPack.prepend(orientationMeasurement);
+   }
+
+   @Override
+   public String getName()
+   {
+      return name;
    }
 }

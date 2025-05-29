@@ -1,8 +1,10 @@
 package us.ihmc.devices.genericIMU;
 
-import us.ihmc.sensorProcessing.simulatedSensors.SensorDataContext;
+import us.ihmc.sensorProcessing.outputData.ImuData;
 
 public interface IMUManagerInterface
 {
-   public void update(SensorDataContext sensorDataContext);
+   void read(ImuData measuredIMUData);
+
+   String getName();
 }
