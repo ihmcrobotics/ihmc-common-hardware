@@ -78,4 +78,10 @@ public class BareIMUManager implements IMUManagerInterface
          }
       }
    }
+
+   @Override
+   public String getName()
+   {
+      return name;
+   }
 }

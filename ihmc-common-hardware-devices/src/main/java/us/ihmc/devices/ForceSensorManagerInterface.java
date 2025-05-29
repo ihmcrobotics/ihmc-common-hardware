@@ -9,4 +9,6 @@ public interface ForceSensorManagerInterface
    void write();
 
    void calibrate();
+
+   String getName();
 }

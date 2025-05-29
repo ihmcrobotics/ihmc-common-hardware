@@ -4,5 +4,7 @@ import us.ihmc.sensorProcessing.outputData.ImuData;
 
 public interface IMUManagerInterface
 {
-   public void read(ImuData measuredIMUData);
+   void read(ImuData measuredIMUData);
+
+   String getName();
 }
