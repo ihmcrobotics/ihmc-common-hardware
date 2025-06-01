@@ -1,9 +1,5 @@
 package us.ihmc.devices.cycloids;
 
-import us.ihmc.devices.cycloids.CycloidActuatorPackage;
-import us.ihmc.devices.cycloids.CycloidActuatorParameters;
-import us.ihmc.devices.cycloids.CycloidPlatinumTwitter;
-import us.ihmc.devices.cycloids.SILParameters;
 import us.ihmc.commons.MathTools;
 import us.ihmc.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -14,6 +10,8 @@ import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
+import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -155,8 +153,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble motorDirection;
    private final YoDouble gearRatio;
 
-   private final CycloidActuatorParameters actuatorParameters;
-   private final SILParameters silParameters;
+   private final CycloidPhysicalParameters physicalParameters;
+   private final CycloidSILParameters silParameters;
 
    // SIL Debuggging variables
    private final YoDouble sil_linearDampingCompensationCurrent;
@@ -175,7 +173,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private YoEnum<EncoderState> inputEncoderState;
    private YoEnum<EncoderState> outputEncoderState;
 
-   private final CycloidActuatorPackage actuatorPackage;
+   private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
 //   private double motorDirection = 1.0;
@@ -189,7 +187,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public YoCycloidPlatinumTwitter(String prefix,
                                    CycloidPlatinumTwitter twitter,
                                    DoubleProvider time,
-                                   CycloidActuatorPackage actuatorPackage,
+                                   String actuatorPackage,
                                    boolean isMotorDirectionReversed,
                                    double zeroPositionOffset,
                                    double dt,
@@ -202,8 +200,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       name = prefix + getClass().getSimpleName();
       registry = new YoRegistry(name);
 
-      this.actuatorParameters = CycloidActuatorParameters.createCycloidParameters(actuatorPackage);
-      this.silParameters = SILParameters.createParameters(actuatorPackage);
+      XmlCycloidParameters cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
+
+      this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
+      this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
 
       this.reverseMotorDirection = new YoBoolean(name + "MotorDirectionIsReversed", registry);
       this.reverseMotorDirection.set(isMotorDirectionReversed);
@@ -242,19 +242,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       estimatedDt.setToNaN();
 
       this.kt = new YoDouble(prefix + "kt", registry);
-      this.kt.set(actuatorParameters.getKt());
+      this.kt.set(physicalParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
       this.maxRecommendedStatorTemperature = new YoInteger(prefix + "maxRecommendedStatorTemperature", registry);
 
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
-      gearRatio.set(actuatorParameters.getGearRatio());
+      gearRatio.set(physicalParameters.getGearRatio());
 
-      motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / actuatorParameters.getCountsPerMotorRevolution();
-      motorEncoderCountsToOutputRadians = motorEncoderCountsToMotorRadians * actuatorParameters.getGearRatio();
+      motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / physicalParameters.getCountsPerMotorRevolution();
+      motorEncoderCountsToOutputRadians = motorEncoderCountsToMotorRadians * physicalParameters.getGearRatio();
 
       outputRadiansToMotorEncoderCounts = 1.0 / (motorEncoderCountsToOutputRadians);
-      outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / actuatorParameters.getCountsPerOutputRevolution();
+      outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / physicalParameters.getCountsPerOutputRevolution();
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
@@ -445,7 +445,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          motorDirection.set(1.0);
    }
 
-   public void setSILParameters(SILParameters parameters)
+   public void setSILParameters(CycloidSILParameters parameters)
    {
       dahlFrictionForce.set(parameters.getDahlFrictionForceGain());
       dahlSlope.set(parameters.getDahlFrictionSlope());
@@ -875,9 +875,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return platinumTwitter.getState();
    }
 
-   public CycloidActuatorParameters getActuatorParameters()
+   public CycloidPhysicalParameters getPhysicalParameters()
    {
-      return actuatorParameters;
+      return physicalParameters;
    }
 
    public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
@@ -970,7 +970,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return name;
    }
 
-   public CycloidActuatorPackage getActuatorPackage()
+   public String getActuatorPackage()
    {
       return actuatorPackage;
    }

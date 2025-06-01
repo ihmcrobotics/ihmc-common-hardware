@@ -1,6 +1,8 @@
 package us.ihmc.devices.cycloids;
 
-public class SILParameters
+import us.ihmc.xmlDescription.devices.parameters.XmlCycloidSILParameters;
+
+public class CycloidSILParameters
 {
    private double dahlFrictionForceGain;
    private double dahlFrictionSlope;
@@ -9,6 +11,21 @@ public class SILParameters
    private double linearDampingOutputScalar;
    private double coggingOutputScalar;
    private double accelerationIntegrationScalar;
+
+   public CycloidSILParameters()
+   {
+
+   }
+
+   public CycloidSILParameters(XmlCycloidSILParameters xmlCycloidSILParameters)
+   {
+      dahlFrictionForceGain = xmlCycloidSILParameters.getFrictionGain();
+      dahlFrictionSlope = xmlCycloidSILParameters.getFrictionSlope();
+      linearDampingCompensationGain = xmlCycloidSILParameters.getDampingGain();
+      dahlOutputScalar = 1.0;
+      coggingOutputScalar = 1.0;
+      accelerationIntegrationScalar = 0.0;
+   }
 
    public double getDahlFrictionForceGain()
    {
@@ -80,35 +97,35 @@ public class SILParameters
       this.accelerationIntegrationScalar = accelerationIntegrationScalar;
    }
 
-   /**
-    * Create the SIL Parameters for the specific actuator package
-    *
-    * @param actuatorPackage Specific actuator package being used
-    * @return The SILParameters object for the actuator package
-    */
-   public static SILParameters createParameters(CycloidActuatorPackage actuatorPackage)
-   {
-      return switch (actuatorPackage)
-      {
-         case A, B, C, D -> createParameters();
-         default -> throw new IllegalArgumentException("Unexpected actuator package for SIL parameters: " + actuatorPackage);
-      };
-   }
-
-   /**
-    * @return The SILParameters object for AP01
-    */
-   private static SILParameters createParameters()
-   {
-      SILParameters parameters = new SILParameters();
-      parameters.setDahlFrictionForceGain(0.4);
-      parameters.setDahlFrictionSlope(200.0);
-      parameters.setLinearDampingCompensationGain(0.0);
-      parameters.setCoggingOutputScalar(1.0);
-      parameters.setDahlOutputScalar(1.0);
-      parameters.setLinearDampingOutputScalar(1.0);
-      parameters.setAccelerationIntegrationScalar(0.0);
-
-      return parameters;
-   }
+//   /**
+//    * Create the SIL Parameters for the specific actuator package
+//    *
+//    * @param actuatorPackage Specific actuator package being used
+//    * @return The SILParameters object for the actuator package
+//    */
+//   public static CycloidSILParameters createParameters(CycloidActuatorPackage actuatorPackage)
+//   {
+//      return switch (actuatorPackage)
+//      {
+//         case A, B, C, D -> createParameters();
+//         default -> throw new IllegalArgumentException("Unexpected actuator package for SIL parameters: " + actuatorPackage);
+//      };
+//   }
+//
+//   /**
+//    * @return The SILParameters object for AP01
+//    */
+//   private static CycloidSILParameters createParameters()
+//   {
+//      CycloidSILParameters parameters = new CycloidSILParameters();
+//      parameters.setDahlFrictionForceGain(0.4);
+//      parameters.setDahlFrictionSlope(200.0);
+//      parameters.setLinearDampingCompensationGain(0.0);
+//      parameters.setCoggingOutputScalar(1.0);
+//      parameters.setDahlOutputScalar(1.0);
+//      parameters.setLinearDampingOutputScalar(1.0);
+//      parameters.setAccelerationIntegrationScalar(0.0);
+//
+//      return parameters;
+//   }
 }

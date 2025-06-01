@@ -19,9 +19,9 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    protected String rollJoint;
 
    @XmlElement(required = true)
-   private String pitchMotor;
+   private String leftMotor;
    @XmlElement
-   private String rollMotor;
+   private String rightMotor;
 
    @XmlElement
    protected double pitchJointOffset;
@@ -43,14 +43,14 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
       return rollJoint;
    }
 
-   public String getPitchMotor()
+   public String getLeftMotor()
    {
-      return pitchMotor;
+      return leftMotor;
    }
 
-   public String getRollMotor()
+   public String getRightMotor()
    {
-      return rollMotor;
+      return rightMotor;
    }
 
    public double getPitchJointOffset()

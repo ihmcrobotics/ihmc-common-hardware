@@ -4,14 +4,13 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
-import us.ihmc.devices.cycloids.CycloidActuatorPackage;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "XmlPlatinumTwitter")
 public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
 {
    @XmlElement(required = true)
-   protected CycloidActuatorPackage actuatorPackage;
+   protected String actuatorPackage;
    @XmlElement(required = true)
    protected boolean reversePositiveMotorDirection;
    @XmlElement(required = true)
@@ -22,7 +21,7 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
 
    }
 
-   public XmlPlatinumTwitter(String name, int alias, int position, CycloidActuatorPackage actuatorPackage)
+   public XmlPlatinumTwitter(String name, int alias, int position, String actuatorPackage)
    {
       this.name = name;
       this.alias = alias;
@@ -31,7 +30,7 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       this.actuatorPackage = actuatorPackage;
    }
 
-   public CycloidActuatorPackage getActuatorPackage()
+   public String getActuatorPackage()
    {
       return actuatorPackage;
    }
