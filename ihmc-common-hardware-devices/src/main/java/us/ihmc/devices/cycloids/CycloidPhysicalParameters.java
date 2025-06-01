@@ -65,28 +65,4 @@ public class CycloidPhysicalParameters
    {
       this.kt = kt;
    }
-
-//   public static CycloidPhysicalParameters createCycloidParameters(CycloidActuatorPackage actuatorPackage)
-//   {
-//      switch (actuatorPackage)
-//      {
-//         case A:
-//         case B:
-//         case C:
-//         case D:
-//            return creatCycloidParameters();
-//         default:
-//            throw new IllegalArgumentException("Unexpected actuator package for cycloid parameters: " + actuatorPackage);
-//      }
-//   }
-//
-//   public static CycloidPhysicalParameters creatCycloidParameters()
-//   {
-//      CycloidPhysicalParameters parameters = new CycloidPhysicalParameters();
-//      parameters.setCountsPerMotorRevolution(1 << 17);
-//      parameters.setCountsPerOutputRevolution(1 << 17);
-//      parameters.setGearRatio(17.0);
-//      parameters.setKt(0.073);
-//      return parameters;
-//   }
 }

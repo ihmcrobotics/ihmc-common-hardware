@@ -8,9 +8,9 @@ import java.io.InputStream;
 
 public class XmlCycloidParameterLoader
 {
-   private static final String parameterDirectory = "/parameters/actuators/";
+   private static final String DEFAULT_DIRECTORY = "/parameters/actuators/";
 
-   public static XmlCycloidParameters getCycloidParametersFromActuatorPackageName(String actuatorPackage)
+   public static XmlCycloidParameters getCycloidParametersFromActuatorPackageName(String parameterDirectory, String actuatorPackage)
    {
       InputStream parameterStream = XmlCycloidParameterLoader.class.getResourceAsStream(parameterDirectory + actuatorPackage + ".xml");
       try
@@ -24,6 +24,11 @@ public class XmlCycloidParameterLoader
       {
          throw new RuntimeException(e);
       }
+   }
+
+   public static XmlCycloidParameters getCycloidParametersFromActuatorPackageName(String actuatorPackage)
+   {
+      return getCycloidParametersFromActuatorPackageName(DEFAULT_DIRECTORY, actuatorPackage);
    }
 
    public static void main(String[] args)
