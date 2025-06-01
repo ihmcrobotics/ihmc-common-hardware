@@ -21,9 +21,5 @@ public interface MechanismManagerInterface
    {
    }
 
-   default void onRampingDownMasterGain()
-   {
-   }
-
    String getName();
 }
