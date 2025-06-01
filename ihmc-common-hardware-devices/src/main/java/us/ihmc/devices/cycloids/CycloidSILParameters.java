@@ -22,9 +22,9 @@ public class CycloidSILParameters
       dahlFrictionForceGain = xmlCycloidSILParameters.getFrictionGain();
       dahlFrictionSlope = xmlCycloidSILParameters.getFrictionSlope();
       linearDampingCompensationGain = xmlCycloidSILParameters.getDampingGain();
-      dahlOutputScalar = 1.0;
-      coggingOutputScalar = 1.0;
-      accelerationIntegrationScalar = 0.0;
+      dahlOutputScalar = xmlCycloidSILParameters.getDahlScalar();
+      coggingOutputScalar = xmlCycloidSILParameters.getCoggingScalar();
+      accelerationIntegrationScalar = xmlCycloidSILParameters.getAccelerationIntegrationScalar();
    }
 
    public double getDahlFrictionForceGain()
