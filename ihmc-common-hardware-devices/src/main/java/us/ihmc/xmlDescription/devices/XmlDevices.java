@@ -13,13 +13,13 @@ import java.util.List;
 @XmlType(name = "XmlDevices")
 public class XmlDevices
 {
-   @XmlElements({@XmlElement(name = "XmlH4EtherCATJunctionBoard", type = XmlH4EtherCATJunctionBoard.class),
-                 @XmlElement(name = "XmlEtherSnacksTDKIMU", type = XmlEtherSnacksBoard.class),
+   @XmlElements({@XmlElement(name = "XmlH4EtherCATJunctionPort", type = XmlH4EtherCATJunctionPort.class),
+                 @XmlElement(name = "XmlEtherSnacksBoard", type = XmlEtherSnacksBoard.class),
                  @XmlElement(name = "XmlIMU", type = XmlIMU.class),
                  @XmlElement(name = "XmlPlatinumTwitter", type = XmlPlatinumTwitter.class),})
-   protected List<? extends AbstractXmlDevice> devices;
+   protected List<AbstractXmlDevice> devices;
 
-   public List<? extends AbstractXmlDevice> getDevices()
+   public List<AbstractXmlDevice> getDevices()
    {
       if (devices == null)
       {

@@ -45,6 +45,8 @@ public interface YoGenericTwitter
 
    double getKt();
 
+   boolean isMotorFaulted();
+
    void setDesiredMotorStiffness(double desiredMotorStiffness);
 
    void setDesiredMotorDamping(double desiredMotorDamping);

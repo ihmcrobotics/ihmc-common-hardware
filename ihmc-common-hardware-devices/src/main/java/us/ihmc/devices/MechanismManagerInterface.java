@@ -7,19 +7,21 @@ import us.ihmc.sensorProcessing.outputData.LowLevelState;
 
 public interface MechanismManagerInterface
 {
-   public void initialize();
+   void initialize();
 
-   public void read(LowLevelState measuredJointData);
+   void read(LowLevelState measuredJointData);
 
-   public void write(JointDesiredOutputReadOnly desiredJointData);
+   void write(JointDesiredOutputReadOnly desiredJointData);
 
-   public void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
+   void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
 
-   public default void setIsRobotServoed(boolean isRobotServoed)
+   boolean isMotorFaulted();
+
+   default void setIsRobotServoed(boolean isRobotServoed)
    {
    }
 
-   public default void onRampingDownMasterGain()
+   default void onRampingDownMasterGain()
    {
    }
 

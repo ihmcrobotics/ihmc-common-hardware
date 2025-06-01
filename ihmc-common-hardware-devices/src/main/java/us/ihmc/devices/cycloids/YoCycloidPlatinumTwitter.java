@@ -419,6 +419,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
       CURRENT_LIMITED = new YoBoolean(prefix + "_CURRENT_LIMITED", registry);
 
+      DRIVE_FAULTED.addListener(new YoVariableChangedListener()
+      {
+         @Override
+         public void changed(YoVariable source)
+         {
+            if (DRIVE_FAULTED.getBooleanValue())
+            {
+               MOTOR_FAULT.set(true);
+               LogTools.error("Drive fault at " + name + " with error: " + elmoErrorString.getValue());
+            }
+         }
+      });
+
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
 
       parentRegistry.addChild(registry);
@@ -743,6 +756,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setDesiredMotorVelocity(double motorVelocity)
    {
       accelerationIntegrationDesiredMotorVelocity.set(motorVelocity);
+   }
+
+   @Override
+   public boolean isMotorFaulted()
+   {
+      return MOTOR_FAULT.getBooleanValue();
    }
 
    public void setKt(double kt)

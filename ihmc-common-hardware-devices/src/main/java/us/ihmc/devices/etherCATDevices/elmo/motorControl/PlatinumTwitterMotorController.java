@@ -8,6 +8,7 @@ import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
@@ -169,6 +170,11 @@ public class PlatinumTwitterMotorController implements RobotController
    public double getKt()
    {
       return twitter.getKt();
+   }
+
+   public boolean isMotorFaulted()
+   {
+      return twitter.isMotorFaulted();
    }
 
    /**
