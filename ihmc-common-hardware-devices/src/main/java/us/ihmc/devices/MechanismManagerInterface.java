@@ -1,17 +1,20 @@
 package us.ihmc.devices;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import us.ihmc.sensorProcessing.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
 import us.ihmc.sensorProcessing.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+
+import java.util.Map;
 
 public interface MechanismManagerInterface
 {
    void initialize();
 
-   void read(LowLevelState measuredJointData);
+   void read(LowLevelState measuredJointDataToPack);
 
-   void write(JointDesiredOutputReadOnly desiredJointData);
+   void write(Map<String, JointDesiredOutputBasics> desiredJointData);
 
    void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
 
