@@ -58,11 +58,10 @@ public class HardwareStatusUI implements VisualizerController
     * Set {@code SessionVisualizer} where it can be launched using an intractable GUI button,
     * and then resized, moved, or closed like any normal graphical window.
     */
-   public HardwareStatusUI(RobotDefinition robotDefinition, SessionVisualizerControls sessionVisualizerControls, AbstractUIHardwareStatusManager hardwareStatusUIDataManager)
+   public HardwareStatusUI(SessionVisualizerControls sessionVisualizerControls, AbstractUIHardwareStatusManager hardwareStatusUIDataManager)
    {
       this.hardwareStatusUIDataManager = hardwareStatusUIDataManager;
       scs = new SimulationConstructionSet2();
-      scs.addRobot(robotDefinition);
 
       createDeviceStatusTablePane();
 
