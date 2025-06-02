@@ -16,7 +16,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import us.ihmc.scs2.SimulationConstructionSet2;
-import us.ihmc.scs2.definition.robot.RobotDefinition;
 import us.ihmc.scs2.sessionVisualizer.jfx.SessionVisualizerControls;
 import us.ihmc.scs2.sessionVisualizer.jfx.controllers.VisualizerController;
 import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerWindowToolkit;
@@ -50,6 +49,8 @@ public class HardwareStatusUI implements VisualizerController
    private final Scene scene = new Scene(splitPane, 1000, 800);
    private Stage stage;
 
+   private final Button launchHardwareStatusUIButton;
+
    /**
     * Graphical User Interface (GUI) responsible for displaying device status info of certain
     * hardware devices on a given robot such as motors, boards, or sensors. This status
@@ -58,14 +59,18 @@ public class HardwareStatusUI implements VisualizerController
     * Set {@code SessionVisualizer} where it can be launched using an intractable GUI button,
     * and then resized, moved, or closed like any normal graphical window.
     */
-   public HardwareStatusUI(SessionVisualizerControls sessionVisualizerControls, AbstractUIHardwareStatusManager hardwareStatusUIDataManager)
+   public HardwareStatusUI(SessionVisualizerControls sessionVisualizerControls, AbstractUIHardwareStatusManager hardwareStatusUIDataManager, boolean createLaunchUIButtonPane)
    {
       this.hardwareStatusUIDataManager = hardwareStatusUIDataManager;
       scs = new SimulationConstructionSet2();
 
       createDeviceStatusTablePane();
 
-      createLaunchUIButtonAndPane(sessionVisualizerControls);
+      launchHardwareStatusUIButton = new Button("Launch Hardware Status UI");
+      launchHardwareStatusUIButton.setOnAction(e -> show());
+
+      if (createLaunchUIButtonPane)
+         createLaunchUIButtonPane(sessionVisualizerControls, launchHardwareStatusUIButton);
 
       sessionVisualizerControls.addSessionChangedListener((oldSession, newSession) ->
                                                           {
@@ -96,16 +101,18 @@ public class HardwareStatusUI implements VisualizerController
       setupDataTable(sensorsStatusTab, sensorsStatusTable, false, false, true);
    }
 
-   private void createLaunchUIButtonAndPane(SessionVisualizerControls sessionVisualizerControls)
+   private void createLaunchUIButtonPane(SessionVisualizerControls sessionVisualizerControls, Button launchHardwareStatusUIButton)
    {
       Pane hardwareStatusUILaunchButtonPane = new Pane();
-
-      Button launchHardwareStatusUIButton = new Button("Launch Hardware Status UI");
-      launchHardwareStatusUIButton.setOnAction(e -> show());
       hardwareStatusUILaunchButtonPane.getChildren().add(launchHardwareStatusUIButton);
       launchHardwareStatusUIButton.relocate(5, 5);
 
       sessionVisualizerControls.addCustomGUIPane("Hardware Status UI", hardwareStatusUILaunchButtonPane);
+   }
+
+   public Button getLaunchUIButton()
+   {
+      return launchHardwareStatusUIButton;
    }
 
    private void clearDataTables()
