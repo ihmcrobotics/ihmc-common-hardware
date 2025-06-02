@@ -5,7 +5,9 @@ import us.ihmc.log.LogTools;
 import us.ihmc.scs2.sessionVisualizer.jfx.SessionVisualizerControls;
 import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerToolkit;
 import us.ihmc.xmlDescription.devices.AbstractXmlDevice;
+import us.ihmc.xmlDescription.devices.XmlH4EtherCATJunctionPort;
 import us.ihmc.xmlDescription.devices.XmlIMU;
+import us.ihmc.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.yoVariables.tools.YoSearchTools;
 import us.ihmc.yoVariables.tools.YoTools;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -59,6 +61,14 @@ public abstract class AbstractUIHardwareStatusManager
          else if (daughterDevice instanceof XmlIMU xmlIMU)
             createNewEtherCATDataHolder(xmlIMU.getName() + "_" + name, "IMU", xmlIMU.getPosition(), xmlIMU.getAlias(), DeviceType.BOARD, true);
 
+         else if (daughterDevice instanceof XmlTemperatureSensor xmlTemperatureSensor)
+            createNewEtherCATDataHolder(xmlTemperatureSensor.getName() + "_" + name, "Temp Sensor", position, alias, DeviceType.BOARD, true);
+
+         else if (daughterDevice instanceof XmlH4EtherCATJunctionPort xmlH4EtherCATJunctionPort && useParentPositionAndAlias)
+            createNewEtherCATDataHolder(xmlH4EtherCATJunctionPort.getName() + "_" + name, "Junction Port", position, alias, DeviceType.BOARD, true);
+
+         else if (daughterDevice instanceof XmlH4EtherCATJunctionPort xmlH4EtherCATJunctionPort)
+            createNewEtherCATDataHolder(xmlH4EtherCATJunctionPort.getName() + "_" + name, "Junction Port", xmlH4EtherCATJunctionPort.getPosition(), xmlH4EtherCATJunctionPort.getAlias(), DeviceType.BOARD, true);
       }
    }
 

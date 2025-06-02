@@ -1,6 +1,7 @@
 package us.ihmc.devices.cycloids;
 
 import us.ihmc.devices.etherCATDevices.elmo.PlatinumTwitter;
+import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 import us.ihmc.etherCAT.javalution.Struct.Unsigned16;
 import us.ihmc.etherCAT.master.RxPDO;
@@ -28,12 +29,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    private double currentCountPerAmp;
 
    static final double AMPS_PER_MILLIAMPS = 1.0e-3;
-
-   @Override
-   public boolean isResponding()
-   {
-      return super.isOperational();
-   }
 
    public class RPDO_1600 extends RxPDO
    {
@@ -173,6 +168,18 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       maxDriveCurrentAmps = maxDriveCurrentMilliAmps * AMPS_PER_MILLIAMPS;
 
       super.configure(dcEnabled, cycleTimeInNs);
+   }
+
+   @Override
+   public boolean isResponding()
+   {
+      return super.isOperational();
+   }
+
+   @Override
+   public Slave.State getState()
+   {
+      return super.getState();
    }
 
    //untested

@@ -45,6 +45,12 @@ public class H4EtherCATJunctionPort extends Slave implements EtherCATDeviceStatu
    @Override
    public boolean isResponding()
    {
-      return isOperational();
+      return super.isOperational();
+   }
+
+   @Override
+   public Slave.State getState()
+   {
+      return super.getState();
    }
 }

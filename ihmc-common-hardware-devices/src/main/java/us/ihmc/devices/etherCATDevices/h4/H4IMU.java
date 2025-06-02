@@ -158,11 +158,11 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
    @Override
    public boolean isResponding()
    {
-      return isOperational();
+      return super.isOperational();
    }
 
    @Override
-   public State getState()
+   public Slave.State getState()
    {
       return super.getState();
    }
