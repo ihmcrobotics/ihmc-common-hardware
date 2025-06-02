@@ -8,11 +8,11 @@ import java.io.InputStream;
 
 public class XmlCycloidParameterLoader
 {
-   private static final String DEFAULT_DIRECTORY = "/parameters/actuators/";
+   private static final String DEFAULT_DIRECTORY = "parameters/actuators/";
 
    public static XmlCycloidParameters getCycloidParametersFromActuatorPackageName(String parameterDirectory, String actuatorPackage)
    {
-      InputStream parameterStream = XmlCycloidParameterLoader.class.getResourceAsStream(parameterDirectory + actuatorPackage + ".xml");
+      InputStream parameterStream = XmlCycloidParameterLoader.class.getClassLoader().getResourceAsStream(parameterDirectory + actuatorPackage + ".xml");
       try
       {
          JAXBContext jaxbContext = JAXBContext.newInstance(XmlCycloidParameters.class);
