@@ -25,18 +25,18 @@ public class XmlAtiForceTorqueSensor extends AbstractXmlEtherCATDevice
    protected double tzOffset;
 
    @XmlElement(defaultValue = "1.0")
-   protected double fxScalar;
+   protected double fxScalar = 1.0;
    @XmlElement(defaultValue = "1.0")
-   protected double fyScalar;
+   protected double fyScalar = 1.0;
    @XmlElement(defaultValue = "1.0")
-   protected double fzScalar;
+   protected double fzScalar = 1.0;
    
    @XmlElement(defaultValue = "1.0")
-   protected double txScalar;
+   protected double txScalar = 1.0;
    @XmlElement(defaultValue = "1.0")
-   protected double tyScalar;
+   protected double tyScalar = 1.0;
    @XmlElement(defaultValue = "1.0")
-   protected double tzScalar;
+   protected double tzScalar = 1.0;
 
    public double getFxOffset()
    {
@@ -115,6 +115,7 @@ public class XmlAtiForceTorqueSensor extends AbstractXmlEtherCATDevice
 
    public Vector3D getTorqueScalar()
    {
+      System.out.println(txScalar + " " + tyScalar + " " + tzScalar);
       return new Vector3D(txScalar, tyScalar, tzScalar);
    }
 }

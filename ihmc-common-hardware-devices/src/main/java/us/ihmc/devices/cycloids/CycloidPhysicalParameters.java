@@ -18,10 +18,10 @@ public class CycloidPhysicalParameters
       this(physicalParameters.getInputResolution(), physicalParameters.getOutputResolution(), physicalParameters.getKt(), physicalParameters.getGearRatio());
    }
 
-   public CycloidPhysicalParameters(int countsPerMotorRevolution, int countsPerOutputRevolution, double gearRatio, double kt)
+   public CycloidPhysicalParameters(int inputResolution, int outputResolution, double gearRatio, double kt)
    {
-      setCountsPerMotorRevolution(countsPerMotorRevolution);
-      setCountsPerOutputRevolution(countsPerOutputRevolution);
+      setCountsPerMotorRevolution(1 << inputResolution);
+      setCountsPerOutputRevolution(1 << outputResolution);
       setGearRatio(gearRatio);
       setKt(kt);
    }
