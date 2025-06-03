@@ -193,14 +193,31 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    double dt,
                                    YoRegistry parentRegistry)
    {
+      this(prefix, twitter, time, null, actuatorPackage, isMotorDirectionReversed, zeroPositionOffset, dt, parentRegistry);
+   }
+
+   public YoCycloidPlatinumTwitter(String prefix,
+                                   CycloidPlatinumTwitter twitter,
+                                   DoubleProvider time,
+                                   String actuatorDirectory,
+                                   String actuatorPackage,
+                                   boolean isMotorDirectionReversed,
+                                   double zeroPositionOffset,
+                                   double dt,
+                                   YoRegistry parentRegistry)
+   {
       this.time = time;
       this.dt = dt;
       this.platinumTwitter = twitter;
       this.actuatorPackage = actuatorPackage;
       name = prefix + getClass().getSimpleName();
       registry = new YoRegistry(name);
+      XmlCycloidParameters cycloidParameters;
+      if(actuatorDirectory != null)
+         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
+      else
+         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
 
-      XmlCycloidParameters cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);

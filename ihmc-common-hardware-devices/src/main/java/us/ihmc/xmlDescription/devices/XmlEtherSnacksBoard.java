@@ -12,17 +12,15 @@ import java.util.List;
 @XmlType(name = "XmlEtherSnacksBoard")
 public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
 {
-   @XmlElements({@XmlElement(name = "XmlIMU", type = XmlIMU.class), @XmlElement(name = "XmlTemperatureSensor", type = XmlTemperatureSensor.class)})
-   protected List<AbstractXmlDevice> daughterDevices;
+   @XmlElement(required = true)
+   protected XmlDaughterDevices daughterDevices;
 
    @XmlElement(required = true)
    protected XmlEtherSnacksBoardType boardType;
 
    public List<AbstractXmlDevice> getDaughterDevices()
    {
-      if (daughterDevices == null)
-         daughterDevices = new ArrayList<AbstractXmlDevice>();
-      return this.daughterDevices;
+      return this.daughterDevices.getDevices();
    }
 
    public XmlEtherSnacksBoardType getBoardType()
