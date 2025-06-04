@@ -390,7 +390,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       return tpdo_1a00.measuredCurrent.get();
    }
 
-   public double getAnalogInput2()
+   public double getAnalogInput1a00()
    {
       return tpdo_1a00.measuredAnalogInput.get();
    }

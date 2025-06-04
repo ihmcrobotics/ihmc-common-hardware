@@ -1,5 +1,6 @@
 package us.ihmc.devices.cycloids;
 
+import com.esotericsoftware.minlog.Log;
 import us.ihmc.commons.MathTools;
 import us.ihmc.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -70,6 +71,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    protected final YoBoolean[] digitalOutputs = new YoBoolean[6];
    protected final YoEnum<ElmoModeOfOperation> requestedModeOfOperation;
    protected final YoEnum<ElmoModeOfOperation> currentModeOfOperation;
+   protected final YoEnum<ElmoModeOfOperation> previousModeOfOperation;
 
    // measured variables
    private final YoDouble measuredMotorPosition;
@@ -105,9 +107,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoEnum<DSP402Slave.StatusWord> statusWord;
    private final YoLong elmoStatusRegister;
    private final YoInteger errorCode;
-   private final YoEnum<?> elmoErrorString;
+//   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
-   private final YoDouble measuredAnalogInput2;
+   private final YoDouble measuredAnalogInput1a00;
 
    // error variables
    private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
@@ -262,6 +264,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.kt.set(physicalParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
+      setMaxAllowableStatorTemperature(1);
       this.maxRecommendedStatorTemperature = new YoInteger(prefix + "maxRecommendedStatorTemperature", registry);
 
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
@@ -399,7 +402,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
       estimatedOutputTorque = new YoDouble(prefix + "estimatedOutputTorque", registry);
 
-      measuredAnalogInput2 = new YoDouble(prefix + "measuredAnalogInput2", registry);
+      measuredAnalogInput1a00 = new YoDouble(prefix + "measuredAnalogInput1a00", registry);
 
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
@@ -410,6 +413,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       //settings and op stuff
       requestedModeOfOperation = new YoEnum<>(prefix + "requestedModeOfOperation", registry, ElmoModeOfOperation.class);
+      previousModeOfOperation = new YoEnum<>(prefix + "previousModeOfOperation", registry, ElmoModeOfOperation.class);
       currentModeOfOperation = new YoEnum<>(prefix + "currentModeOfOperation", registry, ElmoModeOfOperation.class);
       enableDrive = new YoBoolean(prefix + "enableDrive", registry);
       clearFaults = new YoBoolean(prefix + "clearFaults", registry);
@@ -421,7 +425,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       statusWord = new YoEnum<>(prefix + "statusWord", registry, DSP402Slave.StatusWord.class);
       elmoStatusRegister = new YoLong(prefix + "elmoStatusRegister", registry);
       errorCode = new YoInteger(prefix + "elmoErrorCode", registry);
-      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
+//      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
       //faults
@@ -444,7 +448,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             if (DRIVE_FAULTED.getBooleanValue())
             {
                MOTOR_FAULT.set(true);
-               LogTools.error("Drive fault at " + name + " with error: " + elmoErrorString.getValue());
+               LogTools.error("Drive fault at " + name + " with error: " + errorCode.getValue());
             }
          }
       });
@@ -507,6 +511,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       errorCode.set(platinumTwitter.getErrorRegister());
       //TODO Implement fully
       //      elmoErrorString.set(errorCode.getIntegerValue());
+      previousModeOfOperation.set(currentModeOfOperation.getEnumValue());
       currentModeOfOperation.set(platinumTwitter.getModeOfOperation());
 
       DRIVE_FAULTED.set(platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
@@ -609,7 +614,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       maxDriveCurrentMilliAmps.set(platinumTwitter.getMaxDriveCurrentMilliAmps());
 
       //read the voltage on analog input 2
-      measuredAnalogInput2.set(platinumTwitter.getAnalogInput2());
+      measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
    }
 
    private void updateEncoderStates()
@@ -934,7 +939,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public double getStatorTemperature()
    {
-      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput2.getValue());
+      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput1a00.getValue());
    }
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
@@ -949,8 +954,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public double convertAnalogInputToTemperatureInDegreeCelsius(double voltage)
    {
-      return (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * Math.sqrt(voltage) + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
-              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
+      //TODO figure out why this doesn't work
+      return 0.0; // (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * Math.sqrt(voltage) + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
+//              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
    }
 
    public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
