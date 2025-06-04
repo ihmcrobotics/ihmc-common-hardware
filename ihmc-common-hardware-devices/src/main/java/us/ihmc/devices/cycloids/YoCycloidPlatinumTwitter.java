@@ -685,7 +685,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
       // feedforward motor current.
       desiredFeedForwardMotorCurrent.set(0.0); //TODO Figure out how to do this properly
-      desiredMotorTorque.set(desiredOutputTorque.getDoubleValue() / gearRatio.getDoubleValue());
+//      desiredMotorTorque.set(desiredOutputTorque.getDoubleValue() / gearRatio.getDoubleValue());
+      desiredOutputTorque.set(desiredMotorTorque.getDoubleValue() * gearRatio.getDoubleValue());
       desiredMotorCurrent.set(desiredMotorTorque.getDoubleValue() / kt.getDoubleValue());
       desiredMotorCurrentWithFF.set(desiredMotorCurrent.getDoubleValue() + desiredFeedForwardMotorCurrent.getDoubleValue());
 

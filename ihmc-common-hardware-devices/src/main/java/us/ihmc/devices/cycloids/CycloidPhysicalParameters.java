@@ -15,7 +15,7 @@ public class CycloidPhysicalParameters
 
    public CycloidPhysicalParameters(XmlCycloidPhysicalParameters physicalParameters)
    {
-      this(physicalParameters.getInputResolution(), physicalParameters.getOutputResolution(), physicalParameters.getKt(), physicalParameters.getGearRatio());
+      this(physicalParameters.getInputResolution(), physicalParameters.getOutputResolution(), physicalParameters.getGearRatio(), physicalParameters.getKt());
    }
 
    public CycloidPhysicalParameters(int inputResolution, int outputResolution, double gearRatio, double kt)
