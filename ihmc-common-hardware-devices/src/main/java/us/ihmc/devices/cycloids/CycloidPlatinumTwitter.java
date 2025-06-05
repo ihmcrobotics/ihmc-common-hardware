@@ -74,7 +74,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Float64 desiredMotorVelocityInRadians = new Float64(); // Controller set desired Motor velocity R2[52]
       Float64 accelerationIntegrationStiffness = new Float64(); // Stiffness R2[55]
       Float64 accelerationIntegrationDamping = new Float64(); // Damping R2[56]
-      Float64 accelerationIntegrationScalar = new Float64(); // Position and velocity FeedBack Scalar R2[60]
+      Float64 accelerationIntegrationScalar = new Float64(); // Position and velocity FeedBack Scalar R2[13]
       Float64 accelerationIntegrationMaxPositionError = new Float64(); // R2[53]
       Float64 accelerationIntegrationMaxVelocityError = new Float64(); // R2[54]
    }
@@ -222,8 +222,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(0x22F4, 10, 64)), "failed to write to 0x1600 - 0x22F4 10"); // R2 index 10
       verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(0x22F4, 11, 64)), "failed to write to 0x1600 - 0x22F4 11"); // R2 index 11
       verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(0x22F4, 12, 64)), "failed to write to 0x1600 - 0x22F4 12"); // R2 index 12
-      verifyWorkingCounter(writeSDO(0x1601, 8, computePdoMapValue(0x22F4, 13, 64)),
-                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
+//      verifyWorkingCounter(writeSDO(0x1601, 8, computePdoMapValue(0x22F4, 13, 64)),
+//                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
       verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1600 (max 8)
 
       //1602 PDO
@@ -237,8 +237,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
 
       verifyWorkingCounter(writeSDO(0x1602, 5, computePdoMapValue(0x22F4, 53, 64)), "failed to write to 0x1600 - 0x22F4"); //   Max position error R2[53]
       verifyWorkingCounter(writeSDO(0x1602, 6, computePdoMapValue(0x22F4, 54, 64)), "failed to write to 0x1600 - 0x22F4 1"); // Max velocity error R2[54]
-      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(0x22F4, 60, 64)),
-                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[60]
+      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(0x22F4, 13, 64)),
+                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
 
       verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1602 (max 8)
 
