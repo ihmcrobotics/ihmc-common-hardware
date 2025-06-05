@@ -11,6 +11,7 @@ import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
+import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
@@ -940,6 +941,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double getStatorTemperature()
    {
       return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput1a00.getValue());
+   }
+
+   public void setDesiredControlMode(JointDesiredControlMode controlMode)
+   {
+      if(controlMode != null)
+      {
+         switch (controlMode)
+         {
+            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
+            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
+            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
+            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
+         }
+      }
    }
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)

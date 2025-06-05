@@ -1,8 +1,10 @@
 package us.ihmc.devices.etherCATDevices.elmo.motorControl;
 
+import us.ihmc.devices.cycloids.CycloidPlatinumTwitter;
 import us.ihmc.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.etherCAT.master.Slave;
+import us.ihmc.robotics.outputData.JointDesiredControlMode;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
@@ -108,6 +110,14 @@ public class PlatinumTwitterMotorController implements RobotController
       twitter.setMaxVelocityFeedbackError(desireds.getMaxVelocityFeedbackError());
       
    }
+
+//   public void setDesiredControlMode(JointDesiredControlMode controlMode)
+//   {
+//      switch (controlMode)
+//      {
+//         case POSITION -> twi
+//      }
+//   }
    
    public void write()
    {

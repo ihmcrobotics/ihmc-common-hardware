@@ -19,6 +19,12 @@ public class XmlCycloidMotorMechanism extends AbstractXmlObject
    @XmlElement(required = true)
    protected double jointPositionOffset;
 
+   @XmlElement(defaultValue = "0.0")
+   protected double upperJointLimit;
+
+   @XmlElement(defaultValue = "0.0")
+   protected double lowerJointLimit;
+
    public String getJointName()
    {
       return jointName;
@@ -42,6 +48,16 @@ public class XmlCycloidMotorMechanism extends AbstractXmlObject
    public double getJointPositionOffset()
    {
       return jointPositionOffset;
+   }
+
+   public double getUpperJointLimit()
+   {
+      return upperJointLimit;
+   }
+
+   public double getLowerJointLimit()
+   {
+      return lowerJointLimit;
    }
 
    @Override
