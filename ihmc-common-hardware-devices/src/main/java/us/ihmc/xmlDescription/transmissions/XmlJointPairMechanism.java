@@ -28,6 +28,36 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement
    protected double rollJointOffset;
 
+   public double getRollJointLowerLimit()
+   {
+      return rollJointLowerLimit;
+   }
+
+   public double getRollJointUpperLimit()
+   {
+      return rollJointUpperLimit;
+   }
+
+   public double getPitchJointLowerLimit()
+   {
+      return pitchJointLowerLimit;
+   }
+
+   public double getPitchJointUpperLimit()
+   {
+      return pitchJointUpperLimit;
+   }
+
+   @XmlElement
+   private double rollJointLowerLimit;
+   @XmlElement
+   private double rollJointUpperLimit;
+   @XmlElement
+   private double pitchJointLowerLimit;
+   @XmlElement
+   private double pitchJointUpperLimit;
+
+
    public String getRobotSide()
    {
       return robotSide;

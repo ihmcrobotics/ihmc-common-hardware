@@ -18,6 +18,8 @@ public interface MechanismManagerInterface
 
    void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
 
+   void updateJointOffset();
+
    boolean isMotorFaulted();
 
    default void setIsRobotServoed(boolean isRobotServoed)
