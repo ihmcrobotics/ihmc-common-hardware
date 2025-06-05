@@ -1,9 +1,7 @@
 package us.ihmc.devices;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputBasics;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputReadOnly;
+import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 
 import java.util.Map;

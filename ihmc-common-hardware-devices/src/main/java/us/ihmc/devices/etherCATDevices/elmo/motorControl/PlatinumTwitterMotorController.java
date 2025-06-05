@@ -224,6 +224,11 @@ public class PlatinumTwitterMotorController implements RobotController
       return twitter.getMeasuredOutputVelocity();
    }
 
+   public double getFilteredOutputVelocity()
+   {
+      return twitter.getFilteredOutputVelocity();
+   }
+
    public double getMeasuredOutputTorque()
    {
       return twitter.getMeasuredOutputTorque();
