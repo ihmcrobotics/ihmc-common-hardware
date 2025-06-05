@@ -1,13 +1,11 @@
 package us.ihmc.devices.cycloids;
 
-import com.esotericsoftware.minlog.Log;
 import us.ihmc.commons.MathTools;
 import us.ihmc.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
-import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
@@ -543,7 +541,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       /** Motor Space Encoders **/
 
       //raw motor position and velocity in counts & counts per sec
-      rawMeasuredMotorPosition.set(platinumTwitter.getRawMotorEncoderPosition());
+      rawMeasuredMotorPosition.set(platinumTwitter.getRawMotorPosition());
       rawMeasuredMotorVelocity.set(platinumTwitter.getRawMotorVelocity());
 
       // convert the motor encoder count measurement to the motor position in radians. Flip the sign here if the directionality is reversed 
@@ -552,15 +550,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
       double previousMeasuredMotorPosition = measuredMotorPosition.getDoubleValue();
 
-      // update the actual measured position of the motor
+      // update the actual measured position and velocity of the motor
       measuredMotorPosition.set(currentMeasuredMotorPosition);
+      measuredMotorVelocity.set(motorDirection.getDoubleValue() * rawMeasuredMotorVelocity.getDoubleValue() * motorEncoderCountsToMotorRadians);
 
       // finite difference the measured motor velocity, looking at the previous encoder measurement.
       measuredMotorVelocityFD.set((currentMeasuredMotorPosition - previousMeasuredMotorPosition) / estimatedDt.getDoubleValue());
 
       // convert the motor velocity from counts per second in encoder space to output encoder radians per second.
-      measuredMotorVelocity.set(
-            motorDirection.getDoubleValue() * rawMeasuredMotorVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * motorEncoderCountsToMotorRadians);
+//      measuredMotorVelocity.set(
+//            motorDirection.getDoubleValue() * rawMeasuredMotorVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * motorEncoderCountsToMotorRadians);
 
       // perform low-pass filtering on the measured motor velocity signal.
       preFilteredMotorVelocity.update();
@@ -575,8 +574,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       /** Output Space Encoders **/
 
       //raw output position and velocity in counts & counts per sec
-      rawMeasuredOuputPosition.set(platinumTwitter.getRawAuxiliaryPosition());
-      rawMeasuredOutputVelocity.set(platinumTwitter.getRawAuxiliaryVelocity());
+      rawMeasuredOuputPosition.set(platinumTwitter.getRawOutputPosition());
+      rawMeasuredOutputVelocity.set(platinumTwitter.getRawOutputVelocity());
 
       // convert the output encoder count measurement to the output position in radians. Flip the sign here if the directionality is reversed
       double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * rawMeasuredOuputPosition.getDoubleValue() * outputEncoderCountsToOutputRadians;
@@ -586,12 +585,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       // update the actual measured position of the output
       measuredOutputPosition.set(currentMeasuredOutputPosition - zeroPositionOffset.getDoubleValue());
+      measuredOutputVelocity.set(motorDirection.getDoubleValue() * rawMeasuredOutputVelocity.getDoubleValue() * outputEncoderCountsToOutputRadians);
 
       // finite difference the measured velocity, looking at the previous encoder measurement.
       measuredOutputVelocityFD.set((currentMeasuredOutputPosition - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
 
-      measuredOutputVelocity.set(
-            motorDirection.getDoubleValue() * rawMeasuredOutputVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * outputEncoderCountsToOutputRadians);
+//      measuredOutputVelocity.set(
+//            motorDirection.getDoubleValue() * rawMeasuredOutputVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * outputEncoderCountsToOutputRadians);
 
       // perform low-pass filtering on the measured output velocity signal.
       preFilteredOutputVelocity.update();
