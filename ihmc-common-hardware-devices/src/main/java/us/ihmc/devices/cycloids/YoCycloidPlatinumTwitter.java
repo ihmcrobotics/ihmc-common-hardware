@@ -1009,6 +1009,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return name;
    }
 
+   public boolean isDriveEnabled()
+   {
+      return enableDrive.getBooleanValue();
+   }
+
    public String getActuatorPackage()
    {
       return actuatorPackage;
