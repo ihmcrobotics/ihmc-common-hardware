@@ -9,8 +9,6 @@ import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 
-import java.io.IOException;
-
 public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATDeviceStatusProvider
 {
    private static final int MAX_CURRENT_ADDRESS = 0x6075;
@@ -102,8 +100,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
 
       Float64 desiredMotorPositionInRadians = new Float64(); // Controller set desired Motor position R2[51] (0x22F4 51)
       Float64 desiredMotorVelocityInRadians = new Float64(); // Controller set desired Motor velocity R2[52] (0x22F4 52)
-      Float64 motorStiffness = new Float64(); // Stiffness for position-based torque control R2[55] (0x22F4 55)
-      Float64 motorDamping = new Float64(); // Damping for velocity-based torque control R2[56] (0x22F4 56)
+      Float64 motorStiffness = new Float64(); // Stiffness (Kp) for position-based torque control R2[55] (0x22F4 55)
+      Float64 motorDamping = new Float64(); // Damping (Kd) for velocity-based torque control R2[56] (0x22F4 56)
       Float64 maxMotorFeedbackPositionError = new Float64(); // R2[53] (0x22F4 53)
       Float64 maxMotorFeedbackVelocityError = new Float64(); // R2[54] (0x22F4 54)
       Float64 accelerationIntegrationScalar = new Float64(); // Position and velocity FeedBack Scalar R2[13] (0x22F4 13)
@@ -137,7 +135,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Float32 measuredOutputVelocity = new Float32(); // raw output velocity (0x2FE8 2) //TODO it seems to work, but can't find this register. Try 36E5 2
       Signed32 measuredBusVoltage = new Signed32(); // Bus voltage in mv (0x6079)
       Signed16 measuredMotorCurrent = new Signed16(); // motor current (0x6078)
-      Float64 measuredStatorTemperature = new Float64(); // raw stator temperature from analog input signal R2[19] (0x22F4 19)
+      Float64 measuredStatorTemperature = new Float64(); // raw stator temperature from analog input channel 2 R2[19] (0x22F4 19)
    }
 
    private void configurePDO1a00()
@@ -162,25 +160,24 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
          super(0x1A01);
       }
 
-      Float64 sil_desiredDahlFrictionCompensationCurrent = new Float64();
-      Float64 sil_desiredLinearDampingCompensationCurrent = new Float64();
-      Float64 sil_desiredCoggingCompensationCurrent = new Float64();
-      Float64 sil_desiredPDControlFeedbackCurrent = new Float64();
-
-      Float64 sil_desiredFeedForwardCurrent = new Float64();
-      Float64 sil_desiredTotalCurrent = new Float64();
+      Float64 sil_desiredDahlFrictionCompensationCurrent = new Float64(); // R2[30]
+      Float64 sil_desiredLinearDampingCompensationCurrent = new Float64(); // R2[31]
+      Float64 sil_desiredCoggingCompensationCurrent = new Float64(); // R2[32]
+      Float64 sil_desiredPDControlFeedbackCurrent = new Float64(); // R2[33]
+      Float64 sil_desiredFeedForwardCurrent = new Float64(); // R2[34]
+      Float64 sil_desiredTotalCurrent = new Float64(); // R2[35]
    }
 
    private void configurePDO1a01()
    {
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 0), "failed to write to 0x1A01 -- 0x0"); // disable 0x1A01 while we write
 
-      verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x22F4, 30, 64)), "failed to write to  0x1A01 -- 0x22F4"); // SIL dahl Friction Compensation Output Torque
-      verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(0x22F4, 31, 64)), "failed to write to   0x1A01 -- 0x22F4"); // SIL linear Damping Compensation Output Torque
-      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x22F4, 32, 64)), "failed to write to  0x1A01 -- 0x22F4"); // SIL Cogging Compensation Motor Current
-      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x22F4, 33, 64)), "failed to write to  0x1A01 -- 0x22F4"); // SIL Acceleration Integration Motor Feedback Current
-      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x22F4, 41, 64)), "failed to write to  0x1A01 -- 0x22F4"); // SIL Acceleration Integration Measured Motor Position
-      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(0x22F4, 42, 64)), "failed to write to 0x1A01  -- 0x22F4"); // SIL Acceleration Integration Measured Motor Velocity
+      verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x22F4, 30, 64)), "failed to write to  0x1A01 -- 0x22F4"); // R2[30] SIL dahl Friction Compensation Output Torque
+      verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(0x22F4, 31, 64)), "failed to write to   0x1A01 -- 0x22F4"); // R2[31] SIL linear Damping Compensation Output Torque
+      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x22F4, 32, 64)), "failed to write to  0x1A01 -- 0x22F4"); // R2[32] SIL Cogging Compensation Motor Current
+      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x22F4, 33, 64)), "failed to write to  0x1A01 -- 0x22F4"); // R2[33] SIL Acceleration Integration Motor Feedback Current
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x22F4, 34, 64)), "failed to write to  0x1A01 -- 0x22F4"); // R2[34] SIL Acceleration Integration Measured Motor Position
+      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(0x22F4, 35, 64)), "failed to write to 0x1A01  -- 0x22F4"); // R2[35] SIL Acceleration Integration Measured Motor Velocity
 
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 6), "failed to write to 0x1A01 -- 0x8"); // num elements in 0x1A01 (max 8)
    }
@@ -224,9 +221,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    }
 
    /**
-    * @param alias
-    * @param ringPosition
-    * @throws IOException
+    * @param alias EtherCAT alias of the twitter
+    * @param ringPosition Position of the twitter within alias
+    * @param productCode product code of the twitter
     */
    public CycloidPlatinumTwitter(int alias, int ringPosition, TWITTER_PRODUCT_CODE productCode)
    {
@@ -506,14 +503,14 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       rpdo_1602.maxMotorFeedbackVelocityError.set(maxVelocityError);
    }
 
-   public void setAccelerationIntegrationStiffness(double accelerationIntegrationStiffness)
+   public void setMotorControlStiffness(double motorControlStiffness)
    {
-      rpdo_1602.motorStiffness.set(accelerationIntegrationStiffness);
+      rpdo_1602.motorStiffness.set(motorControlStiffness);
    }
 
-   public void setAccelerationIntegrationDamping(double accelerationIntegrationDamping)
+   public void setMotorControlDamping(double motorControlDamping)
    {
-      rpdo_1602.motorDamping.set(accelerationIntegrationDamping);
+      rpdo_1602.motorDamping.set(motorControlDamping);
    }
 
    public void setAccelerationIntegrationScalar(double accelerationIntegrationScalar)

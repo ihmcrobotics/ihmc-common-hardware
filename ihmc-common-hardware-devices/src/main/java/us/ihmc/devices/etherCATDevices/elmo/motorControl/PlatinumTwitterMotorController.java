@@ -1,16 +1,13 @@
 package us.ihmc.devices.etherCATDevices.elmo.motorControl;
 
-import us.ihmc.devices.cycloids.CycloidPlatinumTwitter;
 import us.ihmc.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.robotics.outputData.JointDesiredControlMode;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.simulationconstructionset.util.RobotController;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
@@ -98,10 +95,10 @@ public class PlatinumTwitterMotorController implements RobotController
       twitter.setDesiredMotorTorque(desireds.getDesiredMotorTorque());
       
       // sets the motor stiffness
-      twitter.setDesiredMotorStiffness(desireds.getDesiredMotorStiffness());
+      twitter.setDesiredImpedanceControlMotorStiffness(desireds.getDesiredMotorStiffness());
       
       // sets the motor damping
-      twitter.setDesiredMotorDamping(desireds.getDesiredMotorDamping());
+      twitter.setDesiredImpedanceControlMotorDamping(desireds.getDesiredMotorDamping());
       
       // sets the max position feedback error
       twitter.setMaxPositionFeedbackError(desireds.getMaxPositionFeedbackError());

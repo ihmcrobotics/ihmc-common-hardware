@@ -47,9 +47,9 @@ public interface YoGenericTwitter
 
    boolean isMotorFaulted();
 
-   void setDesiredMotorStiffness(double desiredMotorStiffness);
+   void setDesiredImpedanceControlMotorStiffness(double desiredMotorStiffness);
 
-   void setDesiredMotorDamping(double desiredMotorDamping);
+   void setDesiredImpedanceControlMotorDamping(double desiredMotorDamping);
 
    void setMaxPositionFeedbackError(double maxPositionFeedbackError);
 

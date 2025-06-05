@@ -133,13 +133,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble coggingOutputScalar; // Cogging Output Scalar
 
    // SIL Acceleration Integration Variables
-   private final YoDouble accelerationIntegrationDesiredMotorPosition;
-   private final YoDouble accelerationIntegrationDesiredMotorVelocity;
-   private YoDouble accelerationIntegrationStiffness;
-   private YoDouble accelerationIntegrationDamping;
-   private YoDouble accelerationIntegrationScalar;
-   private YoDouble accelerationIntegrationMaxPositionError;
-   private YoDouble accelerationIntegrationMaxVelocityError;
+   private final YoDouble impedanceControlDesiredMotorPosition;
+   private final YoDouble impedanceControlDesiredMotorVelocity;
+   private final YoDouble impedanceControlStiffness;
+   private final YoDouble impedanceControlDamping;
+   private final YoDouble impedanceControlScalar;
+   private final YoDouble impedanceControlMaxPositionError;
+   private final YoDouble impedanceControlMaxVelocityError;
 
    // Control variables
    private final YoBoolean enableDrive;
@@ -161,9 +161,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble sil_linearDampingCompensationCurrent;
    private final YoDouble sil_coggingCompensationMotorCurrent;
    private final YoDouble sil_dahlFrictionCompensationCurrent;
-   private final YoDouble sil_acceleratiojnIntegrationMotorFeedbackCurrent;
-   private final YoDouble sil_accelerationIntegrationMeasuredMotorPosition;
-   private final YoDouble sil_accelerationIntegrationMeasuredMotorVelocity;
+   private final YoDouble sil_impedanceControlMotorFeedbackCurrent;
+   private final YoDouble sil_desiredFeedForwardCurrent;
+   private final YoDouble sil_desiredTotalCurrent;
 
    // SIL Socket warning and error status variables
    private final YoDouble inputEncoderWarningValue;
@@ -340,21 +340,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       });
 
       // SIL Acceleration Integration Variables
-      accelerationIntegrationDesiredMotorPosition = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorPosition", registry);
-      accelerationIntegrationDesiredMotorVelocity = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorVelocity", registry);
-      accelerationIntegrationStiffness = new YoDouble(prefix + "AccelerationIntegration_Stiffness", registry);
-      accelerationIntegrationDamping = new YoDouble(prefix + "AccelerationIntegration_Damping", registry);
-      accelerationIntegrationScalar = new YoDouble(prefix + "AccelerationIntegration_Scalar", registry);
-      accelerationIntegrationMaxPositionError = new YoDouble(prefix + "AccelerationIntegration_MaxPositionError", registry);
-      accelerationIntegrationMaxVelocityError = new YoDouble(prefix + "AccelerationIntegration_MaxVelocityError", registry);
+      impedanceControlDesiredMotorPosition = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorPosition", registry);
+      impedanceControlDesiredMotorVelocity = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorVelocity", registry);
+      impedanceControlStiffness = new YoDouble(prefix + "AccelerationIntegration_Stiffness", registry);
+      impedanceControlDamping = new YoDouble(prefix + "AccelerationIntegration_Damping", registry);
+      impedanceControlScalar = new YoDouble(prefix + "AccelerationIntegration_Scalar", registry);
+      impedanceControlMaxPositionError = new YoDouble(prefix + "AccelerationIntegration_MaxPositionError", registry);
+      impedanceControlMaxVelocityError = new YoDouble(prefix + "AccelerationIntegration_MaxVelocityError", registry);
 
       // SIL debugging variables
       sil_linearDampingCompensationCurrent = new YoDouble(prefix + "sil_linearDampingCompensationCurrent", registry);
       sil_coggingCompensationMotorCurrent = new YoDouble(prefix + "sil_coggingCompensationMotorCurrent", registry);
       sil_dahlFrictionCompensationCurrent = new YoDouble(prefix + "sil_dahlFrictionCompensationCurrent", registry);
-      sil_acceleratiojnIntegrationMotorFeedbackCurrent = new YoDouble(prefix + "sil_accelerationIntegrationMotorFeedbackCurrent", registry);
-      sil_accelerationIntegrationMeasuredMotorPosition = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorPosition", registry);
-      sil_accelerationIntegrationMeasuredMotorVelocity = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorVelocity", registry);
+      sil_impedanceControlMotorFeedbackCurrent = new YoDouble(prefix + "sil_accelerationIntegrationMotorFeedbackCurrent", registry);
+      sil_desiredFeedForwardCurrent = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorPosition", registry);
+      sil_desiredTotalCurrent = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorVelocity", registry);
 
       // SIL Socket error and warning status signals
       inputEncoderWarningValue = new YoDouble(prefix + "sil_inputEncoderWarningValue", registry);
@@ -476,9 +476,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       coggingOutputScalar.set(parameters.getCoggingOutputScalar());
 
       // AccelerationIntegration Parameters
-      accelerationIntegrationScalar.set(parameters.getAccelerationIntegrationScalar());
+      impedanceControlScalar.set(parameters.getAccelerationIntegrationScalar());
 
-      accelerationIntegrationScalar.set(1.0);
+      impedanceControlScalar.set(1.0);
    }
 
    @Override
@@ -524,10 +524,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
       sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
       sil_coggingCompensationMotorCurrent.set(platinumTwitter.getSILDesiredCoggingCompensationCurrent());
-      sil_acceleratiojnIntegrationMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
+      //PD control is actually impedance control, naming is kept on cycloid platinum twitter to match sil variable names
+      sil_impedanceControlMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
 
-      sil_accelerationIntegrationMeasuredMotorPosition.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
-      sil_accelerationIntegrationMeasuredMotorVelocity.set(platinumTwitter.getSILDesiredTotalCurrent());
+      sil_desiredFeedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
+      sil_desiredTotalCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
 
       inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
       inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
@@ -720,15 +721,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       platinumTwitter.setLinearDampingOutputScalar(linearDampingOutputScalar.getDoubleValue());
 
       // Set acceleration Integration Parameters
-      platinumTwitter.setAccelerationIntegrationStiffness(accelerationIntegrationStiffness.getDoubleValue());
-      platinumTwitter.setAccelerationIntegrationDamping(accelerationIntegrationDamping.getDoubleValue());
-      platinumTwitter.setAccelerationIntegrationScalar(accelerationIntegrationScalar.getDoubleValue());
+      platinumTwitter.setMotorControlStiffness(impedanceControlStiffness.getDoubleValue());
+      platinumTwitter.setMotorControlDamping(impedanceControlDamping.getDoubleValue());
+      platinumTwitter.setAccelerationIntegrationScalar(impedanceControlScalar.getDoubleValue());
 
-      platinumTwitter.setMotorDesiredPosition(motorDirection.getDoubleValue() * accelerationIntegrationDesiredMotorPosition.getDoubleValue());
-      platinumTwitter.setMotorDesiredVelocity(motorDirection.getDoubleValue() * accelerationIntegrationDesiredMotorVelocity.getDoubleValue());
+      platinumTwitter.setMotorDesiredPosition(motorDirection.getDoubleValue() * impedanceControlDesiredMotorPosition.getDoubleValue());
+      platinumTwitter.setMotorDesiredVelocity(motorDirection.getDoubleValue() * impedanceControlDesiredMotorVelocity.getDoubleValue());
 
-      platinumTwitter.setMaxMotorPositionError(accelerationIntegrationMaxPositionError.getDoubleValue());
-      platinumTwitter.setMaxMotorVelocityError(accelerationIntegrationMaxVelocityError.getDoubleValue());
+      platinumTwitter.setMaxMotorPositionError(impedanceControlMaxPositionError.getDoubleValue());
+      platinumTwitter.setMaxMotorVelocityError(impedanceControlMaxVelocityError.getDoubleValue());
 
       platinumTwitter.doStateControl();
    }
@@ -773,13 +774,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setDesiredMotorPosition(double motorPosition)
    {
-      accelerationIntegrationDesiredMotorPosition.set(motorPosition);
+      if (currentModeOfOperation.getEnumValue() == ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE)
+         impedanceControlDesiredMotorPosition.set(motorPosition);
+      else
+         desiredMotorPosition.set(motorPosition);
    }
 
    @Override
    public void setDesiredMotorVelocity(double motorVelocity)
    {
-      accelerationIntegrationDesiredMotorVelocity.set(motorVelocity);
+      if (currentModeOfOperation.getEnumValue() == ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE)
+         impedanceControlDesiredMotorVelocity.set(motorVelocity);
+      else
+         desiredMotorVelocity.set(motorVelocity);
    }
 
    @Override
@@ -791,11 +798,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setKt(double kt)
    {
       this.kt.set(kt);
-   }
-
-   public void reversePositiveMotorDirection()
-   {
-      motorDirection.set(-1);
    }
 
    public void setVelocityFilterAlpha(double velocityFilterAlpha)
@@ -817,16 +819,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void enableCyclicSynchronousTorque()
    {
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
-   }
-
-   public double getJointPosition()
-   {
-      return getMeasuredOutputPosition();
-   }
-
-   public double getJointVelocity()
-   {
-      return getMeasuredOutputVelocity();
    }
 
    public boolean getDriveFaulted()
@@ -904,38 +896,38 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return physicalParameters;
    }
 
-   public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
+   public void setImpedanceControlDesiredMotorPosition(double desiredPosition)
    {
-      accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      impedanceControlDesiredMotorPosition.set(desiredPosition);
    }
 
-   public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
+   public void setImpedanceControlDesiredMotorVelocity(double desiredVelocity)
    {
-      accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
-   }
-
-   @Override
-   public void setDesiredMotorStiffness(double desiredMotorStiffness)
-   {
-      accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      impedanceControlDesiredMotorVelocity.set(desiredVelocity);
    }
 
    @Override
-   public void setDesiredMotorDamping(double desiredMotorDamping)
+   public void setDesiredImpedanceControlMotorStiffness(double desiredMotorStiffness)
    {
-      accelerationIntegrationDamping.set(desiredMotorDamping);
+      impedanceControlStiffness.set(desiredMotorStiffness);
+   }
+
+   @Override
+   public void setDesiredImpedanceControlMotorDamping(double desiredMotorDamping)
+   {
+      impedanceControlDamping.set(desiredMotorDamping);
    }
 
    @Override
    public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
    {
-      accelerationIntegrationMaxPositionError.set(maxPositionFeedbackError);
+      impedanceControlMaxPositionError.set(maxPositionFeedbackError);
    }
 
    @Override
    public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
    {
-      accelerationIntegrationMaxVelocityError.set(maxVelocityFeedbackError);
+      impedanceControlMaxVelocityError.set(maxVelocityFeedbackError);
    }
 
    public double getStatorTemperature()
@@ -949,10 +941,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       {
          switch (controlMode)
          {
-            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
-            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
-            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
-            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
+            case POSITION -> enableCyclicSynchronousPosition();
+            case VELOCITY -> enableCyclicSynchronousVelocity();
+            case EFFORT -> enableCyclicSynchronousTorque();
+            case DISABLED -> enableDrive.set(false);
          }
       }
    }
