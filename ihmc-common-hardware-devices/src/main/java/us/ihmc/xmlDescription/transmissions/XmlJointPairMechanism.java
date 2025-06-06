@@ -23,9 +23,14 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement
    private String rightMotor;
 
-   @XmlElement
+   @XmlElement(defaultValue = "0.0")
+   private double leftMotorOffset;
+   @XmlElement(defaultValue = "0.0")
+   private double rightMotorOffset;
+
+   @XmlElement(defaultValue = "0.0")
    protected double pitchJointOffset;
-   @XmlElement
+   @XmlElement(defaultValue = "0.0")
    protected double rollJointOffset;
 
    public double getRollJointLowerLimit()
@@ -91,5 +96,15 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    public double getRollJointOffset()
    {
       return rollJointOffset;
+   }
+
+   public double getLeftMotorOffset()
+   {
+      return leftMotorOffset;
+   }
+
+   public double getRightMotorOffset()
+   {
+      return rightMotorOffset;
    }
 }

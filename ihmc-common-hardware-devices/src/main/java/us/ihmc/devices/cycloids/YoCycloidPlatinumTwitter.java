@@ -449,7 +449,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             if (DRIVE_FAULTED.getBooleanValue())
             {
                MOTOR_FAULT.set(true);
-               LogTools.error("Drive fault at " + name + " with error: " + errorCode.getValue());
+//               LogTools.error("Drive fault at " + name + " with error: " + errorCode.getValue());
             }
          }
       });

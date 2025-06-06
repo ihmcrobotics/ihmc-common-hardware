@@ -25,9 +25,7 @@ public interface MechanismManagerInterface
    {
    }
 
-   default void setMasterGain(double masterGain)
-   {
-   }
+   void setMasterGain(double masterGain);
 
    String getName();
 }
