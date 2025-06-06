@@ -2,6 +2,7 @@ package us.ihmc.devices;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
+import us.ihmc.commons.lists.PairList;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 
 import java.util.Map;
@@ -10,7 +11,7 @@ public interface MechanismManagerInterface
 {
    void initialize();
 
-   void read(LowLevelState measuredJointDataToPack);
+   void read(PairList<String, LowLevelState> measuredJointData);
 
    void write(Map<String, JointDesiredOutputBasics> desiredJointData);
 
