@@ -14,6 +14,8 @@ import us.ihmc.log.LogTools;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
+import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
+import us.ihmc.yoVariables.filters.AlphaFilterTools;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -35,6 +37,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
+
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 500.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 250.0;
 
    // RTD 1000 temperature sensor function coefficients
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
@@ -80,7 +85,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredMotorVelocityFD;
    private final YoBoolean useFDforMotorVelocity;
 
-   private final YoDouble filteredVelocityAlphaValue;
+   private final YoDouble filteredVelocityBreakFrequency;
+   private final DoubleProvider filteredVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredMotorVelocity, filteredMotorVelocity;
 
    private final YoDouble measuredMotorPositionInOutput;
@@ -91,7 +97,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredOutputVelocityFD;
    private final YoBoolean useFDforOutputVelocity;
 
-   private final YoDouble filteredOutputVelocityAlphaValue;
+   private final YoDouble filteredOutputVelocityBreakFrequency;
+   private final DoubleProvider filteredOutputVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredOutputVelocity, filteredOutputVelocity;
 
    private final YoLong maxDriveCurrentMilliAmps;
@@ -374,8 +381,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useFDforMotorVelocity = new YoBoolean(prefix + "useFDforMotorVelocity", registry);
       useFDforMotorVelocity.set(false);
 
-      filteredVelocityAlphaValue = new YoDouble(prefix + "filteredVelocityAlphaValue", registry);
-      filteredVelocityAlphaValue.set(0.5);
+      filteredVelocityBreakFrequency = new YoDouble(prefix + "filteredVelocityBreakFrequency", registry);
+      filteredVelocityBreakFrequency.set(DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY);
+      filteredVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredVelocityBreakFrequency, dt);
       preFilteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredMotorVelocity", registry, filteredVelocityAlphaValue, measuredMotorVelocity);
       filteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "filteredMotorVelocity", registry, filteredVelocityAlphaValue, preFilteredMotorVelocity);
 
@@ -388,8 +396,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useFDforOutputVelocity = new YoBoolean(prefix + "useFDforOutputVelocity", registry);
       useFDforOutputVelocity.set(false);
 
-      filteredOutputVelocityAlphaValue = new YoDouble(prefix + "filteredOutputVelocityAlphaValue", registry);
-      filteredOutputVelocityAlphaValue.set(0.5);
+      filteredOutputVelocityBreakFrequency = new YoDouble(prefix + "filteredOutputVelocityBreakFrequency", registry);
+      filteredOutputVelocityBreakFrequency.set(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
+      filteredOutputVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredOutputVelocityBreakFrequency, dt);
       preFilteredOutputVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredOutputVelocity",
                                                               registry,
                                                               filteredOutputVelocityAlphaValue,
@@ -408,7 +417,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
       rawMeasuredMotorVelocity = new YoDouble(prefix + "rawMeasuredMotorVelocity", registry);
-      rawMeasuredOuputPosition = new YoDouble(prefix + "rawMeasuredOuputPosition", registry);
+      rawMeasuredOuputPosition = new YoDouble(prefix + "rawMeasuredOutputPosition", registry);
       rawMeasuredOutputVelocity = new YoDouble(prefix + "rawMeasuredOutputVelocity", registry);
       rawMeasuredMotorCurrent = new YoInteger(prefix + "rawMeasuredMotorCurrent", registry);
 
@@ -752,6 +761,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.enableDrive.set(enable);
    }
 
+   public void setEnableCompensationCurrents(boolean enableCompensationCurrents)
+   {
+      this.enableCompensation.set(enableCompensationCurrents);
+   }
+
    @Override
    public void setDesiredOutputTorque(double desiredTorque)
    {
@@ -798,10 +812,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       motorDirection.set(-1);
    }
 
+   public void setVelocityFilterBreakFrequency(double breakFrequency)
+   {
+      filteredVelocityBreakFrequency.set(breakFrequency);
+      filteredOutputVelocityBreakFrequency.set(breakFrequency);
+   }
+
    public void setVelocityFilterAlpha(double velocityFilterAlpha)
    {
-      filteredVelocityAlphaValue.set(velocityFilterAlpha);
-      filteredOutputVelocityAlphaValue.set(velocityFilterAlpha);
+      filteredVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
+      filteredOutputVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
    }
 
    public void enableCyclicSynchronousPosition()

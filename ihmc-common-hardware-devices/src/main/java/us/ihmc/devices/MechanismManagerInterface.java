@@ -21,9 +21,9 @@ public interface MechanismManagerInterface
 
    boolean isMotorFaulted();
 
-   default void setIsRobotServoed(boolean isRobotServoed)
-   {
-   }
+   void setIsRobotServoed(boolean isRobotServoed);
+
+   void setEnableCompensationEfforts(boolean enable);
 
    void setMasterGain(double masterGain);
 
