@@ -11,6 +11,7 @@ import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
+import us.ihmc.sensorProcessing.bubo.clouds.detect.alg.LocalFitShapeNN;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
@@ -118,6 +119,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
    private final YoDouble measuredAnalogInput1a00;
+
+   private final YoEnum<State> etherCATState;
 
    // error variables
    private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
@@ -450,6 +453,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
       CURRENT_LIMITED = new YoBoolean(prefix + "_CURRENT_LIMITED", registry);
 
+      etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
+
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
          @Override
@@ -462,6 +467,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             }
          }
       });
+
+      etherCATState.addListener(source ->
+                                {
+                                   if(etherCATState.getEnumValue() == State.OFFLINE)
+                                      LogTools.error(getName() + " just went OFFLINE");
+                                });
 
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
 
@@ -497,6 +508,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       // estimate the update dt. We're finite differencing the velocity, so making sure this estimate is accurate is really important. If we don't have a
       // previous update time, then we can fall back to the provided dt.
+      etherCATState.set(platinumTwitter.getState());
       if (previousTime.isNaN())
       {
          estimatedDt.set(dt);
@@ -916,7 +928,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public State getEtherCATState()
    {
-      return platinumTwitter.getState();
+      return etherCATState.getEnumValue();
    }
 
    public CycloidPhysicalParameters getPhysicalParameters()
@@ -926,36 +938,62 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
    {
-      accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      if (Double.isFinite(desiredPosition))
+         accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      else
+         LogTools.warn("Tried to set desired impedance position to " + desiredPosition + ", which is not a valid input");
    }
 
    public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
    {
-      accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
+      if (Double.isFinite(desiredVelocity))
+         accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
+      else
+         LogTools.warn("Tried to set desired impedance velocity to " + desiredVelocity + ", which is not a valid input");
    }
 
    @Override
    public void setDesiredMotorStiffness(double desiredMotorStiffness)
    {
-      accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      if(Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
+         accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      else if (desiredMotorStiffness < 0)
+      {
+         LogTools.warn("Tried to set negative stiffness to " + getName() + ", setting stiffness to 0");
+         accelerationIntegrationStiffness.set(0.0);
+      }
+      else
+         LogTools.warn("Tried to set stiffness at " + getName() + " to a non-finite value of " + desiredMotorStiffness);
    }
 
    @Override
    public void setDesiredMotorDamping(double desiredMotorDamping)
    {
-      accelerationIntegrationDamping.set(desiredMotorDamping);
+      if (Double.isFinite(desiredMotorDamping) && desiredMotorDamping >= 0)
+         accelerationIntegrationDamping.set(desiredMotorDamping);
+      else if (desiredMotorDamping < 0)
+      {
+         LogTools.error("Tried to set negative damping to " + getName() + ", setting damping to 0");
+         accelerationIntegrationDamping.set(0.0);
+      }
    }
 
    @Override
    public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
    {
-      accelerationIntegrationMaxPositionError.set(maxPositionFeedbackError);
+      if(Double.isFinite(maxPositionFeedbackError))
+         accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
+      else
+         LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
    }
 
    @Override
    public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
    {
-      accelerationIntegrationMaxVelocityError.set(maxVelocityFeedbackError);
+      if(Double.isFinite(maxVelocityFeedbackError))
+         accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
+      else
+         LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
    }
 
    public double getStatorTemperature()
@@ -979,7 +1017,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
    {
-      this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
+      if(maxAllowableStatorTemperature > 0)
+         this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
+      else
+         LogTools.warn("Tried to set max allowable stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
    }
 
    public int getMaxAllowableStatorTemperature()
@@ -996,7 +1037,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
    {
-      this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
+      if (maxRecommendedStatorTemperature > 0)
+         this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
+      else
+         LogTools.warn("Tried to set max recommended stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
    }
 
    public int getMaxRecommendedStatorTemperature()
