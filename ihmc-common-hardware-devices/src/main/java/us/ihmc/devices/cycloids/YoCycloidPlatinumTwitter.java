@@ -40,7 +40,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 500.0;
-   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 250.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
 
    // RTD 1000 temperature sensor function coefficients
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
