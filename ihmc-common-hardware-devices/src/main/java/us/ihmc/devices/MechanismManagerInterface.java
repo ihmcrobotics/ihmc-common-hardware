@@ -21,6 +21,8 @@ public interface MechanismManagerInterface
 
    boolean isMotorFaulted();
 
+   void clearFaults();
+
    void setIsRobotServoed(boolean isRobotServoed);
 
    void setEnableCompensationEfforts(boolean enable);

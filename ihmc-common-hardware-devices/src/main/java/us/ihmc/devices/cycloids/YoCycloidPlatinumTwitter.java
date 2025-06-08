@@ -819,6 +819,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.kt.set(kt);
    }
 
+   public void clearFaults()
+   {
+      clearFaults.set(true);
+      MOTOR_FAULT.set(false);
+      DRIVE_FAULTED.set(false);
+      UNDER_VOLTAGE.set(false);
+      OVER_VOLTAGE.set(false);
+      STO_DISABLED.set(false);
+      CURRENT_SHORT.set(false);
+      OVER_TEMPERATURE.set(false);
+
+   }
+
    public void reversePositiveMotorDirection()
    {
       motorDirection.set(-1);
