@@ -330,6 +330,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
       dahlSlope.set(silParameters.getDahlFrictionSlope());
       linearDampingCompensation.set(silParameters.getLinearDampingCompensationGain());
+      coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
+      dahlOutputScalar.set(silParameters.getDahlOutputScalar());
+      linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+      enableCompensation.set(true);
 
       enableCompensation.addListener(new YoVariableChangedListener()
       {
