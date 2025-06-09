@@ -130,9 +130,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       }
 
       Signed32 measuredMotorPosition = new Signed32(); // raw motor position (0x6064)
-      Float64 measuredOutputPosition = new Float64(); // raw auxiliary position, reads output encoder (0x2FE4 2) //TODO It seems to work, but can't find this register. Try 36E4 2
+      Float64 measuredOutputPosition = new Float64(); // raw auxiliary position, reads output encoder (0x2FE4 2)
       Float32 measuredMotorVelocity = new Float32(); // raw motor velocity (0x606C)
-      Float32 measuredOutputVelocity = new Float32(); // raw output velocity (0x2FE8 2) //TODO it seems to work, but can't find this register. Try 36E5 2
+      Float32 measuredOutputVelocity = new Float32(); // raw output velocity (0x2FE8 2)
       Signed32 measuredBusVoltage = new Signed32(); // Bus voltage in mv (0x6079)
       Signed16 measuredMotorCurrent = new Signed16(); // motor current (0x6078)
       Float64 measuredStatorTemperature = new Float64(); // raw stator temperature from analog input channel 2 R2[19] (0x22F4 19)
@@ -143,9 +143,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 0), "failed to write to 0x1A00 -- 0x0"); // disable 0x1A00 while we write
 
       verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(0x6064, 0, 32)), "failed to write to 0x1A00 -- 0x6064"); // motor position
-      verifyWorkingCounter(writeSDO(0x1A00, 2, computePdoMapValue(0x36E4, 2, 32)), "failed to write to 0x1A00 -- 0x36E4"); // output position
+      verifyWorkingCounter(writeSDO(0x1A00, 2, computePdoMapValue(0x2FE4, 2, 64)), "failed to write to 0x1A00 -- 0x2FE4"); // output position
       verifyWorkingCounter(writeSDO(0x1A00, 3, computePdoMapValue(0x606C, 0, 32)), "failed to write to 0x1A01 -- 0x606C"); // motor velocity
-      verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(0x36E5, 2, 32)), "failed to write to 0x1A01 -- 0x36E5"); // output velocity
+      verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(0x2FE8, 2, 32)), "failed to write to 0x1A01 -- 0x2FE8"); // output velocity
       verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(0x6079, 0, 32)), "failed to write to 0x1A00 -- 0x6079"); // bus voltage
       verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x6078, 0, 16)), "failed to write to 0x1A00 -- 0x6078"); // torque actual
       verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(0x22F4, 19, 64)), "failed to write to 0x1A00 -- 0x22F4"); // From SIL - Getting Analog Input 2 value for stator temperature
@@ -294,7 +294,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1C12, 2, (short) 0x1601), "failed to write to 0x1C12 -- 0x1601");
       verifyWorkingCounter(writeSDO(0x1C12, 3, (short) 0x1602), "failed to write to 0x1C12 -- 0x1602");
 
-      verifyWorkingCounter(writeSDO(0x1C12, 0, (byte) 3), "failed to write to 0x1C12  -- 0x2");
+      verifyWorkingCounter(writeSDO(0x1C12, 0, (byte) 3), "failed to write to 0x1C12  -- 0x3");
 
       // Configure TPDOS
       verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 0), "failed to write to 0x1C13");
@@ -307,7 +307,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
       verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
 
-      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 3), "failed to write to 0x1C13 -- 0x2");
+      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 3), "failed to write to 0x1C13 -- 0x3");
 
       //      writeSDO(0x1010, 1, (byte) 4);
 
