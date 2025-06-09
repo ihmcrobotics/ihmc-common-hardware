@@ -11,6 +11,8 @@ public interface MechanismManagerInterface
 {
    void initialize();
 
+   void shutDown();
+
    void read(PairList<String, LowLevelState> measuredJointData);
 
    void write(Map<String, JointDesiredOutputBasics> desiredJointData);
