@@ -24,6 +24,7 @@ public class CycloidSILParameters
       linearDampingCompensationGain = xmlCycloidSILParameters.getDampingGain();
       dahlOutputScalar = xmlCycloidSILParameters.getDahlScalar();
       coggingOutputScalar = xmlCycloidSILParameters.getCoggingScalar();
+      linearDampingOutputScalar = xmlCycloidSILParameters.getDampingScalar();
       accelerationIntegrationScalar = xmlCycloidSILParameters.getAccelerationIntegrationScalar();
    }
 

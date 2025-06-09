@@ -1,17 +1,14 @@
 package us.ihmc.devices.cycloids;
 
-import com.esotericsoftware.minlog.Log;
 import us.ihmc.commons.MathTools;
 import us.ihmc.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
-import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
-import us.ihmc.sensorProcessing.bubo.clouds.detect.alg.LocalFitShapeNN;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
@@ -53,6 +50,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble previousTime;
    private final YoDouble estimatedDt;
 
+   private final YoBoolean useOutputVelocityFromMotor;
+
    private final CycloidPlatinumTwitter platinumTwitter;
 
    // conversion variables
@@ -90,8 +89,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final DoubleProvider filteredVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredMotorVelocity, filteredMotorVelocity;
 
-   private final YoDouble measuredMotorPositionInOutput;
-   private final YoDouble measuredMotorVelocityInOutput;
+   private final YoDouble measuredOutputPositionFromMotor;
+   private final YoDouble measuredOutputVelocityFromMotor;
 
    private final YoDouble measuredOutputPosition;
    private final YoDouble measuredOutputVelocity;
@@ -394,8 +393,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       preFilteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredMotorVelocity", registry, filteredVelocityAlphaValue, measuredMotorVelocity);
       filteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "filteredMotorVelocity", registry, filteredVelocityAlphaValue, preFilteredMotorVelocity);
 
-      measuredMotorPositionInOutput = new YoDouble(prefix + "measuredMotorPositionInOutput", registry);
-      measuredMotorVelocityInOutput = new YoDouble(prefix + "measuredMotorVelocityInOutput", registry);
+      measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
+      measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
 
       measuredOutputPosition = new YoDouble(prefix + "measuredOutputPosition", registry);
       measuredOutputVelocity = new YoDouble(prefix + "measuredOutputVelocity", registry);
@@ -458,6 +457,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       CURRENT_LIMITED = new YoBoolean(prefix + "_CURRENT_LIMITED", registry);
 
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
+
+      useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
+      useOutputVelocityFromMotor.set(true);
 
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
@@ -594,8 +596,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       filteredMotorVelocity.update();
 
       //project motor measureds in output space
-      measuredMotorPositionInOutput.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
-      measuredMotorVelocityInOutput.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
+      measuredOutputPositionFromMotor.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
+      measuredOutputVelocityFromMotor.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
 
       /** Output Space Encoders **/
 
@@ -886,7 +888,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getMeasuredOutputVelocity()
    {
-      return measuredOutputVelocity.getValue();
+      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
