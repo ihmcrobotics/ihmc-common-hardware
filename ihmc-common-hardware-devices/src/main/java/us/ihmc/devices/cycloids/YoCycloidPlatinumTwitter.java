@@ -711,10 +711,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //      }
 
       // Set the desired motor position in encoder counts. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * (desiredMotorPosition.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
+      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * (desiredMotorPosition.getDoubleValue() / motorEncoderCountsToMotorRadians)));
 
       // Set the desired motor velocity in encoder counts per second. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
+      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * motorEncoderCountsToMotorRadians)));
 
       // Compute the total desired current for the drive. This is the summation of the feedforward motor current, the desired motor current, which is the main
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
