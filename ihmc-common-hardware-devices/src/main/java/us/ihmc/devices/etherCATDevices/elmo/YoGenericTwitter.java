@@ -20,6 +20,8 @@ public interface YoGenericTwitter
 
    void write();
 
+   void clearFaults();
+
    double getMeasuredMotorPosition();
 
    double getMeasuredOutputPosition();

@@ -1,9 +1,8 @@
 package us.ihmc.devices;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputBasics;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputListReadOnly;
-import us.ihmc.sensorProcessing.outputData.JointDesiredOutputReadOnly;
+import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
+import us.ihmc.commons.lists.PairList;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 
 import java.util.Map;
@@ -12,7 +11,9 @@ public interface MechanismManagerInterface
 {
    void initialize();
 
-   void read(LowLevelState measuredJointDataToPack);
+   void shutDown();
+
+   void read(PairList<String, LowLevelState> measuredJointData);
 
    void write(Map<String, JointDesiredOutputBasics> desiredJointData);
 
@@ -22,13 +23,13 @@ public interface MechanismManagerInterface
 
    boolean isMotorFaulted();
 
-   default void setIsRobotServoed(boolean isRobotServoed)
-   {
-   }
+   void clearFaults();
 
-   default void setMasterGain(double masterGain)
-   {
-   }
+   void setIsRobotServoed(boolean isRobotServoed);
+
+   void setEnableCompensationEfforts(boolean enable);
+
+   void setMasterGain(double masterGain);
 
    String getName();
 }
