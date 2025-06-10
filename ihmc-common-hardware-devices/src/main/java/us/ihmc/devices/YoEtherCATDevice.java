@@ -32,7 +32,7 @@ public class YoEtherCATDevice
       this.deviceName = device.getName();
       this.numPorts = device.getNumberOfPorts();
 
-      registry = new YoRegistry(deviceName + "Status");
+      registry = new YoRegistry(device.getAliasAddress() + "_" + device.getPosition() + "_" + deviceName + "Status");
 
       state = new YoEnum<>(deviceName + "_state", registry, State.class);
       isOperational = new YoBoolean(deviceName + "_isOperational", registry);
