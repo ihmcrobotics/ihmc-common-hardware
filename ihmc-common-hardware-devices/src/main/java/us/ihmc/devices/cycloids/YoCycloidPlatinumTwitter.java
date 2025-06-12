@@ -51,6 +51,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble estimatedDt;
 
    private final YoBoolean useOutputVelocityFromMotor;
+   private final YoBoolean useOutputPositionFromMotor;
 
    private final CycloidPlatinumTwitter platinumTwitter;
 
@@ -460,6 +461,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
       useOutputVelocityFromMotor.set(true);
+      useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
@@ -923,7 +925,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getMeasuredOutputPosition()
    {
-      return measuredOutputPosition.getDoubleValue();
+      return useOutputPositionFromMotor.getBooleanValue() ? measuredOutputPositionFromMotor.getDoubleValue() : measuredOutputPosition.getDoubleValue();
    }
 
    @Override
@@ -942,6 +944,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double getFilteredOutputVelocity()
    {
       return filteredOutputVelocity.getDoubleValue();
+   }
+
+   public double getMeasuredMotorCurrent()
+   {
+      return measuredMotorCurrent.getDoubleValue();
    }
 
    @Override
@@ -1013,6 +1020,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
       else
          LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
+   }
+
+   public void setUseOutputPositionFromMotor(boolean useOutputPositionFromMotor)
+   {
+      this.useOutputPositionFromMotor.set(useOutputPositionFromMotor);
+   }
+
+   public void setUseOutputVelocityFromMotor(boolean useOutputVelocityFromMotor)
+   {
+      this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
    }
 
    public double getStatorTemperature()
