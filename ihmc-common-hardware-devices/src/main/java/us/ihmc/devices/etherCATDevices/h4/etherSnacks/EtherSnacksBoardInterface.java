@@ -4,8 +4,8 @@ public interface EtherSnacksBoardInterface
 {
    void readSensors();
 
-   default void write()
+   default void writeToBoard()
    {
-      // Do nothing by default. Most boards don't have to write anything.
+      // Do nothing by default. Most boards don't take any input.
    }
 }
