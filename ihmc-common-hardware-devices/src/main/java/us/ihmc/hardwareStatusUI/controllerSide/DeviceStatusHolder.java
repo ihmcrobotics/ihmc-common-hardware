@@ -1,6 +1,7 @@
 package us.ihmc.hardwareStatusUI.controllerSide;
 
 import us.ihmc.etherCAT.master.Slave;
+import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -21,6 +22,8 @@ public class DeviceStatusHolder
 
    private final YoBoolean isResponding;
    private final OptionalFactoryField<YoEnum<Slave.State>> state;
+   private final int primaryAddress;
+   private final int secondaryAddress;
 
    /**
     * Class responsible for holding and YoVariableizing device status info for a given device.
@@ -31,9 +34,17 @@ public class DeviceStatusHolder
     */
    public DeviceStatusHolder(String name, DeviceStatusProvider deviceStatusProvider, YoRegistry registry)
    {
+      this(name, -1, -1, deviceStatusProvider, registry);
+   }
+
+   public DeviceStatusHolder(String name, int primaryAddress, int secondaryAddress, DeviceStatusProvider deviceStatusProvider, YoRegistry registry)
+   {
       this.name = name;
       this.deviceStatusProvider = deviceStatusProvider;
       this.registry = registry;
+      this.primaryAddress = primaryAddress;
+      this.secondaryAddress = secondaryAddress;
+
 
       isResponding = new YoBoolean(name + IS_RESPONDING_SUFFIX, registry);
       state = new OptionalFactoryField<>(name + STATE_SUFFIX);
@@ -68,5 +79,29 @@ public class DeviceStatusHolder
    {
       if (!this.state.hasValue())
          state.set(new YoEnum<>(name + STATE_SUFFIX, registry, Slave.State.class));
+   }
+
+   public boolean isResponding()
+   {
+      return deviceStatusProvider.isResponding();
+   }
+   public Slave.State getState()
+   {
+      return this.state.hasValue() ? state.get().getValue() : null;
+   }
+
+   public int getPrimaryAddress()
+   {
+      return primaryAddress;
+   }
+
+   public int getSecondaryAddress()
+   {
+      return secondaryAddress;
+   }
+
+   public String getName()
+   {
+      return name;
    }
 }

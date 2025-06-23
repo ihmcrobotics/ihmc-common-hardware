@@ -1,6 +1,7 @@
 package us.ihmc.hardwareStatusUI.controllerSide;
 
 import us.ihmc.xmlDescription.devices.AbstractXmlDevice;
+import us.ihmc.xmlDescription.devices.AbstractXmlEtherCATDevice;
 import us.ihmc.yoVariables.registry.YoRegistry;
 
 import java.util.ArrayList;
@@ -27,9 +28,9 @@ public class HardwareStatusManager
       deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry));
    }
 
-   public void registerDevice(AbstractXmlDevice xmlDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
+   public void registerDevice(AbstractXmlEtherCATDevice xmlDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
    {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry));
+      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), xmlDevice.getAlias(), xmlDevice.getPosition(), deviceStatusProvider, registry));
    }
 
    public void registerDevice(AbstractXmlDevice xmlDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
@@ -41,5 +42,10 @@ public class HardwareStatusManager
    {
       for (int i = 0; i < deviceStatusHolders.size(); i ++)
          deviceStatusHolders.get(i).update();
+   }
+
+   public ArrayList<DeviceStatusHolder> getDeviceStatusHolders()
+   {
+      return deviceStatusHolders;
    }
 }
