@@ -37,6 +37,14 @@ public class DeviceStatusHolder
       this(name, -1, -1, deviceStatusProvider, registry);
    }
 
+   /**
+    * Initializes device status holder for device with addresses
+    * @param name Name of the device
+    * @param primaryAddress primary address of the device. For EtherCAT, it is the alias, and for CAN, it is the line number
+    * @param secondaryAddress secondary address of the device. For EtherCAT, it is the position, and for CAN, it is the ID number
+    * @param deviceStatusProvider status provider for the device
+    * @param registry registry of the device status holder
+    */
    public DeviceStatusHolder(String name, int primaryAddress, int secondaryAddress, DeviceStatusProvider deviceStatusProvider, YoRegistry registry)
    {
       this.name = name;
