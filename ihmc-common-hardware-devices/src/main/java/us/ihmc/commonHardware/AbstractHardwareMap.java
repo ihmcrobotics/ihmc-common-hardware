@@ -52,7 +52,7 @@ public abstract class AbstractHardwareMap
    protected final double dt;
    protected final YoDouble yoTime;
 
-   protected final ArrayList<Slave> etherCATSlaves = new ArrayList<>();
+   protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
 
    protected final ArrayList<IMUManagerInterface> imuManagers = new ArrayList<>();
    protected final PairList<String, ImuData> measuredIMUData = new PairList<>();
@@ -67,10 +67,10 @@ public abstract class AbstractHardwareMap
    protected final PairList<String, LowLevelState> measuredJointData = new PairList<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
 
-   private final ArrayList<EtherSnacksBoardInterface> etherSnacksBoards = new ArrayList<>();
-   private final ArrayList<YoSensorInterface> yoEtherSnacksSensors = new ArrayList<>();
+   protected final ArrayList<EtherSnacksBoardInterface> etherSnacksBoards = new ArrayList<>();
+   protected final ArrayList<YoSensorInterface> yoEtherSnacksSensors = new ArrayList<>();
 
-   private Map<String, DoubleProvider> temperatureProviders = new HashMap<>();
+   protected Map<String, DoubleProvider> temperatureProviders = new HashMap<>();
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
@@ -99,7 +99,7 @@ public abstract class AbstractHardwareMap
          createTransmissions(transmissions); // consider passing in devices here
 
          XmlJoints joints = xmlHardwareDescription.getJoints();
-         if(joints != null)
+         if (joints != null)
             createJoints(joints);
       }
 
@@ -108,14 +108,29 @@ public abstract class AbstractHardwareMap
       parentRegistry.addChild(registry);
    }
 
+   /**
+    * Create instances of all the devices provided in the xml
+    * @param devices XmlDevices object containing all the devicesin xml format
+    */
    protected abstract void createDevices(XmlDevices devices);
 
+   /**
+    * Create instances of all the joints provided in the xml
+    * @param joints XmlJoints object containing all the joints in xml format
+    */
    protected abstract void createJoints(XmlJoints joints);
 
+   /**
+    * Create instances of all the transmissions provided in the xml
+    * @param transmissions XmlTransmissions object containing all the joints in xml format
+    */
    protected abstract void createTransmissions(XmlTransmissions transmissions);
 
-   protected abstract void createIMUDefinitions();
-
+   /**
+    * Use to check if any of the objects created are null, which means there is a mistake in the xml
+    * @param o object to check
+    * @param msg message indicating which item is incorrect
+    */
    protected void nullCheck(Object o, String msg)
    {
       if (o == null)
@@ -125,18 +140,26 @@ public abstract class AbstractHardwareMap
       }
    }
 
-   private void createH4EtherCATJunctions(XmlH4EtherCATJunctionPort xmlH4JunctionPort)
+   /**
+    * Create the H4 ethercat junction port objects and register them on the etherCAT line
+    * @param xmlH4JunctionPort specific port to be initialized from xml
+    */
+   protected void createH4EtherCATJunctionPort(XmlH4EtherCATJunctionPort xmlH4JunctionPort)
    {
       int alias = xmlH4JunctionPort.getAlias();
       int position = xmlH4JunctionPort.getPosition();
       int junctionPort = xmlH4JunctionPort.getJunctionPort();
       H4EtherCATJunctionPort junction = new H4EtherCATJunctionPort(alias, position, junctionPort);
       etherCATMaster.registerSlave(junction);
-      etherCATSlaves.add(junction);
+      etherCATDevices.add(junction);
       hardwareStatusManager.registerDevice(xmlH4JunctionPort, junction);
    }
 
-   private void createIMU(XmlIMU xmlIMU)
+   /**
+    * Create the IMU object and register on the etherCAT line
+    * @param xmlIMU IMU to be initialized from xml
+    */
+   protected void createIMU(XmlIMU xmlIMU)
    {
       String name = xmlIMU.getName();
       XmlIMUType type = xmlIMU.getIMUType();
@@ -164,14 +187,19 @@ public abstract class AbstractHardwareMap
          System.out.println("Registering " + name + " on " + alias + ":" + position);
 
          etherCATMaster.registerSlave(imu);
-         etherCATSlaves.add(imu);
+         etherCATDevices.add(imu);
          hardwareStatusManager.registerDevice(xmlIMU, imu);
          imuManagers.add(imuManager);
          measuredIMUData.add(imuManager.getName(), new ImuData());
       }
    }
 
-   private void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter, String parameterDirectory)
+   /**
+    * Create the platinum twitter object and register on the etherCAT line
+    * @param xmlPlatinumTwitter platinum twitter to be initialized from xml
+    * @param parameterDirectory directory where the actuator package parameters are stored
+    */
+   protected void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter, String parameterDirectory)
    {
       String name = xmlPlatinumTwitter.getName();
       int alias = xmlPlatinumTwitter.getAlias();
@@ -193,13 +221,19 @@ public abstract class AbstractHardwareMap
 
       System.out.println("Registering " + name + " on " + alias + ":" + position);
       etherCATMaster.registerSlave(cycloidPlatinumTwitter);
-      etherCATSlaves.add(cycloidPlatinumTwitter);
+      etherCATDevices.add(cycloidPlatinumTwitter);
       cycloidTwitters.add(yoCycloidPlatinumTwitter);
       cycloidPlatinumTwitterMap.put(name, yoCycloidPlatinumTwitter);
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
    }
 
-   private EtherSnacksTemperatureSensor createEtherSnacksTemperatureSensor(XmlTemperatureSensor temperatureSensor, String parentName)
+   /**
+    * Create temperature sensor for an ethersnacks board
+    * @param temperatureSensor temperature sensor to be initialized
+    * @param parentName name of the parent board
+    * @return ethersnacks temperature sensor object
+    */
+   protected EtherSnacksTemperatureSensor createEtherSnacksTemperatureSensor(XmlTemperatureSensor temperatureSensor, String parentName)
    {
       String name = temperatureSensor.getName();
       double scale = temperatureSensor.getConversionScale();
@@ -213,7 +247,13 @@ public abstract class AbstractHardwareMap
       return sensor;
    }
 
-   private EtherSnacksIMU createEtherSnacksIMU(XmlIMU xmlIMU, String parentName)
+   /**
+    * Create IMU for an ethersnacks board
+    * @param xmlIMU IMU to be initialized
+    * @param parentName name of the parent board
+    * @return ethersnacks IMU object
+    */
+   protected EtherSnacksIMU createEtherSnacksIMU(XmlIMU xmlIMU, String parentName)
    {
       String name = xmlIMU.getName();
 
@@ -237,5 +277,60 @@ public abstract class AbstractHardwareMap
       measuredIMUData.add(imuManager.getName(), new ImuData());
       yoEtherSnacksSensors.add(yoImu);
       return imu;
+   }
+
+   public Slave[] getEtherCATDevices()
+   {
+      return etherCATDevices.toArray(new Slave[0]);
+   }
+
+   public IMUManagerInterface[] getImuManagers()
+   {
+      return imuManagers.toArray(new IMUManagerInterface[0]);
+   }
+
+   public PairList<String, ImuData> getMeasuredImuData()
+   {
+      return measuredIMUData;
+   }
+
+   public YoCycloidPlatinumTwitter[] getCycloidActuators()
+   {
+      return cycloidTwitters.toArray(new YoCycloidPlatinumTwitter[0]);
+   }
+
+   public EtherSnacksBoardInterface[] getEtherSnacksBoards()
+   {
+      return etherSnacksBoards.toArray(new EtherSnacksBoardInterface[0]);
+   }
+
+   public YoSensorInterface[] getYoEtherSnacksSensors()
+   {
+      return yoEtherSnacksSensors.toArray(new YoSensorInterface[0]);
+   }
+
+   public MechanismManagerInterface[] getMechanismManagers()
+   {
+      return mechanismManagers.toArray(new MechanismManagerInterface[0]);
+   }
+
+   public String[] getJointNames()
+   {
+      return jointNames;
+   }
+
+   public PairList<String, LowLevelState> getMeasuredJointData()
+   {
+      return measuredJointData;
+   }
+
+   public Map<String, JointDesiredOutputBasics> getDesiredJointData()
+   {
+      return desiredJointData;
+   }
+
+   public HardwareStatusManager getHardwareStatusManager()
+   {
+      return hardwareStatusManager;
    }
 }
