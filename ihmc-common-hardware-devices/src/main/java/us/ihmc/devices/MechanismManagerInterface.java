@@ -15,15 +15,19 @@ public interface MechanismManagerInterface
 
    void write(Map<String, JointDesiredOutputBasics> desiredJointData);
 
+   void shutDown();
+
    void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
 
    void updateJointOffset();
 
    boolean isMotorFaulted();
 
-   default void setIsRobotServoed(boolean isRobotServoed)
-   {
-   }
+   void clearFaults();
+
+   void setIsRobotServoed(boolean isRobotServoed);
+
+   void setEnableCompensationEfforts(boolean enable);
 
    void setMasterGain(double masterGain);
 

@@ -2,5 +2,10 @@ package us.ihmc.devices.etherCATDevices.h4.etherSnacks;
 
 public interface EtherSnacksBoardInterface
 {
-   public void readSensors();
+   void readSensors();
+
+   default void writeToBoard()
+   {
+      // Do nothing by default. Most boards don't take any input.
+   }
 }

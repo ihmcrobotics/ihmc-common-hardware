@@ -1,19 +1,19 @@
 package us.ihmc.devices.cycloids;
 
-import com.esotericsoftware.minlog.Log;
 import us.ihmc.commons.MathTools;
 import us.ihmc.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
-import us.ihmc.etherCAT.slaves.elmo.ElmoErrorCodes;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.xmlDescription.devices.parameters.XmlCycloidParameters;
+import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
+import us.ihmc.yoVariables.filters.AlphaFilterTools;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -36,6 +36,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 35.0;
+
    // RTD 1000 temperature sensor function coefficients
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
 
@@ -46,6 +49,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final DoubleProvider time;
    private final YoDouble previousTime;
    private final YoDouble estimatedDt;
+
+   private final YoBoolean useOutputVelocityFromMotor;
+   private final YoBoolean useOutputPositionFromMotor;
 
    private final CycloidPlatinumTwitter platinumTwitter;
 
@@ -80,18 +86,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredMotorVelocityFD;
    private final YoBoolean useFDforMotorVelocity;
 
-   private final YoDouble filteredVelocityAlphaValue;
+   private final YoDouble filteredVelocityBreakFrequency;
+   private final DoubleProvider filteredVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredMotorVelocity, filteredMotorVelocity;
 
-   private final YoDouble measuredMotorPositionInOutput;
-   private final YoDouble measuredMotorVelocityInOutput;
+   private final YoDouble measuredOutputPositionFromMotor;
+   private final YoDouble measuredOutputVelocityFromMotor;
 
    private final YoDouble measuredOutputPosition;
    private final YoDouble measuredOutputVelocity;
    private final YoDouble measuredOutputVelocityFD;
    private final YoBoolean useFDforOutputVelocity;
 
-   private final YoDouble filteredOutputVelocityAlphaValue;
+   private final YoDouble filteredOutputVelocityBreakFrequency;
+   private final DoubleProvider filteredOutputVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredOutputVelocity, filteredOutputVelocity;
 
    private final YoLong maxDriveCurrentMilliAmps;
@@ -111,6 +119,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
    private final YoDouble measuredAnalogInput1a00;
+
+   private final YoEnum<State> etherCATState;
 
    // error variables
    private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
@@ -320,6 +330,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
       dahlSlope.set(silParameters.getDahlFrictionSlope());
       linearDampingCompensation.set(silParameters.getLinearDampingCompensationGain());
+      coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
+      dahlOutputScalar.set(silParameters.getDahlOutputScalar());
+      linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+      enableCompensation.set(true);
 
       enableCompensation.addListener(new YoVariableChangedListener()
       {
@@ -374,13 +388,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useFDforMotorVelocity = new YoBoolean(prefix + "useFDforMotorVelocity", registry);
       useFDforMotorVelocity.set(false);
 
-      filteredVelocityAlphaValue = new YoDouble(prefix + "filteredVelocityAlphaValue", registry);
-      filteredVelocityAlphaValue.set(0.5);
+      filteredVelocityBreakFrequency = new YoDouble(prefix + "filteredVelocityBreakFrequency", registry);
+      filteredVelocityBreakFrequency.set(DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY);
+      filteredVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredVelocityBreakFrequency, dt);
       preFilteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredMotorVelocity", registry, filteredVelocityAlphaValue, measuredMotorVelocity);
       filteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "filteredMotorVelocity", registry, filteredVelocityAlphaValue, preFilteredMotorVelocity);
 
-      measuredMotorPositionInOutput = new YoDouble(prefix + "measuredMotorPositionInOutput", registry);
-      measuredMotorVelocityInOutput = new YoDouble(prefix + "measuredMotorVelocityInOutput", registry);
+      measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
+      measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
 
       measuredOutputPosition = new YoDouble(prefix + "measuredOutputPosition", registry);
       measuredOutputVelocity = new YoDouble(prefix + "measuredOutputVelocity", registry);
@@ -388,8 +403,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useFDforOutputVelocity = new YoBoolean(prefix + "useFDforOutputVelocity", registry);
       useFDforOutputVelocity.set(false);
 
-      filteredOutputVelocityAlphaValue = new YoDouble(prefix + "filteredOutputVelocityAlphaValue", registry);
-      filteredOutputVelocityAlphaValue.set(0.5);
+      filteredOutputVelocityBreakFrequency = new YoDouble(prefix + "filteredOutputVelocityBreakFrequency", registry);
+      filteredOutputVelocityBreakFrequency.set(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
+      filteredOutputVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredOutputVelocityBreakFrequency, dt);
       preFilteredOutputVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredOutputVelocity",
                                                               registry,
                                                               filteredOutputVelocityAlphaValue,
@@ -408,7 +424,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
       rawMeasuredMotorVelocity = new YoDouble(prefix + "rawMeasuredMotorVelocity", registry);
-      rawMeasuredOuputPosition = new YoDouble(prefix + "rawMeasuredOuputPosition", registry);
+      rawMeasuredOuputPosition = new YoDouble(prefix + "rawMeasuredOutputPosition", registry);
       rawMeasuredOutputVelocity = new YoDouble(prefix + "rawMeasuredOutputVelocity", registry);
       rawMeasuredMotorCurrent = new YoInteger(prefix + "rawMeasuredMotorCurrent", registry);
 
@@ -441,6 +457,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
       CURRENT_LIMITED = new YoBoolean(prefix + "_CURRENT_LIMITED", registry);
 
+      etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
+
+      useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
+      useOutputVelocityFromMotor.set(true);
+      useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
+
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
          @Override
@@ -453,6 +475,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             }
          }
       });
+
+      etherCATState.addListener(source ->
+                                {
+                                   if(etherCATState.getEnumValue() == State.OFFLINE)
+                                      LogTools.error(getName() + " just went OFFLINE");
+                                });
 
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
 
@@ -488,6 +516,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       // estimate the update dt. We're finite differencing the velocity, so making sure this estimate is accurate is really important. If we don't have a
       // previous update time, then we can fall back to the provided dt.
+      etherCATState.set(platinumTwitter.getState());
       if (previousTime.isNaN())
       {
          estimatedDt.set(dt);
@@ -569,8 +598,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       filteredMotorVelocity.update();
 
       //project motor measureds in output space
-      measuredMotorPositionInOutput.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
-      measuredMotorVelocityInOutput.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
+      measuredOutputPositionFromMotor.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
+      measuredOutputVelocityFromMotor.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
 
       /** Output Space Encoders **/
 
@@ -752,6 +781,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.enableDrive.set(enable);
    }
 
+   public void setEnableCompensationCurrents(boolean enableCompensationCurrents)
+   {
+      this.enableCompensation.set(enableCompensationCurrents);
+   }
+
    @Override
    public void setDesiredOutputTorque(double desiredTorque)
    {
@@ -793,15 +827,34 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.kt.set(kt);
    }
 
+   public void clearFaults()
+   {
+      clearFaults.set(true);
+      MOTOR_FAULT.set(false);
+      DRIVE_FAULTED.set(false);
+      UNDER_VOLTAGE.set(false);
+      OVER_VOLTAGE.set(false);
+      STO_DISABLED.set(false);
+      CURRENT_SHORT.set(false);
+      OVER_TEMPERATURE.set(false);
+
+   }
+
    public void reversePositiveMotorDirection()
    {
       motorDirection.set(-1);
    }
 
+   public void setVelocityFilterBreakFrequency(double breakFrequency)
+   {
+      filteredVelocityBreakFrequency.set(breakFrequency);
+      filteredOutputVelocityBreakFrequency.set(breakFrequency);
+   }
+
    public void setVelocityFilterAlpha(double velocityFilterAlpha)
    {
-      filteredVelocityAlphaValue.set(velocityFilterAlpha);
-      filteredOutputVelocityAlphaValue.set(velocityFilterAlpha);
+      filteredVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
+      filteredOutputVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
    }
 
    public void enableCyclicSynchronousPosition()
@@ -837,7 +890,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getMeasuredOutputVelocity()
    {
-      return measuredOutputVelocity.getValue();
+      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
@@ -872,7 +925,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getMeasuredOutputPosition()
    {
-      return measuredOutputPosition.getDoubleValue();
+      return useOutputPositionFromMotor.getBooleanValue() ? measuredOutputPositionFromMotor.getDoubleValue() : measuredOutputPosition.getDoubleValue();
    }
 
    @Override
@@ -893,10 +946,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return filteredOutputVelocity.getDoubleValue();
    }
 
+   public double getMeasuredMotorCurrent()
+   {
+      return measuredMotorCurrent.getDoubleValue();
+   }
+
    @Override
    public State getEtherCATState()
    {
-      return platinumTwitter.getState();
+      return etherCATState.getEnumValue();
    }
 
    public CycloidPhysicalParameters getPhysicalParameters()
@@ -906,36 +964,72 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
    {
-      accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      if (Double.isFinite(desiredPosition))
+         accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      else
+         LogTools.warn("Tried to set desired impedance position to " + desiredPosition + ", which is not a valid input");
    }
 
    public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
    {
-      accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
+      if (Double.isFinite(desiredVelocity))
+         accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
+      else
+         LogTools.warn("Tried to set desired impedance velocity to " + desiredVelocity + ", which is not a valid input");
    }
 
    @Override
    public void setDesiredMotorStiffness(double desiredMotorStiffness)
    {
-      accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      if(Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
+         accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      else if (desiredMotorStiffness < 0)
+      {
+         LogTools.warn("Tried to set negative stiffness to " + getName() + ", setting stiffness to 0");
+         accelerationIntegrationStiffness.set(0.0);
+      }
+      else
+         LogTools.warn("Tried to set stiffness at " + getName() + " to a non-finite value of " + desiredMotorStiffness);
    }
 
    @Override
    public void setDesiredMotorDamping(double desiredMotorDamping)
    {
-      accelerationIntegrationDamping.set(desiredMotorDamping);
+      if (Double.isFinite(desiredMotorDamping) && desiredMotorDamping >= 0)
+         accelerationIntegrationDamping.set(desiredMotorDamping);
+      else if (desiredMotorDamping < 0)
+      {
+         LogTools.error("Tried to set negative damping to " + getName() + ", setting damping to 0");
+         accelerationIntegrationDamping.set(0.0);
+      }
    }
 
    @Override
    public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
    {
-      accelerationIntegrationMaxPositionError.set(maxPositionFeedbackError);
+      if(Double.isFinite(maxPositionFeedbackError))
+         accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
+      else
+         LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
    }
 
    @Override
    public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
    {
-      accelerationIntegrationMaxVelocityError.set(maxVelocityFeedbackError);
+      if(Double.isFinite(maxVelocityFeedbackError))
+         accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
+      else
+         LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
+   }
+
+   public void setUseOutputPositionFromMotor(boolean useOutputPositionFromMotor)
+   {
+      this.useOutputPositionFromMotor.set(useOutputPositionFromMotor);
+   }
+
+   public void setUseOutputVelocityFromMotor(boolean useOutputVelocityFromMotor)
+   {
+      this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
    }
 
    public double getStatorTemperature()
@@ -959,7 +1053,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
    {
-      this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
+      if(maxAllowableStatorTemperature > 0)
+         this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
+      else
+         LogTools.warn("Tried to set max allowable stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
    }
 
    public int getMaxAllowableStatorTemperature()
@@ -976,7 +1073,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
    {
-      this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
+      if (maxRecommendedStatorTemperature > 0)
+         this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
+      else
+         LogTools.warn("Tried to set max recommended stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
    }
 
    public int getMaxRecommendedStatorTemperature()

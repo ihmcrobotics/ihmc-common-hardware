@@ -25,7 +25,10 @@ public class XmlCycloidSILParameters
    private double coggingScalar = 1.0;
 
    @XmlElement(defaultValue = "1.0")
-   private double accelerationIntegrationScalar = 1.0;
+   private double dampingScalar = 1.0;
+
+   @XmlElement(defaultValue = "0.0")
+   private double accelerationIntegrationScalar = 0.0;
 
    public double getFrictionGain()
    {
@@ -50,6 +53,11 @@ public class XmlCycloidSILParameters
    public double getCoggingScalar()
    {
       return coggingScalar;
+   }
+
+   public double getDampingScalar()
+   {
+      return dampingScalar;
    }
 
    public double getAccelerationIntegrationScalar()
