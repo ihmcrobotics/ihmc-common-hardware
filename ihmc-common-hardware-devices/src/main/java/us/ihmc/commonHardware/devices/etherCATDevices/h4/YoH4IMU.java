@@ -1,6 +1,6 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4;
 
-import us.ihmc.commonHardware.devices.genericIMU.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;

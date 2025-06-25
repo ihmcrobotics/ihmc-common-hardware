@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices.genericIMU;
+package us.ihmc.commonHardware.devices.genericSensor;
 
 import us.ihmc.commons.MathTools;
 import us.ihmc.robotics.math.filters.AlphaFilteredTuple3D;
