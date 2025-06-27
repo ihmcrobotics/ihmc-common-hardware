@@ -20,6 +20,7 @@ import us.ihmc.commonHardware.devices.genericSensor.YoGenericEncoder;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
+import us.ihmc.commonHardware.mechanisms.CycloidMotorMechanismManager;
 import us.ihmc.commonHardware.xmlDescription.XmlHardwareDescription;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlDevices;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlEncoder;
@@ -231,6 +232,38 @@ public abstract class AbstractHardwareMap
       cycloidTwitters.add(yoCycloidPlatinumTwitter);
       cycloidPlatinumTwitterMap.put(name, yoCycloidPlatinumTwitter);
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
+   }
+
+   /**
+    * Create the cycloid mechanism manager to tie the joint and the actuator together
+    * @param jointName Name of the joint the cycloid is connected to
+    * @param motorName Name of the cycloid
+    * @param jointOffset Rotational offset between encoder 0 and joint 0
+    * @param jointLimitLower Lower joint limit
+    * @param jointLimitUpper Upper joint limit
+    * @param torqueBreakFrequency Break frequency for desired torques
+    * @return New cycloid mechanism manager
+    */
+   protected CycloidMotorMechanismManager createCycloidMechanismManager(String jointName,
+                                                                      String motorName,
+                                                                      double jointOffset,
+                                                                      double jointLimitLower,
+                                                                      double jointLimitUpper,
+                                                                      double torqueBreakFrequency)
+   {
+      YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
+      nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
+
+      return new CycloidMotorMechanismManager(jointOffset,
+                                              jointLimitLower,
+                                              jointLimitUpper,
+                                              jointName,
+                                              platinumTwitter,
+                                              yoTime,
+                                              this.dt,
+                                              doCycloidPDControlOnTwitters,
+                                              torqueBreakFrequency,
+                                              registry);
    }
 
    /**
