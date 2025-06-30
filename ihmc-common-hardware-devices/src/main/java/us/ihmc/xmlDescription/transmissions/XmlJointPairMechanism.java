@@ -33,6 +33,11 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement(defaultValue = "0.0")
    protected double rollJointOffset;
 
+   @XmlElement(defaultValue = "0.0")
+   protected double leftMotorReflectedInertia;
+   @XmlElement(defaultValue = "0.0")
+   protected double rightMotorReflectedInertia;
+
    @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
    protected double torqueBreakFrequency = Double.POSITIVE_INFINITY;
 
@@ -109,6 +114,16 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    public double getRightMotorOffset()
    {
       return rightMotorOffset;
+   }
+
+   public double getLeftMotorReflectedInertia()
+   {
+      return leftMotorReflectedInertia;
+   }
+
+   public double getRightMotorReflectedInertia()
+   {
+      return rightMotorReflectedInertia;
    }
 
    public double getTorqueBreakFrequency()
