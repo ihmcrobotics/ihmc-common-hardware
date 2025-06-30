@@ -28,6 +28,9 @@ public class XmlCycloidMotorMechanism extends AbstractXmlObject
    @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
    protected double torqueBreakFrequency = Double.POSITIVE_INFINITY;
 
+   @XmlElement(defaultValue = "0.0")
+   protected double motorReflectedInertia;
+
    public String getJointName()
    {
       return jointName;
@@ -66,6 +69,11 @@ public class XmlCycloidMotorMechanism extends AbstractXmlObject
    public double getTorqueBreakFrequency()
    {
       return torqueBreakFrequency;
+   }
+
+   public double getMotorReflectedInertia()
+   {
+      return motorReflectedInertia;
    }
 
    @Override
