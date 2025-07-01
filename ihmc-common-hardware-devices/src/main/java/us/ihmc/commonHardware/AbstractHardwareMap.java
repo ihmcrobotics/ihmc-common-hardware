@@ -86,6 +86,8 @@ public abstract class AbstractHardwareMap
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
+      createSensorDefinitions();
+
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
          // Hardware maps will be skipped if they don't contain both devices and transmissions
@@ -139,6 +141,8 @@ public abstract class AbstractHardwareMap
          throw new NullPointerException(msg);
       }
    }
+
+   protected abstract void createSensorDefinitions();
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
