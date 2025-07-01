@@ -5,6 +5,7 @@ import us.ihmc.commonHardware.devices.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
 import us.ihmc.commons.lists.PairList;
+import us.ihmc.commons.InterpolationTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.outputData.JointDesiredLoadMode;
@@ -26,6 +27,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_VELOCITIES = false;
    private static final boolean DEFAULT_USE_FILTERED_VELOCITIES = false;
 
    private final String jointName;
@@ -34,6 +36,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 
    private YoCycloidPlatinumTwitter platinumTwitter;
 
+   private final YoBoolean publishFilteredVelocities;
    private final YoBoolean useFilteredVelocities;
    private final YoJointData measuredMotorData;
    private final YoJointData desiredMotorData;
@@ -41,6 +44,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    private final YoDouble positionError;
    private final YoDouble velocityError;
    private final YoDouble feedback;
+   private final YoDouble velocityFeedbackAlphaVariable;
    private final YoDouble torqueBreakFrequency;
    private final AlphaFilteredYoVariable filteredDesiredTau;
 
@@ -129,13 +133,19 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
 
       useFilteredVelocities = new YoBoolean(jointName + "_UseFilteredVelocities", registry);
+      publishFilteredVelocities = new YoBoolean(jointName + "_PublishFilteredVelocities", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
       desiredActuatorData = new YoJointData(jointName + "_DesiredActuator", true, registry);
       useFilteredVelocities.set(DEFAULT_USE_FILTERED_VELOCITIES);
+      publishFilteredVelocities.set(DEFAULT_PUBLISH_FILTERED_VELOCITIES);
 
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);
       feedback = new YoDouble(jointName + "_ActuatorFeedback", registry);
+
+      velocityFeedbackAlphaVariable = new YoDouble(jointName + "_VelocityFeedbackAlphaVariable", registry);
+      velocityFeedbackAlphaVariable.set(1.0);
+
       this.torqueBreakFrequency = new YoDouble(jointName + "_TorqueBreakFrequency", registry);
       this.torqueBreakFrequency.set(torqueBreakFrequency);
       filteredDesiredTau = new AlphaFilteredYoVariable(jointName + "_DesiredActuatorFilteredTorque",
@@ -246,7 +256,8 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 //      measuredMotorData.setTorque(twitterController.getMeasuredMotorTorque());
 
       measuredMotorData.setPosition(platinumTwitter.getMeasuredMotorPosition());
-      if (useFilteredVelocities.getBooleanValue())
+
+      if (publishFilteredVelocities.getBooleanValue())
          measuredMotorData.setVelocity(platinumTwitter.getFilteredMotorVelocity());
       else
          measuredMotorData.setVelocity(platinumTwitter.getMeasuredMotorVelocity());
@@ -278,7 +289,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       double jointPosition = computeJointPosition(platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
 
       this.measuredActuatorData.setPosition(jointPosition);
-      if (useFilteredVelocities.getBooleanValue())
+      if (publishFilteredVelocities.getBooleanValue())
          this.measuredActuatorData.setVelocity(platinumTwitter.getFilteredOutputVelocity());
       else
          this.measuredActuatorData.setVelocity(platinumTwitter.getMeasuredOutputVelocity());
@@ -354,10 +365,14 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       //      tau_d += stiffness * (q_d - joint.getQ()) + damping * (qd_d - joint.getQd());
       //      tau_d += stiffness * (q_d - yoSensedJointData.getPosition()) + damping * (qd_d - yoSensedJointData.getVelocity());
 
+      // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
+      double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
+      qd_d = InterpolationTools.linearInterpolate(0.0, qd_d, velocityFeedbackAlpha);
+
       if (!doPDControlOnTwitter.getValue())
       {
          positionError.set(q_d - measuredActuatorData.getPosition());
-         if(useFilteredVelocities.getBooleanValue())
+         if (useFilteredVelocities.getBooleanValue())
             velocityError.set(qd_d - platinumTwitter.getFilteredOutputVelocity());
          else
             velocityError.set(qd_d - platinumTwitter.getMeasuredOutputVelocity());
