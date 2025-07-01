@@ -16,6 +16,7 @@ import us.ihmc.commonHardware.devices.genericIMU.GeneralIMUManager;
 import us.ihmc.commonHardware.devices.genericIMU.IMUManagerInterface;
 import us.ihmc.commonHardware.devices.genericIMU.YoGenericIMU;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
+import us.ihmc.commonHardware.mechanisms.CycloidMotorMechanismManager;
 import us.ihmc.commonHardware.xmlDescription.XmlHardwareDescription;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlDevices;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlH4EtherCATJunctionPort;
@@ -24,12 +25,14 @@ import us.ihmc.commonHardware.xmlDescription.devices.XmlIMUType;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlPlatinumTwitter;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.commonHardware.xmlDescription.joints.XmlJoints;
+import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMotorMechanism;
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlTransmissions;
 import us.ihmc.commons.lists.PairList;
 import us.ihmc.etherCAT.master.MasterInterface;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
+import us.ihmc.robotics.outputData.JointDesiredOutput;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
@@ -229,6 +232,48 @@ public abstract class AbstractHardwareMap
       cycloidTwitters.add(yoCycloidPlatinumTwitter);
       cycloidPlatinumTwitterMap.put(name, yoCycloidPlatinumTwitter);
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
+   }
+
+   protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism, double dt)
+   {
+      String jointName = mechanism.getJointName();
+      String motorName = mechanism.getMotorName();
+      double jointOffset = mechanism.getJointPositionOffset();
+      double upperLimit = mechanism.getUpperJointLimit();
+      double lowerLimit = mechanism.getLowerJointLimit();
+      double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
+
+      CycloidMotorMechanismManager cycloidMotorMechanismManager = createCycloidMechanismManager(jointName,
+                                                                                                motorName,
+                                                                                                jointOffset,
+                                                                                                lowerLimit,
+                                                                                                upperLimit,
+                                                                                                torqueBreakFrequency); //TODO add joint limits to xml
+      mechanismManagers.add(cycloidMotorMechanismManager);
+      measuredJointData.add(cycloidMotorMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
+      desiredJointData.put(cycloidMotorMechanismManager.getName(), new JointDesiredOutput());
+   }
+
+   protected CycloidMotorMechanismManager createCycloidMechanismManager(String jointName,
+                                                                      String motorName,
+                                                                      double jointOffset,
+                                                                      double jointLimitLower,
+                                                                      double jointLimitUpper,
+                                                                      double torqueBreakFrequency)
+   {
+      YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
+      nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
+
+      return new CycloidMotorMechanismManager(jointOffset,
+                                              jointLimitLower,
+                                              jointLimitUpper,
+                                              jointName,
+                                              platinumTwitter,
+                                              yoTime,
+                                              this.dt,
+                                              doCycloidPDControlOnTwitters,
+                                              torqueBreakFrequency,
+                                              registry);
    }
 
    /**
