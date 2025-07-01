@@ -5,21 +5,18 @@ import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.euclid.tuple3D.Vector3D;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
-import us.ihmc.robotics.math.filters.AlphaFilteredTuple3D;
 import us.ihmc.robotics.math.filters.YoIMUMahonyFilter;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
-import us.ihmc.sensorProcessing.simulatedSensors.SensorDataContext;
-import us.ihmc.yoVariables.euclid.YoVector3D;
 import us.ihmc.yoVariables.euclid.filters.AlphaFilteredYoFrameVector3D;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameQuaternion;
-import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameVector3D;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameYawPitchRoll;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -50,6 +47,7 @@ public class GeneralIMUManager implements IMUManagerInterface
    private final FrameVector3D trueNorthInSensorFrame = new FrameVector3D(ReferenceFrame.getWorldFrame());
 
    private final YoBoolean filterIMUReadings;
+   private final YoBoolean useMahoneyFilterAngularVelocity;
 
    private final AlphaFilteredYoFrameVector3D filteredAngularVelocity;
    private final AlphaFilteredYoFrameVector3D filteredLinearAcceleration;
@@ -81,6 +79,7 @@ public class GeneralIMUManager implements IMUManagerInterface
       mahonyFilter.setDesiredInitialHeading(initialHeading);
 
       filterIMUReadings = new YoBoolean(prefix + "filterH4IMUReadings", registry);
+      useMahoneyFilterAngularVelocity = new YoBoolean(prefix + "useMahoneyFilterAngularVelocity", registry);
 
       YoDouble h4IMUAngularVelocityFilterAlpha = new YoDouble(prefix + "h4IMUAngularVelocityFilterAlpha", registry);
       YoDouble h4IMULinearAccelerationFilterAlpha = new YoDouble(prefix + "h4IMULinearAccelerationFilterAlpha", registry);
@@ -105,43 +104,57 @@ public class GeneralIMUManager implements IMUManagerInterface
    }
 
    @Override
-   public void read(ImuData measuredIMUData)
+   public void read(ImuData measuredIMUDataToPack)
    {
+      // Update the IMU
       yoIMU.update();
 
       trueNorthInSensorFrame.setIncludingFrame(ReferenceFrame.getWorldFrame(), YoIMUMahonyFilter.NORTH_REFERENCE);
       trueNorthInSensorFrame.changeFrame(imuFrame);
 
-      mahonyFilter.update(yoIMU.getUnbiasedAngularVelocity(), yoIMU.getUnbiasedLinearAcceleration(), trueNorthInSensorFrame);
+      // Initialize Mahony filter with pre-determined angular velocity biases (if we haven't yet)
+      if (!mahonyFilter.hasBeenInitialized())
+         mahonyFilter.initialize(yoIMU.getUnbiasedLinearAcceleration(),
+                                 trueNorthInSensorFrame,
+                                 yoIMU.getInitialAngularVelocityBias().getX(),
+                                 yoIMU.getInitialAngularVelocityBias().getY(),
+                                 yoIMU.getInitialAngularVelocityBias().getZ());
+
+      // Update the Mahony filter. We pass in regular angular velocity because Mahony class will calculate and account for bias internally
+      mahonyFilter.update(yoIMU.getAngularVelocity(), yoIMU.getUnbiasedLinearAcceleration(), trueNorthInSensorFrame);
       mahonyYawPitchRoll.set(mahonyFilter.getEstimatedOrientation());
       quaternion.set(mahonyFilter.getEstimatedOrientation());
 
-      filteredAngularVelocity.update(yoIMU.getUnbiasedAngularVelocity());
-      filteredLinearAcceleration.update(yoIMU.getUnbiasedLinearAcceleration());
+      // Get our estimated orientation, estimated velocity (unbiased), and linear acceleration
+      FixedFrameQuaternionBasics orientation = mahonyFilter.getEstimatedOrientation();
+      Vector3DReadOnly angularVelocity = useMahoneyFilterAngularVelocity.getBooleanValue() ? mahonyFilter.getEstimatedAngularVelocity() : yoIMU.getUnbiasedAngularVelocity();
+      Vector3DReadOnly linearAcceleration = yoIMU.getUnbiasedLinearAcceleration();
 
-      YoFrameQuaternion mahoneyFilteredOrientation = mahonyFilter.getEstimatedOrientation();
-      YoFrameVector3D mahoneyFilteredAngularVelocity = mahonyFilter.getEstimatedAngularVelocity();
-      Vector3DReadOnly mahoneyFilteredLinearAcceleration = yoIMU.getUnbiasedLinearAcceleration();
+      // Filter angular velocity and linear acceleration
+      filteredAngularVelocity.update(angularVelocity);
+      filteredLinearAcceleration.update(linearAcceleration);
 
+      // Pack the linear acceleration and angular velocity data into measuredIMUDataToPack
       if (filterIMUReadings.getBooleanValue())
       {
-         measuredIMUData.setLinearAcceleration(filteredLinearAcceleration);
-         measuredIMUData.setAngularVelocity(filteredAngularVelocity);
+         measuredIMUDataToPack.setLinearAcceleration(filteredLinearAcceleration);
+         measuredIMUDataToPack.setAngularVelocity(filteredAngularVelocity);
       }
       else
       {
-         measuredIMUData.setLinearAcceleration(yoIMU.getUnbiasedLinearAcceleration());
-         measuredIMUData.setAngularVelocity(yoIMU.getUnbiasedAngularVelocity());
+         measuredIMUDataToPack.setLinearAcceleration(yoIMU.getUnbiasedLinearAcceleration());
+         measuredIMUDataToPack.setAngularVelocity(yoIMU.getUnbiasedAngularVelocity());
       }
 
+      // Pack the orientation data into measuredIMUDataToPack
       if (rootJointEstimate != null)
       {
-         computeOrientationAtEstimateFrame(imuFrame, mahoneyFilteredOrientation, rootJointFrame, rootJointEstimate);
+         computeOrientationAtEstimateFrame(imuFrame, orientation, rootJointFrame, rootJointEstimate);
          rootJointEstimate.set(rootJointOrientation);
-         measuredIMUData.setOrientation(rootJointOrientation);
+         measuredIMUDataToPack.setOrientation(rootJointOrientation);
       }
       else
-         measuredIMUData.setOrientation(mahoneyFilteredOrientation);
+         measuredIMUDataToPack.setOrientation(orientation);
    }
 
    /**

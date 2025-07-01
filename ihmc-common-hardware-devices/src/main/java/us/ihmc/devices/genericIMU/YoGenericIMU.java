@@ -3,6 +3,7 @@ package us.ihmc.devices.genericIMU;
 import us.ihmc.devices.IMUInterface;
 import us.ihmc.devices.YoSensorInterface;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameVector3D;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -21,8 +22,8 @@ public class YoGenericIMU implements YoSensorInterface
    protected final YoFrameVector3D linearAcceleration;
    protected final YoFrameVector3D rawLinearAcceleration;
    protected final YoFrameVector3D unbiasedLinearAcceleration;
-   protected final YoFrameVector3D linearAccelerationBias;
-   protected final YoFrameVector3D angularVelocityBias;
+   protected final YoFrameVector3D initialLinearAccelerationBias;
+   protected final YoFrameVector3D initialAngularVelocityBias;
    protected final YoFrameVector3D unbiasedAngularVelocity;
    protected final YoDouble imuTemp;
 
@@ -44,9 +45,9 @@ public class YoGenericIMU implements YoSensorInterface
       linearAcceleration = new YoFrameVector3D(prefix + "LinearAccel", worldFrame, registry);
       rawLinearAcceleration = new YoFrameVector3D(prefix + "RawLinearAccel", worldFrame, registry);
       unbiasedLinearAcceleration = new YoFrameVector3D(prefix + "UnbiasedLinearAccel", worldFrame, registry);
-      linearAccelerationBias = new YoFrameVector3D(prefix + "LinearAccelBias", worldFrame, registry);
+      initialLinearAccelerationBias = new YoFrameVector3D(prefix + "InitialLinearAccelBias", worldFrame, registry);
       unbiasedAngularVelocity = new YoFrameVector3D(prefix + "unbiasedAngularVelocity", worldFrame, registry);
-      angularVelocityBias = new YoFrameVector3D(prefix + "AngularVelBias", worldFrame, registry);
+      initialAngularVelocityBias = new YoFrameVector3D(prefix + "InitialAngularVelBias", worldFrame, registry);
 
       imuTemp = new YoDouble(prefix + "IMUTemp", registry);
 
@@ -63,8 +64,8 @@ public class YoGenericIMU implements YoSensorInterface
       linearAcceleration.set(imu.getAccelX(), imu.getAccelY(), imu.getAccelZ());
       rawLinearAcceleration.set(imu.getRawAccelX(), imu.getRawAccelY(), imu.getRawAccelZ());
 
-      unbiasedAngularVelocity.sub(angularVelocity, angularVelocityBias);
-      unbiasedLinearAcceleration.sub(linearAcceleration, linearAccelerationBias);
+      unbiasedAngularVelocity.sub(angularVelocity, initialAngularVelocityBias);
+      unbiasedLinearAcceleration.sub(linearAcceleration, initialLinearAccelerationBias);
 
       imuTemp.set(imu.getTemp());
    }
@@ -79,7 +80,12 @@ public class YoGenericIMU implements YoSensorInterface
     */
    public void setLinearAccelerationBias(double x, double y, double z)
    {
-      linearAccelerationBias.set(x, y, z);
+      initialLinearAccelerationBias.set(x, y, z);
+   }
+
+   public FrameVector3DReadOnly getInitialLinearAccelerationBias()
+   {
+      return initialLinearAccelerationBias;
    }
 
    /**
@@ -92,12 +98,17 @@ public class YoGenericIMU implements YoSensorInterface
     */
    public void setAngularVelocityBias(double x, double y, double z)
    {
-      angularVelocityBias.set(x, y, z);
+      initialAngularVelocityBias.set(x, y, z);
+   }
+
+   public FrameVector3DReadOnly getInitialAngularVelocityBias()
+   {
+      return initialAngularVelocityBias;
    }
 
    /**
     * 
-    * @return the raw angular velocity measurement from the IMU hashtag no filter
+    * @return the unbiased angular velocity measurement (bias removed from original signal)
     */
    public Vector3DReadOnly getUnbiasedAngularVelocity()
    {
@@ -105,12 +116,29 @@ public class YoGenericIMU implements YoSensorInterface
    }
 
    /**
+    *
+    * @return the angular velocity measurement from the IMU (original signal, but not raw)
+    */
+   public Vector3DReadOnly getAngularVelocity()
+   {
+      return angularVelocity;
+   }
+
+   /**
     * 
-    * @return the raw acceleration measurement from the IMU hashtag no filter
+    * @return the unbiased linear acceleration measurement (bias removed from original signal)
     */
    public Vector3DReadOnly getUnbiasedLinearAcceleration()
    {
       return unbiasedLinearAcceleration;
    }
 
+   /**
+    *
+    * @return the linear acceleration measurement from the IMU (original signal, but not raw)
+    */
+   public Vector3DReadOnly getLinearAcceleration()
+   {
+      return linearAcceleration;
+   }
 }
