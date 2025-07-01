@@ -101,6 +101,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble filteredOutputVelocityBreakFrequency;
    private final DoubleProvider filteredOutputVelocityAlphaValue;
    private final AlphaFilteredYoVariable preFilteredOutputVelocity, filteredOutputVelocity;
+   private final AlphaFilteredYoVariable preFilteredOutputVelocityFromMotor, filteredOutputVelocityFromMotor;
 
    private final YoLong maxDriveCurrentMilliAmps;
    private final YoDouble measuredMotorCurrent;
@@ -415,6 +416,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                                            filteredOutputVelocityAlphaValue,
                                                            preFilteredOutputVelocity);
 
+      preFilteredOutputVelocityFromMotor = new AlphaFilteredYoVariable(prefix + "preFilteredOutputVelocityFromMotor",
+                                                                       registry,
+                                                                       filteredOutputVelocityAlphaValue,
+                                                                       measuredOutputVelocityFromMotor);
+      filteredOutputVelocityFromMotor = new AlphaFilteredYoVariable(prefix + "filteredOutputVelocityFromMotor",
+                                                                    registry,
+                                                                    filteredOutputVelocityAlphaValue,
+                                                                    preFilteredOutputVelocityFromMotor);
+
       measuredMotorCurrent = new YoDouble(prefix + "measuredMotorCurrent", registry);
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
       estimatedOutputTorque = new YoDouble(prefix + "estimatedOutputTorque", registry);
@@ -626,6 +636,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       preFilteredOutputVelocity.update();
       // perform a second round of low-pass filtering on the filtered motor velocity signal.
       filteredOutputVelocity.update();
+
+      //
+      preFilteredOutputVelocityFromMotor.update();
+      filteredOutputVelocityFromMotor.update();
 
       /** Current and Torque **/
 
@@ -943,7 +957,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getFilteredOutputVelocity()
    {
-      return filteredOutputVelocity.getDoubleValue();
+      return useOutputVelocityFromMotor.getBooleanValue() ? filteredOutputVelocityFromMotor.getDoubleValue() : filteredOutputVelocity.getDoubleValue();
    }
 
    public double getMeasuredMotorCurrent()
@@ -1127,5 +1141,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setCompensation(boolean enable)
    {
       enableCompensation.set(enable);
+   }
+
+   public boolean usingOutputPositionFromMotor()
+   {
+      return useOutputPositionFromMotor.getBooleanValue();
+   }
+
+   public boolean usingOutputVelocityFromMotor()
+   {
+      return useOutputVelocityFromMotor.getBooleanValue();
    }
 }
