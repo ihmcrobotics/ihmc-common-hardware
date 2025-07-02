@@ -334,7 +334,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
       dahlOutputScalar.set(silParameters.getDahlOutputScalar());
       linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
-      enableCompensation.set(true);
 
       enableCompensation.addListener(new YoVariableChangedListener()
       {
@@ -470,10 +469,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
 
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
-
-      if (name.contains("RightKnee"))
-         useOutputVelocityFromMotor.set(true);
-
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
@@ -555,7 +550,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //TODO Implement fully
       //      elmoErrorString.set(errorCode.getIntegerValue());
       previousModeOfOperation.set(currentModeOfOperation.getEnumValue());
-      currentModeOfOperation.set(platinumTwitter.getModeOfOperation());
+      int mode = platinumTwitter.getModeOfOperation();
+      if (mode < -3 || mode > 11 || mode == -1 || mode == -2)
+      {
+         LogTools.warn("Mode of operation from " + getName() + " is a reserved mode, can't use " + mode);
+         mode = 0;
+      }
+      currentModeOfOperation.set(mode);
 
       DRIVE_FAULTED.set(platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
       UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage());
