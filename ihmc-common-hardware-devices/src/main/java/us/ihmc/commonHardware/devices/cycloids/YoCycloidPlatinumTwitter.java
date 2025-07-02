@@ -1142,11 +1142,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return platinumTwitter;
    }
 
-   public void setCompensation(boolean enable)
-   {
-      enableCompensation.set(enable);
-   }
-
    public boolean usingOutputPositionFromMotor()
    {
       return useOutputPositionFromMotor.getBooleanValue();
