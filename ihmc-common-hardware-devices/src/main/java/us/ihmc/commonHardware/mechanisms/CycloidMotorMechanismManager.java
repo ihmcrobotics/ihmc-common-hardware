@@ -197,21 +197,9 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void read(PairList<String, LowLevelState> measuredJointData)
+   public void read(Map<String, LowLevelState> measuredJointData)
    {
-      LowLevelState lowLevelState = null;
-
-      for (int i = 0; i < measuredJointData.size(); i ++)
-      {
-         if (measuredJointData.first(i).equals(getName()))
-         {
-            lowLevelState = measuredJointData.second(i);
-            break;
-         }
-      }
-
-      if (lowLevelState != null)
-         read(lowLevelState);
+      read(measuredJointData.get(jointName));
    }
 
    public void read(LowLevelState measuredJointDataToPack)
@@ -507,7 +495,8 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       return jointName;
    }
 
-   public double getMeasuredMotorCurrent()
+   @Override
+   public double getTotalMeasuredMotorCurrent()
    {
       return platinumTwitter.getMeasuredMotorCurrent();
    }
