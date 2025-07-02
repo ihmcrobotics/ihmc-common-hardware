@@ -1,5 +1,7 @@
 package us.ihmc.commonHardware;
 
+import org.ejml.data.DMatrixRMaj;
+import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
 import us.ihmc.commonHardware.devices.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.cycloids.CycloidPlatinumTwitter;
@@ -61,6 +63,10 @@ public abstract class AbstractHardwareMap
    protected final Map<String, ImuData> measuredIMUData = new HashMap<>();
    protected final Map<String, IMUDefinition> imuDefinitions = new HashMap<>();
 
+   protected final String[] forceSensorNames;
+   protected final ArrayList<ForceSensorManagerInterface> forceSensorManagers = new ArrayList<>();
+   protected final Map<String, DMatrixRMaj> forceSensorData = new HashMap<>();
+
    protected final ArrayList<YoCycloidPlatinumTwitter> cycloidTwitters = new ArrayList<>();
    protected final Map<String, YoCycloidPlatinumTwitter> cycloidPlatinumTwitterMap = new HashMap<>();
    protected final ArrayList<MechanismManagerInterface> mechanismManagers = new ArrayList<>();
@@ -110,6 +116,7 @@ public abstract class AbstractHardwareMap
 
       jointNames = measuredJointData.keySet().toArray(new String[0]);
       imuNames = measuredIMUData.keySet().toArray(new String[0]);
+      forceSensorNames = forceSensorData.keySet().toArray(new String[0]);
 
       parentRegistry.addChild(registry);
    }
@@ -381,6 +388,21 @@ public abstract class AbstractHardwareMap
    public String[] getIMUNames()
    {
       return imuNames;
+   }
+
+   public String[] getForceSensorNames()
+   {
+      return forceSensorNames;
+   }
+
+   public ForceSensorManagerInterface[] getForceSensorManagers()
+   {
+      return forceSensorManagers.toArray(new ForceSensorManagerInterface[0]);
+   }
+
+   public Map<String, DMatrixRMaj> getMeasuredFTData()
+   {
+      return forceSensorData;
    }
 
    public Map<String, LowLevelState> getMeasuredJointData()
