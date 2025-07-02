@@ -27,7 +27,6 @@ import us.ihmc.commonHardware.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.commonHardware.xmlDescription.joints.XmlJoints;
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMotorMechanism;
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlTransmissions;
-import us.ihmc.commons.lists.PairList;
 import us.ihmc.etherCAT.master.MasterInterface;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
@@ -57,8 +56,9 @@ public abstract class AbstractHardwareMap
 
    protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
 
+   protected final String[] imuNames;
    protected final ArrayList<IMUManagerInterface> imuManagers = new ArrayList<>();
-   protected final PairList<String, ImuData> measuredIMUData = new PairList<>();
+   protected final Map<String, ImuData> measuredIMUData = new HashMap<>();
    protected final Map<String, IMUDefinition> imuDefinitions = new HashMap<>();
 
    protected final ArrayList<YoCycloidPlatinumTwitter> cycloidTwitters = new ArrayList<>();
@@ -67,7 +67,7 @@ public abstract class AbstractHardwareMap
    protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("doCycloidPDControlOnTwitters", registry);
 
    protected final String[] jointNames;
-   protected final PairList<String, LowLevelState> measuredJointData = new PairList<>();
+   protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
 
    protected final ArrayList<EtherSnacksBoardInterface> etherSnacksBoards = new ArrayList<>();
@@ -108,32 +108,37 @@ public abstract class AbstractHardwareMap
             createJoints(joints);
       }
 
-      jointNames = desiredJointData.keySet().toArray(new String[0]);
+      jointNames = measuredJointData.keySet().toArray(new String[0]);
+      imuNames = measuredIMUData.keySet().toArray(new String[0]);
 
       parentRegistry.addChild(registry);
    }
 
    /**
     * Create instances of all the devices provided in the xml
+    *
     * @param devices XmlDevices object containing all the devicesin xml format
     */
    protected abstract void createDevices(XmlDevices devices);
 
    /**
     * Create instances of all the joints provided in the xml
+    *
     * @param joints XmlJoints object containing all the joints in xml format
     */
    protected abstract void createJoints(XmlJoints joints);
 
    /**
     * Create instances of all the transmissions provided in the xml
+    *
     * @param transmissions XmlTransmissions object containing all the joints in xml format
     */
    protected abstract void createTransmissions(XmlTransmissions transmissions);
 
    /**
     * Use to check if any of the objects created are null, which means there is a mistake in the xml
-    * @param o object to check
+    *
+    * @param o   object to check
     * @param msg message indicating which item is incorrect
     */
    protected void nullCheck(Object o, String msg)
@@ -149,6 +154,7 @@ public abstract class AbstractHardwareMap
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
+    *
     * @param xmlH4JunctionPort specific port to be initialized from xml
     */
    protected void createH4EtherCATJunctionPort(XmlH4EtherCATJunctionPort xmlH4JunctionPort)
@@ -164,6 +170,7 @@ public abstract class AbstractHardwareMap
 
    /**
     * Create the IMU object and register on the etherCAT line
+    *
     * @param xmlIMU IMU to be initialized from xml
     */
    protected void createIMU(XmlIMU xmlIMU)
@@ -197,12 +204,13 @@ public abstract class AbstractHardwareMap
          etherCATDevices.add(imu);
          hardwareStatusManager.registerDevice(xmlIMU, imu);
          imuManagers.add(imuManager);
-         measuredIMUData.add(imuManager.getName(), new ImuData());
+         measuredIMUData.put(imuManager.getName(), new ImuData());
       }
    }
 
    /**
     * Create the platinum twitter object and register on the etherCAT line
+    *
     * @param xmlPlatinumTwitter platinum twitter to be initialized from xml
     * @param parameterDirectory directory where the actuator package parameters are stored
     */
@@ -250,16 +258,16 @@ public abstract class AbstractHardwareMap
                                                                                                 upperLimit,
                                                                                                 torqueBreakFrequency); //TODO add joint limits to xml
       mechanismManagers.add(cycloidMotorMechanismManager);
-      measuredJointData.add(cycloidMotorMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
+      measuredJointData.put(cycloidMotorMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMotorMechanismManager.getName(), new JointDesiredOutput());
    }
 
    protected CycloidMotorMechanismManager createCycloidMechanismManager(String jointName,
-                                                                      String motorName,
-                                                                      double jointOffset,
-                                                                      double jointLimitLower,
-                                                                      double jointLimitUpper,
-                                                                      double torqueBreakFrequency)
+                                                                        String motorName,
+                                                                        double jointOffset,
+                                                                        double jointLimitLower,
+                                                                        double jointLimitUpper,
+                                                                        double torqueBreakFrequency)
    {
       YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
       nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
@@ -278,8 +286,9 @@ public abstract class AbstractHardwareMap
 
    /**
     * Create temperature sensor for an ethersnacks board
+    *
     * @param temperatureSensor temperature sensor to be initialized
-    * @param parentName name of the parent board
+    * @param parentName        name of the parent board
     * @return ethersnacks temperature sensor object
     */
    protected EtherSnacksTemperatureSensor createEtherSnacksTemperatureSensor(XmlTemperatureSensor temperatureSensor, String parentName)
@@ -298,7 +307,8 @@ public abstract class AbstractHardwareMap
 
    /**
     * Create IMU for an ethersnacks board
-    * @param xmlIMU IMU to be initialized
+    *
+    * @param xmlIMU     IMU to be initialized
     * @param parentName name of the parent board
     * @return ethersnacks IMU object
     */
@@ -323,7 +333,7 @@ public abstract class AbstractHardwareMap
       GeneralIMUManager imuManager = new GeneralIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
       imuManagers.add(imuManager);
-      measuredIMUData.add(imuManager.getName(), new ImuData());
+      measuredIMUData.put(imuManager.getName(), new ImuData());
       yoEtherSnacksSensors.add(yoImu);
       return imu;
    }
@@ -338,7 +348,7 @@ public abstract class AbstractHardwareMap
       return imuManagers.toArray(new IMUManagerInterface[0]);
    }
 
-   public PairList<String, ImuData> getMeasuredImuData()
+   public Map<String, ImuData> getMeasuredImuData()
    {
       return measuredIMUData;
    }
@@ -368,7 +378,12 @@ public abstract class AbstractHardwareMap
       return jointNames;
    }
 
-   public PairList<String, LowLevelState> getMeasuredJointData()
+   public String[] getIMUNames()
+   {
+      return imuNames;
+   }
+
+   public Map<String, LowLevelState> getMeasuredJointData()
    {
       return measuredJointData;
    }
