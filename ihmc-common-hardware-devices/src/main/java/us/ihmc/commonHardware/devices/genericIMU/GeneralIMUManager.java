@@ -22,6 +22,8 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
+import java.util.Map;
+
 public class GeneralIMUManager implements IMUManagerInterface
 {
    /**
@@ -102,9 +104,11 @@ public class GeneralIMUManager implements IMUManagerInterface
    }
 
    @Override
-   public void read(ImuData measuredIMUData)
+   public void read(Map<String, ImuData> measuredIMUDataMap)
    {
       yoIMU.update();
+
+      ImuData measuredIMUData = measuredIMUDataMap.get(name);
 
       trueNorthInSensorFrame.setIncludingFrame(ReferenceFrame.getWorldFrame(), YoIMUMahonyFilter.NORTH_REFERENCE);
       trueNorthInSensorFrame.changeFrame(imuFrame);

@@ -37,7 +37,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
-   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 35.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
 
    // RTD 1000 temperature sensor function coefficients
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
@@ -334,7 +334,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
       dahlOutputScalar.set(silParameters.getDahlOutputScalar());
       linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
-      enableCompensation.set(true);
 
       enableCompensation.addListener(new YoVariableChangedListener()
       {
@@ -470,7 +469,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
 
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
-      useOutputVelocityFromMotor.set(true);
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
@@ -552,7 +550,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //TODO Implement fully
       //      elmoErrorString.set(errorCode.getIntegerValue());
       previousModeOfOperation.set(currentModeOfOperation.getEnumValue());
-      currentModeOfOperation.set(platinumTwitter.getModeOfOperation());
+      int mode = platinumTwitter.getModeOfOperation();
+      if (mode < -3 || mode > 11 || mode == -1 || mode == -2)
+      {
+         LogTools.warn("Mode of operation from " + getName() + " is a reserved mode, can't use " + mode);
+         mode = 0;
+      }
+      currentModeOfOperation.set(mode);
 
       DRIVE_FAULTED.set(platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
       UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage());

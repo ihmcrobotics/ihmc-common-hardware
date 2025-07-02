@@ -11,17 +11,23 @@ public interface MechanismManagerInterface
 {
    void initialize();
 
+   void read(Map<String, LowLevelState> measuredJointDataMap);
+
+   void write(Map<String, JointDesiredOutputBasics> desiredJointDataMap);
+
    void shutDown();
-
-   void read(PairList<String, LowLevelState> measuredJointData);
-
-   void write(Map<String, JointDesiredOutputBasics> desiredJointData);
 
    void updateActuatorEffortOffsets(TObjectDoubleHashMap<String> effortOffsetMap);
 
    void updateJointOffset();
 
    boolean isMotorFaulted();
+
+   boolean getIsStatorAboveRecommendedTemperature();
+
+   boolean getIsStatorAboveShutDownTemperature();
+
+   double getTotalMeasuredMotorCurrent();
 
    void clearFaults();
 

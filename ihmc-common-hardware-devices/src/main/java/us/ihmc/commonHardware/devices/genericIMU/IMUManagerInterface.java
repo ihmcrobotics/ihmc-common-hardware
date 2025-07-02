@@ -1,10 +1,11 @@
 package us.ihmc.commonHardware.devices.genericIMU;
 
 import us.ihmc.sensorProcessing.outputData.ImuData;
+import java.util.Map;
 
 public interface IMUManagerInterface
 {
-   void read(ImuData measuredIMUData);
+   void read(Map<String, ImuData> measuredIMUData);
 
    String getName();
 }
