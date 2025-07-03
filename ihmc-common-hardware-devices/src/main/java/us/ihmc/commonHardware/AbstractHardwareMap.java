@@ -228,7 +228,8 @@ public abstract class AbstractHardwareMap
       int position = xmlPlatinumTwitter.getPosition();
       String actuatorPackage = xmlPlatinumTwitter.getActuatorPackage();
       boolean reverseMotorDirection = xmlPlatinumTwitter.isMotorDirectionReversed();
-      double zeroPositionOffset = xmlPlatinumTwitter.getZeroPositionOffset();
+      int inputOffset = xmlPlatinumTwitter.getInputOffset();
+      int outputOffset = xmlPlatinumTwitter.getOutputOffset();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position, TWITTER_PRODUCT_CODE.X00100002);
       YoCycloidPlatinumTwitter yoCycloidPlatinumTwitter = new YoCycloidPlatinumTwitter(name,
@@ -237,7 +238,8 @@ public abstract class AbstractHardwareMap
                                                                                        parameterDirectory,
                                                                                        actuatorPackage,
                                                                                        reverseMotorDirection,
-                                                                                       zeroPositionOffset,
+                                                                                       inputOffset,
+                                                                                       outputOffset,
                                                                                        dt,
                                                                                        registry);
 

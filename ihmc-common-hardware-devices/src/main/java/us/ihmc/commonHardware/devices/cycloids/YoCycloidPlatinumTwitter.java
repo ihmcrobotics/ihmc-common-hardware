@@ -117,7 +117,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoEnum<DSP402Slave.StatusWord> statusWord;
    private final YoLong elmoStatusRegister;
    private final YoInteger errorCode;
-//   private final YoEnum<?> elmoErrorString;
+   //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
    private final YoDouble measuredAnalogInput1a00;
 
@@ -190,8 +190,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
-//   private double motorDirection = 1.0;
-   private final YoDouble zeroPositionOffset;
+   private final YoInteger rawOutputPositionOffset;
+   private final YoInteger rawInputPositionOffset;
+   private final YoBoolean checkEncoderOffsets;
+   private final YoBoolean zeroEncoders;
+   private final int outputCountsPerRevolution;
+   private final int inputCountsPerRevolution;
+   private boolean firstRead = true;
 
    private enum EncoderState
    {
@@ -203,11 +208,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    DoubleProvider time,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   double zeroPositionOffset,
+                                   int inputOffset,
+                                   int outputOffset,
                                    double dt,
                                    YoRegistry parentRegistry)
    {
-      this(prefix, twitter, time, null, actuatorPackage, isMotorDirectionReversed, zeroPositionOffset, dt, parentRegistry);
+      this(prefix, twitter, time, null, actuatorPackage, isMotorDirectionReversed, inputOffset, outputOffset, dt, parentRegistry);
    }
 
    public YoCycloidPlatinumTwitter(String prefix,
@@ -216,7 +222,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    String actuatorDirectory,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   double zeroPositionOffset,
+                                   int inputOffset,
+                                   int outputOffset,
                                    double dt,
                                    YoRegistry parentRegistry)
    {
@@ -227,21 +234,41 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       name = prefix + getClass().getSimpleName();
       registry = new YoRegistry(name);
       XmlCycloidParameters cycloidParameters;
-      if(actuatorDirectory != null)
+      if (actuatorDirectory != null)
          cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
       else
          cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
-
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
 
       this.reverseMotorDirection = new YoBoolean(name + "MotorDirectionIsReversed", registry);
       this.reverseMotorDirection.set(isMotorDirectionReversed);
-      this.zeroPositionOffset = new YoDouble(name + "ZeroPositionOffset", registry);
-      this.zeroPositionOffset.set(zeroPositionOffset);
       motorDirection = new YoDouble(prefix + "motorDirection", registry);
       setMotorDirection(isMotorDirectionReversed);
+
+      rawInputPositionOffset = new YoInteger(name + "RawInputPositionOffset", registry);
+      rawInputPositionOffset.set(inputOffset);
+      rawOutputPositionOffset = new YoInteger(name + "RawOutputPositionOffset", registry);
+      rawOutputPositionOffset.set(outputOffset);
+
+      checkEncoderOffsets = new YoBoolean(name + "UpdateEncoderOffsets", registry);
+
+      checkEncoderOffsets.addListener(s ->
+                                       {
+                                          if (checkEncoderOffsets.getBooleanValue())
+                                             checkAndUpdateEncoderOffsets();
+                                          checkEncoderOffsets.set(false, false);
+                                       });
+
+      zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
+
+      zeroEncoders.addListener(s ->
+                               {
+                                  if (zeroEncoders.getBooleanValue())
+                                     zeroEncoders();
+                                  zeroEncoders.set(false, false);
+                               });
 
       motorDirection.addListener(new YoVariableChangedListener()
       {
@@ -253,7 +280,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                double attemptedValue = motorDirection.getDoubleValue();
                setMotorDirection(reverseMotorDirection.getBooleanValue());
                double actualValue = motorDirection.getDoubleValue();
-               LogTools.warn("Attempted to set motor direction to " + attemptedValue + " which is not allowed. Motor direction can only be 1.0 or -1.0, resetting to " + actualValue);
+               LogTools.warn(
+                     "Attempted to set motor direction to " + attemptedValue + " which is not allowed. Motor direction can only be 1.0 or -1.0, resetting to "
+                     + actualValue);
             }
          }
       });
@@ -282,11 +311,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       gearRatio.set(physicalParameters.getGearRatio());
 
-      motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / physicalParameters.getCountsPerMotorRevolution();
+      inputCountsPerRevolution = physicalParameters.getCountsPerMotorRevolution();
+      motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / inputCountsPerRevolution;
       motorEncoderCountsToOutputRadians = motorEncoderCountsToMotorRadians * physicalParameters.getGearRatio();
 
+      outputCountsPerRevolution = physicalParameters.getCountsPerOutputRevolution();
       outputRadiansToMotorEncoderCounts = 1.0 / (motorEncoderCountsToOutputRadians);
-      outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / physicalParameters.getCountsPerOutputRevolution();
+      outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / outputCountsPerRevolution;
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
@@ -451,7 +482,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       statusWord = new YoEnum<>(prefix + "statusWord", registry, DSP402Slave.StatusWord.class);
       elmoStatusRegister = new YoLong(prefix + "elmoStatusRegister", registry);
       errorCode = new YoInteger(prefix + "elmoErrorCode", registry);
-//      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
+      //      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
       //faults
@@ -479,14 +510,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             if (DRIVE_FAULTED.getBooleanValue())
             {
                MOTOR_FAULT.set(true);
-//               LogTools.error("Drive fault at " + name + " with error: " + errorCode.getValue());
             }
          }
       });
 
       etherCATState.addListener(source ->
                                 {
-                                   if(etherCATState.getEnumValue() == State.OFFLINE)
+                                   if (etherCATState.getEnumValue() == State.OFFLINE)
                                       LogTools.error(getName() + " just went OFFLINE");
                                 });
 
@@ -589,8 +619,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       rawMeasuredMotorPosition.set(platinumTwitter.getRawMotorEncoderPosition());
       rawMeasuredMotorVelocity.set(platinumTwitter.getRawMotorVelocity());
 
-      // convert the motor encoder count measurement to the motor position in radians. Flip the sign here if the directionality is reversed 
-      double currentMeasuredMotorPosition = motorDirection.getDoubleValue() * rawMeasuredMotorPosition.getIntegerValue() * motorEncoderCountsToMotorRadians;
+      // convert the motor encoder count measurement to the motor position in radians. Flip the sign here if the directionality is reversed
+      int currentRawMotorPosition = rawMeasuredMotorPosition.getIntegerValue() - rawInputPositionOffset.getIntegerValue();
+      double currentMeasuredMotorPosition = motorDirection.getDoubleValue() * currentRawMotorPosition * motorEncoderCountsToMotorRadians;
 
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
       double previousMeasuredMotorPosition = measuredMotorPosition.getDoubleValue();
@@ -622,13 +653,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       rawMeasuredOutputVelocity.set(platinumTwitter.getRawAuxiliaryVelocity());
 
       // convert the output encoder count measurement to the output position in radians. Flip the sign here if the directionality is reversed
-      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * rawMeasuredOuputPosition.getDoubleValue() * outputEncoderCountsToOutputRadians;
+      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
 
       // get the output joint position on the previous tick.  This is used to finite difference the output position to get the output velocity.
       double previousMeasuredOutputPosition = measuredOutputPosition.getDoubleValue();
 
       // update the actual measured position of the output
-      measuredOutputPosition.set(currentMeasuredOutputPosition - zeroPositionOffset.getDoubleValue());
+      measuredOutputPosition.set(currentMeasuredOutputPosition);
 
       // finite difference the measured velocity, looking at the previous encoder measurement.
       measuredOutputVelocityFD.set((currentMeasuredOutputPosition - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
@@ -663,6 +695,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       //read the voltage on analog input 2
       measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
+
+      if (firstRead)
+      {
+         checkAndUpdateEncoderOffsets();
+         firstRead = false;
+      }
    }
 
    private void updateEncoderStates()
@@ -729,24 +767,26 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //      }
 
       // Set the desired motor position in encoder counts. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * (desiredMotorPosition.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
+      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * (desiredMotorPosition.getDoubleValue() * outputRadiansToMotorEncoderCounts))
+                                  + rawInputPositionOffset.getIntegerValue());
 
       // Set the desired motor velocity in encoder counts per second. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
+      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts))
+                                  + rawOutputPositionOffset.getIntegerValue());
 
       // Compute the total desired current for the drive. This is the summation of the feedforward motor current, the desired motor current, which is the main
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
       // feedforward motor current.
       desiredFeedForwardMotorCurrent.set(0.0); //TODO Figure out how to do this properly
-//      desiredMotorTorque.set(desiredOutputTorque.getDoubleValue() / gearRatio.getDoubleValue());
+      //      desiredMotorTorque.set(desiredOutputTorque.getDoubleValue() / gearRatio.getDoubleValue());
       desiredOutputTorque.set(desiredMotorTorque.getDoubleValue() * gearRatio.getDoubleValue());
       desiredMotorCurrent.set(desiredMotorTorque.getDoubleValue() / kt.getDoubleValue());
       desiredMotorCurrentWithFF.set(desiredMotorCurrent.getDoubleValue() + desiredFeedForwardMotorCurrent.getDoubleValue());
 
       // Compute the desired motor current to an effort percentage, -1000 to 1000. This is a percentage of the maximum effort available from the drive. Flip the
       // sign of the current if the directionality is reversed so that it matches the motor axis.
-      double desiredEffortPercentage = motorDirection.getDoubleValue() * EuclidCoreTools.clamp(desiredMotorCurrentWithFF.getDoubleValue()
-                                                                                               / platinumTwitter.getMaxDriveCurrentAmps(), 1.0);
+      double desiredEffortPercentage =
+            motorDirection.getDoubleValue() * EuclidCoreTools.clamp(desiredMotorCurrentWithFF.getDoubleValue() / platinumTwitter.getMaxDriveCurrentAmps(), 1.0);
       rawDesiredMotorEffortPercentage.set((int) (CURRENT_SIGNAL_RANGE * desiredEffortPercentage));
 
       // Set the actual objectives for the drive. This includes the desired motor encoder counts, the desired motor encoder counts per second, and the
@@ -855,7 +895,38 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       STO_DISABLED.set(false);
       CURRENT_SHORT.set(false);
       OVER_TEMPERATURE.set(false);
+   }
 
+   private void checkAndUpdateOutputOffset()
+   {
+      int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
+      if (difference >= outputCountsPerRevolution)
+         rawOutputPositionOffset.add(outputCountsPerRevolution);
+      if (difference <= -outputCountsPerRevolution)
+         rawOutputPositionOffset.sub(outputCountsPerRevolution);
+   }
+
+   private void checkAndUpdateInputOffset()
+   {
+      double maxDifference = 2 * Math.PI / gearRatio.getDoubleValue();
+      double difference = measuredOutputPosition.getDoubleValue() - measuredOutputPositionFromMotor.getDoubleValue();
+      int number = (int) Math.abs(difference % maxDifference);
+      if (difference >= maxDifference)
+         rawInputPositionOffset.add(number * inputCountsPerRevolution);
+      if (difference <= maxDifference)
+         rawInputPositionOffset.sub(number * inputCountsPerRevolution);
+   }
+
+   public void checkAndUpdateEncoderOffsets()
+   {
+      checkAndUpdateOutputOffset();
+      checkAndUpdateInputOffset();
+   }
+
+   public void zeroEncoders()
+   {
+      rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
+      rawOutputPositionOffset.set((int) rawMeasuredOuputPosition.getDoubleValue());
    }
 
    public void reversePositiveMotorDirection()
@@ -999,7 +1070,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setDesiredMotorStiffness(double desiredMotorStiffness)
    {
-      if(Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
+      if (Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
          accelerationIntegrationStiffness.set(desiredMotorStiffness);
       else if (desiredMotorStiffness < 0)
       {
@@ -1025,7 +1096,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
    {
-      if(Double.isFinite(maxPositionFeedbackError))
+      if (Double.isFinite(maxPositionFeedbackError))
          accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
       else
          LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
@@ -1034,7 +1105,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
    {
-      if(Double.isFinite(maxVelocityFeedbackError))
+      if (Double.isFinite(maxVelocityFeedbackError))
          accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
       else
          LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
@@ -1057,7 +1128,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setDesiredControlMode(JointDesiredControlMode controlMode)
    {
-      if(controlMode != null)
+      if (controlMode != null)
       {
          switch (controlMode)
          {
@@ -1071,7 +1142,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
    {
-      if(maxAllowableStatorTemperature > 0)
+      if (maxAllowableStatorTemperature > 0)
          this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
       else
          LogTools.warn("Tried to set max allowable stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
@@ -1086,7 +1157,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       //TODO figure out why this doesn't work
       return 0.0; // (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * Math.sqrt(voltage) + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
-//              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
+      //              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
    }
 
    public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
