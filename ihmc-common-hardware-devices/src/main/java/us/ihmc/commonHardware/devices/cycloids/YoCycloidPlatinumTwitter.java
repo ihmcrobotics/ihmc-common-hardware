@@ -192,6 +192,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean reverseMotorDirection;
    private final YoInteger rawOutputPositionOffset;
    private final YoInteger rawInputPositionOffset;
+   private final YoDouble encoderDifferenceAtOutput;
    private final YoBoolean checkEncoderOffsets;
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
@@ -252,14 +253,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       rawOutputPositionOffset = new YoInteger(name + "RawOutputPositionOffset", registry);
       rawOutputPositionOffset.set(outputOffset);
 
-      checkEncoderOffsets = new YoBoolean(name + "UpdateEncoderOffsets", registry);
+      encoderDifferenceAtOutput = new YoDouble(name + "EncoderDifferenceAtOutput", registry);
 
-      checkEncoderOffsets.addListener(s ->
-                                       {
-                                          if (checkEncoderOffsets.getBooleanValue())
-                                             checkAndUpdateEncoderOffsets();
-                                          checkEncoderOffsets.set(false, false);
-                                       });
+      checkEncoderOffsets = new YoBoolean(name + "UpdateEncoderOffsets", registry);
+      checkEncoderOffsets.set(true);
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
 
@@ -696,10 +693,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //read the voltage on analog input 2
       measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
 
-      if (firstRead)
+      encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
+      if (checkEncoderOffsets.getBooleanValue())
       {
          checkAndUpdateEncoderOffsets();
-         firstRead = false;
+         checkEncoderOffsets.set(false);
       }
    }
 
@@ -900,26 +898,41 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private void checkAndUpdateOutputOffset()
    {
       int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
-      if (difference >= outputCountsPerRevolution)
-         rawOutputPositionOffset.add(outputCountsPerRevolution);
-      if (difference <= -outputCountsPerRevolution)
-         rawOutputPositionOffset.sub(outputCountsPerRevolution);
+      int rotationInterval = Math.abs(difference) / outputCountsPerRevolution;
+      if (difference >= outputCountsPerRevolution / 2)
+      {
+         if (rotationInterval == 0)
+            rawOutputPositionOffset.add(outputCountsPerRevolution);
+         else
+            rawOutputPositionOffset.add(rotationInterval * outputCountsPerRevolution);
+      }
+      if (difference <= -outputCountsPerRevolution / 2)
+      {
+         if (rotationInterval == 0)
+            rawOutputPositionOffset.sub(outputCountsPerRevolution);
+         else
+            rawOutputPositionOffset.sub(rotationInterval * outputCountsPerRevolution);
+      }
    }
 
    private void checkAndUpdateInputOffset()
    {
       double maxDifference = 2 * Math.PI / gearRatio.getDoubleValue();
-      double difference = measuredOutputPosition.getDoubleValue() - measuredOutputPositionFromMotor.getDoubleValue();
-      int number = (int) Math.abs(difference % maxDifference);
-      if (difference >= maxDifference)
-         rawInputPositionOffset.add(number * inputCountsPerRevolution);
-      if (difference <= maxDifference)
-         rawInputPositionOffset.sub(number * inputCountsPerRevolution);
+      int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / maxDifference);
+      if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
+         rawInputPositionOffset.add(rotationInterval * inputCountsPerRevolution);
+      if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
+         rawInputPositionOffset.sub(rotationInterval * inputCountsPerRevolution);
    }
 
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
+      //Set the output position based on new offset
+      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
+      measuredOutputPosition.set(currentMeasuredOutputPosition);
+
       checkAndUpdateInputOffset();
    }
 
