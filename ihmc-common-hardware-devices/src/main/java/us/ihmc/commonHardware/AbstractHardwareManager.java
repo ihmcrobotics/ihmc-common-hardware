@@ -7,10 +7,8 @@ import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
 import us.ihmc.commonHardware.devices.genericIMU.IMUManagerInterface;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
-import us.ihmc.commonHardware.mechanisms.YoJointDesiredDataHolder;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.ImuData;
@@ -19,7 +17,6 @@ import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoLong;
 
 import java.util.Map;
@@ -101,6 +98,13 @@ public abstract class AbstractHardwareManager
       parentRegistry.addChild(registry);
    }
 
+   /**
+    * Reads all the data from the IMUs, force sensors, and joint sensors and stores them in their respective manager maps
+    *
+    * @param measuredIMUData   Map to store IMU data
+    * @param measuredFTData    Map to store force and torque data
+    * @param measuredJointData Map to store joint data
+    */
    public void read(Map<String, ImuData> measuredIMUData, Map<String, DMatrixRMaj> measuredFTData, Map<String, LowLevelState> measuredJointData)
    {
       long readStartTime = RealtimeThread.getCurrentMonotonicClockTime();
@@ -166,6 +170,11 @@ public abstract class AbstractHardwareManager
       readTime.set(RealtimeThread.getCurrentMonotonicClockTime() - readStartTime);
    }
 
+   /**
+    * Writes to all writable sensors. In abstract, that includes force sensors, mechanism managers, and ethersnacks boards.
+    *
+    * @param desiredJointData Map of desired joint data for mechanism managers
+    */
    public void write(Map<String, JointDesiredOutputBasics> desiredJointData)
    {
       long writeStartTime = RealtimeThread.getCurrentMonotonicClockTime();
@@ -194,6 +203,9 @@ public abstract class AbstractHardwareManager
       writeTime.set(RealtimeThread.getCurrentMonotonicClockTime() - writeStartTime);
    }
 
+   /**
+    * Shuts down the robot. Use when terminating the program
+    */
    public void shutDown()
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
@@ -201,10 +213,21 @@ public abstract class AbstractHardwareManager
       System.out.println("Hardware manager has been shut down");
    }
 
+   /**
+    * Report the current state of sensors and any other info to report
+    */
    public abstract void doReporting();
 
+   /**
+    * Calibrate the robot. Up for interpretation for each robot
+    */
    public abstract void calibrateRobot();
 
+   /**
+    * Set if compensation should be enabled for the actuators
+    *
+    * @param enableCompensation Enable if true, disable if false
+    */
    public void setEnableCompensationEfforts(boolean enableCompensation)
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
@@ -213,6 +236,11 @@ public abstract class AbstractHardwareManager
       }
    }
 
+   /**
+    * Set if the actuators are servoed (Not sure why it is called this, we are just enabling or disabling actuators with this)
+    *
+    * @param isRobotServoed If true, enable the actuators. If false, disable the actuators
+    */
    public void setIsRobotServoed(boolean isRobotServoed)
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
@@ -221,6 +249,9 @@ public abstract class AbstractHardwareManager
       }
    }
 
+   /**
+    * Try to clear faults on each motor
+    */
    public void clearMotorFaults()
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
@@ -229,26 +260,19 @@ public abstract class AbstractHardwareManager
       }
    }
 
-   public MechanismManagerInterface[] getMechanismManagers()
-   {
-      return mechanismManagers;
-   }
-
-   public IMUManagerInterface[] getImuManagers()
-   {
-      return imuManagers;
-   }
-
-   public ForceSensorManagerInterface[] getForceSensorManagers()
-   {
-      return forceSensorManagers;
-   }
-
+   /**
+    * @return The yoboolean for seeing if the motors are faulted
+    */
    public YoBoolean getAreMotorsFaulted()
    {
       return areMotorsFaulted;
    }
 
+   /**
+    * Set the master gain in the range [0.0, 1.0]. Any other inputs will be clamped to that range
+    *
+    * @param desiredMasterGain desired master gain for robot
+    */
    public void setMasterGain(double desiredMasterGain)
    {
       masterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
