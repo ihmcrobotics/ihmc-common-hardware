@@ -1,10 +1,11 @@
 package us.ihmc.commonHardware.devices;
 
 import org.ejml.data.DMatrixRMaj;
+import java.util.Map;
 
 public interface ForceSensorManagerInterface
 {
-   void read(DMatrixRMaj forceSensorMeasurement);
+   void read(Map<String, DMatrixRMaj> forceSensorMeasurement);
 
    void write();
 

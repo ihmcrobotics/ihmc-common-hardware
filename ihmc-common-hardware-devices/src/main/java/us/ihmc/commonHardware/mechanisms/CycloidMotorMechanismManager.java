@@ -1,11 +1,10 @@
 package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commonHardware.devices.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
-import us.ihmc.commons.lists.PairList;
-import us.ihmc.commons.InterpolationTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.outputData.JointDesiredLoadMode;
@@ -56,10 +55,9 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 
    private final YoDouble yoJointOffset;
    private final YoBoolean updateJointOffset;
+   private final YoBoolean checkAndUpdateEncoderOffsets;
 
    private static final int[] validOffsetIntervals = {-1, 0, 1};
-   private final YoBoolean calculateJointOffsetInterval;
-
    private final YoLong readTime;
    private final YoLong writeTime;
 
@@ -120,13 +118,18 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       yoJointOffset = new YoDouble(jointName + "_jointOffset", registry);
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
+      checkAndUpdateEncoderOffsets = new YoBoolean(jointName + "_checkAndUpdateEncoderOffsets", registry);
+
+      checkAndUpdateEncoderOffsets.addListener(s ->
+                                               {
+                                                  if(checkAndUpdateEncoderOffsets.getBooleanValue())
+                                                     platinumTwitter.checkAndUpdateEncoderOffsets();
+                                                  checkAndUpdateEncoderOffsets.set(false, false);
+                                               });
 
       motorEncoderToOutputEncoderOffset = new YoDouble(jointName + "_motorEncoderToJointEncoderOffset", registry);
       calculateMotorEncoderToOutputEncoderOffset = new YoBoolean(jointName + "_calculateMotorEncoderToJointEncoderOffset", registry);
       calculateMotorEncoderToOutputEncoderOffset.set(true);
-
-      calculateJointOffsetInterval = new YoBoolean(jointName + "_calculateJointOffsetInterval", registry);
-//      calculateJointOffsetInterval.set(true);
 
 
       measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
@@ -172,10 +175,10 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
 
       // Using input velocity scaled to the output seems to work better for control
-      platinumTwitter.setUseOutputVelocityFromMotor(true);
       if(jointName.contains("RIGHT_KNEE")) // Right knee has a noisy output encoder
       {
          platinumTwitter.setUseOutputPositionFromMotor(true);
+         platinumTwitter.setUseOutputVelocityFromMotor(true);
       }
 
       parentRegistry.addChild(registry);
@@ -184,7 +187,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    @Override
    public void initialize()
    {
-      //Do nothing
+      platinumTwitter.checkAndUpdateEncoderOffsets(); //(jointLimitLower, jointLimitUpper);
    }
 
    @Override
@@ -198,28 +201,15 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void read(PairList<String, LowLevelState> measuredJointData)
+   public void read(Map<String, LowLevelState> measuredJointData)
    {
-      LowLevelState lowLevelState = null;
-
-      for (int i = 0; i < measuredJointData.size(); i ++)
-      {
-         if (measuredJointData.first(i).equals(getName()))
-         {
-            lowLevelState = measuredJointData.second(i);
-            break;
-         }
-      }
-
-      if (lowLevelState != null)
-         read(lowLevelState);
+      read(measuredJointData.get(jointName));
    }
 
    public void read(LowLevelState measuredJointDataToPack)
    {
       long startTime = System.nanoTime();
 
-//      twitterController.read();
       platinumTwitter.read();
 
       // recompute the joint offset as if this is the zero position for the joint.
@@ -243,17 +233,6 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
          motorEncoderToOutputEncoderOffset.set(platinumTwitter.getMeasuredOutputPosition() * gearRatio - platinumTwitter.getMeasuredMotorPosition());
          calculateMotorEncoderToOutputEncoderOffset.set(false);
       }
-
-      if (calculateJointOffsetInterval.getValue())
-      {
-         calculateJointOffsetInterval();
-         calculateJointOffsetInterval.set(false);
-      }
-
-      // currently only used for state variables
-//      measuredMotorData.setPosition(twitterController.getMeasuredMotorPosition());
-//      measuredMotorData.setVelocity(twitterController.getMeasuredMotorVelocity());
-//      measuredMotorData.setTorque(twitterController.getMeasuredMotorTorque());
 
       measuredMotorData.setPosition(platinumTwitter.getMeasuredMotorPosition());
 
@@ -322,12 +301,8 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 
       maxPositionFeedbackError = desiredJointData.hasPositionFeedbackMaxError() ? desiredJointData.getPositionFeedbackMaxError() : Double.POSITIVE_INFINITY;
       maxVeloctyFeedbackError = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getVelocityFeedbackMaxError() : Double.POSITIVE_INFINITY;
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println(jointName);
 
       q_d = desiredJointData.hasDesiredPosition() ? desiredJointData.getDesiredPosition() : measuredActuatorData.getPosition();
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println("Desired: " + desiredJointData.getDesiredPosition() + " measured: " + measuredActuatorData.getPosition() + " Used: " + q_d);
 
       qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getDesiredVelocity() : 0.0;
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
@@ -337,8 +312,6 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       // clamping
       q_d = desiredJointData.hasPositionFeedbackMaxError() ? desiredJointData.getClampedDesiredPosition(measuredActuatorData.getPosition()) : q_d;
       qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println("Desired: " + desiredJointData.getDesiredPosition() + " measured: " + desiredJointData.getClampedDesiredPosition(measuredActuatorData.getPosition()) + " Used: " + q_d);
 
       double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
 
@@ -353,13 +326,9 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
          double alpha = MathTools.clamp(timeSinceWakeUp / wakeUpDuration.getValue(), 0.0, 1.0);
          q_d = EuclidCoreTools.interpolate(wakeUpPosition.getValue(), q_d, alpha);
       }
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println(q_d);
 
 
       q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println(q_d);
 
       // The high-level controller is running, we do a proportional controller here and keep the Twitter in velocity + feed-forward mode.
       //      tau_d += stiffness * (q_d - joint.getQ()) + damping * (qd_d - joint.getQd());
@@ -396,8 +365,6 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
          q_d = alphaPositionRampDown * measuredActuatorData.getPosition() + (1.0 - alphaPositionRampDown) * this.desiredActuatorData.getPosition();
          qd_d = 0.0;
       }
-//      if(jointName.equals("R_KNEE_Y"))
-//         System.out.println(q_d);
 
       if (desiredJointData.hasMaxTorque())
          tau_d = MathTools.clamp(tau_d, desiredJointData.getMaxTorque());
@@ -509,7 +476,8 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       return jointName;
    }
 
-   public double getMeasuredMotorCurrent()
+   @Override
+   public double getTotalMeasuredMotorCurrent()
    {
       return platinumTwitter.getMeasuredMotorCurrent();
    }
