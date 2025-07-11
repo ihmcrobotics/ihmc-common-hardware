@@ -5,7 +5,7 @@ import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
 import us.ihmc.commonHardware.devices.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
-import us.ihmc.commonHardware.devices.genericIMU.IMUManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave;
