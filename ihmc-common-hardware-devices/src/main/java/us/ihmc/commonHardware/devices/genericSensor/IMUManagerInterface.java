@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices.genericIMU;
+package us.ihmc.commonHardware.devices.genericSensor;
 
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import java.util.Map;

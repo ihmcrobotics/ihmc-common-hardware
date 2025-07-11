@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices.genericIMU;
+package us.ihmc.commonHardware.devices.genericSensor;
 
 import us.ihmc.commonHardware.devices.IMUInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;

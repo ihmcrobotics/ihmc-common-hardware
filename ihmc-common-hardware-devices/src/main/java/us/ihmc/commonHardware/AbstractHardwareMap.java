@@ -11,19 +11,25 @@ import us.ihmc.commonHardware.devices.etherCATDevices.h4.H4EtherCATJunctionPort;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.H4IMU;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.YoH4IMU;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
+import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksEncoder;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksIMU;
+import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksLoadCell;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksTemperatureSensor;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.YoTemperatureSensor;
-import us.ihmc.commonHardware.devices.genericIMU.GeneralIMUManager;
-import us.ihmc.commonHardware.devices.genericIMU.IMUManagerInterface;
-import us.ihmc.commonHardware.devices.genericIMU.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.GeneralIMUManager;
+import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericEncoder;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.commonHardware.mechanisms.CycloidMotorMechanismManager;
 import us.ihmc.commonHardware.xmlDescription.XmlHardwareDescription;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlDevices;
+import us.ihmc.commonHardware.xmlDescription.devices.XmlEncoder;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlH4EtherCATJunctionPort;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlIMU;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlIMUType;
+import us.ihmc.commonHardware.xmlDescription.devices.XmlLoadCell;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlPlatinumTwitter;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.commonHardware.xmlDescription.joints.XmlJoints;
@@ -251,7 +257,7 @@ public abstract class AbstractHardwareMap
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
    }
 
-   protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism, double dt)
+   protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism)
    {
       String jointName = mechanism.getJointName();
       String motorName = mechanism.getMotorName();
@@ -345,6 +351,34 @@ public abstract class AbstractHardwareMap
       measuredIMUData.put(imuManager.getName(), new ImuData());
       yoEtherSnacksSensors.add(yoImu);
       return imu;
+   }
+
+   protected EtherSnacksEncoder createEtherSnacksEncoder(XmlEncoder xmlEncoder, String parentName)
+   {
+      String name = xmlEncoder.getName();
+
+      EtherSnacksEncoder encoder = new EtherSnacksEncoder(name);
+      YoGenericEncoder yoEncoder = new YoGenericEncoder(name, encoder, xmlEncoder.isInvertDirection(), dt, registry);
+
+      yoEtherSnacksSensors.add(yoEncoder);
+
+      return encoder;
+   }
+
+   protected EtherSnacksLoadCell createEtherSnacksLoadCell(XmlLoadCell xmlLoadCell, String parentName)
+   {
+      String name = xmlLoadCell.getName();
+      double excitationVoltage = xmlLoadCell.getExcitationVoltage();
+      double nominalLoad = xmlLoadCell.getNominalLoad();
+      double nominalSensitivity = xmlLoadCell.getNominalSensitivity();
+      double zeroBalance = xmlLoadCell.getZeroBalance();
+
+      EtherSnacksLoadCell loadCell = new EtherSnacksLoadCell(name);
+      YoGenericLoadCell yoLoadCell = new YoGenericLoadCell(name, loadCell, nominalSensitivity, zeroBalance, nominalLoad, excitationVoltage, registry);
+
+      yoEtherSnacksSensors.add(yoLoadCell);
+
+      return loadCell;
    }
 
    public Slave[] getEtherCATDevices()

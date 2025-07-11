@@ -1,12 +1,12 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks;
 
-import us.ihmc.commonHardware.devices.JointEncoderInterface;
+import us.ihmc.commonHardware.devices.EncoderInterface;
 
-public class EtherSnacksEncoder
+public class EtherSnacksEncoder implements EncoderInterface
 {
    private final String name;
    private double conversionToRadians;
-   private double rawPosition;
+   private long rawPosition;
 
    public EtherSnacksEncoder(String name)
    {
@@ -17,7 +17,7 @@ public class EtherSnacksEncoder
    {
       this.name = name;
       this.conversionToRadians = conversionToRadians;
-      rawPosition = 0.0;
+      rawPosition = 0;
    }
 
    public void setConversionToRadians(double conversionToRadians)
@@ -25,16 +25,18 @@ public class EtherSnacksEncoder
       this.conversionToRadians = conversionToRadians;
    }
 
-   public void setRawPosition(double rawPosition)
+   public void setRawPosition(long rawPosition)
    {
       this.rawPosition = rawPosition;
    }
 
-   public double getRawPosition()
+   @Override
+   public long getRawPosition()
    {
       return rawPosition;
    }
 
+   @Override
    public double getPosition()
    {
       return rawPosition * conversionToRadians;

@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices.genericIMU;
+package us.ihmc.commonHardware.devices.genericSensor;
 
 import us.ihmc.euclid.Axis3D;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;

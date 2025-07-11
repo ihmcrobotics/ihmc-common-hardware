@@ -145,6 +145,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);
       feedback = new YoDouble(jointName + "_ActuatorFeedback", registry);
+
       velocityFeedbackAlphaVariable = new YoDouble(jointName + "_VelocityFeedbackAlphaVariable", registry);
       velocityFeedbackAlphaVariable.set(1.0);
 
@@ -234,6 +235,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       }
 
       measuredMotorData.setPosition(platinumTwitter.getMeasuredMotorPosition());
+
       if (publishFilteredVelocities.getBooleanValue())
          measuredMotorData.setVelocity(platinumTwitter.getFilteredMotorVelocity());
       else
