@@ -133,7 +133,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean OVER_TEMPERATURE;
    private final YoBoolean MOTOR_ENABLED;
    private final YoBoolean MOTOR_FAULT;
-   private final YoBoolean CURRENT_LIMITED;
 
    // SIL Tunable Variables
    private final YoBoolean saveR2ToNVM; //Save R2 to NVM, this can only be done once per power cycle
@@ -492,7 +491,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
       MOTOR_ENABLED = new YoBoolean(prefix + "_MOTOR_ENABLED", registry);
       MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
-      CURRENT_LIMITED = new YoBoolean(prefix + "_CURRENT_LIMITED", registry);
 
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
 
