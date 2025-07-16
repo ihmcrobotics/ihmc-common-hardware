@@ -61,6 +61,8 @@ public abstract class AbstractHardwareManager
    protected final YoBoolean hasMotorOverHeated;
    protected final YoDouble totalMeasuredMotorCurrent;
 
+   protected RobotOverHeatedListener robotOverHeatedListener;
+
    public AbstractHardwareManager(AbstractHardwareMap hardwareMap, DoubleProvider clockTime, YoRegistry parentRegistry)
    {
       registry = new YoRegistry(getClass().getSimpleName());
@@ -87,6 +89,8 @@ public abstract class AbstractHardwareManager
 
       hasMotorOverHeated = new YoBoolean("hasArmMotorOverHeated", registry);
       isMotorWarm = new YoBoolean("isArmMotorWarm", registry);
+      hasMotorOverHeated.addListener(s -> robotOverHeatedListener.changed(hasMotorOverHeated.getValue()));
+
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
       masterGain = new YoDouble("lowLevelMasterGain", registry);
@@ -223,6 +227,11 @@ public abstract class AbstractHardwareManager
     */
    public abstract void calibrateRobot();
 
+   public void addHasRobotOverHeatedListener(RobotOverHeatedListener robotOverHeatedListener)
+   {
+      this.robotOverHeatedListener = robotOverHeatedListener;
+   }
+
    /**
     * Set if compensation should be enabled for the actuators
     *
@@ -276,5 +285,10 @@ public abstract class AbstractHardwareManager
    public void setMasterGain(double desiredMasterGain)
    {
       masterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
+   }
+
+   public static interface RobotOverHeatedListener
+   {
+      void changed(boolean hasRobotOverHeated);
    }
 }
