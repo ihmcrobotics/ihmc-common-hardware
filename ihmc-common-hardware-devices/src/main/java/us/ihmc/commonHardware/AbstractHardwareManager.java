@@ -41,12 +41,12 @@ public abstract class AbstractHardwareManager
    protected final DoubleProvider clockTime;
 
    protected final YoLong imuReadTime;
-   protected final YoLong ftReadTime;
+   protected final YoLong forceSensorReadTime;
    protected final YoLong mechanismReadTime;
    protected final YoLong etherSnacksReadTime;
    protected final YoLong readTime;
 
-   protected final YoLong ftWriteTime;
+   protected final YoLong forceSensorWriteTime;
    protected final YoLong mechanismWriteTime;
    protected final YoLong etherSnacksWriteTime;
    protected final YoLong writeTime;
@@ -77,12 +77,12 @@ public abstract class AbstractHardwareManager
       hardwareStatusManager = hardwareMap.getHardwareStatusManager();
 
       imuReadTime = new YoLong("imuReadTime", registry);
-      ftReadTime = new YoLong("ftReadTime", registry);
+      forceSensorReadTime = new YoLong("forceSensorReadTime", registry);
       mechanismReadTime = new YoLong("mechanismReadTime", registry);
       etherSnacksReadTime = new YoLong("etherSnacksReadTime", registry);
       readTime = new YoLong("readTime", registry);
 
-      ftWriteTime = new YoLong("ftWriteTime", registry);
+      forceSensorWriteTime = new YoLong("forceSensorWriteTime", registry);
       mechanismWriteTime = new YoLong("mechanismWriteTime", registry);
       etherSnacksWriteTime = new YoLong("etherSnacksWriteTime", registry);
       writeTime = new YoLong("writeTime", registry);
@@ -112,6 +112,14 @@ public abstract class AbstractHardwareManager
    public void read(Map<String, ImuData> measuredIMUData, Map<String, DMatrixRMaj> measuredFTData, Map<String, LowLevelState> measuredJointData)
    {
       long readStartTime = RealtimeThread.getCurrentMonotonicClockTime();
+
+      // Read the EtherSnacks boards
+      long etherSnacksReadStartTime = RealtimeThread.getCurrentMonotonicClockTime();
+      for (EtherSnacksBoardInterface etherSnacksBoard : etherSnacksBoards)
+         etherSnacksBoard.readSensors();
+      for (YoSensorInterface yoEtherSnacksSensor : yoEtherSnacksSensors)
+         yoEtherSnacksSensor.update();
+      etherSnacksReadTime.set(RealtimeThread.getCurrentMonotonicClockTime() - etherSnacksReadStartTime);
 
       // Read all actuators/mechanisms
       long mechanismReadStartTime = RealtimeThread.getCurrentMonotonicClockTime();
@@ -145,8 +153,8 @@ public abstract class AbstractHardwareManager
       }
       imuReadTime.set(RealtimeThread.getCurrentMonotonicClockTime() - imuReadStartTime);
 
-      // Read the ATI F/T sensors and calibrate them if necessary
-      long ftReadStartTime = RealtimeThread.getCurrentMonotonicClockTime();
+      // Read the F/T sensors and calibrate them if necessary
+      long forceSensorReadStartTime = RealtimeThread.getCurrentMonotonicClockTime();
       boolean calibrate = false;
       if (calibrateFootForceSensorsAtomic.getAndSet(false))
          calibrate = true;
@@ -158,15 +166,7 @@ public abstract class AbstractHardwareManager
 
          forceSensorManager.read(measuredFTData);
       }
-      ftReadTime.set(RealtimeThread.getCurrentMonotonicClockTime() - ftReadStartTime);
-
-      // Read the EtherSnacks boards
-      long etherSnacksReadStartTime = RealtimeThread.getCurrentMonotonicClockTime();
-      for (EtherSnacksBoardInterface etherSnacksBoard : etherSnacksBoards)
-         etherSnacksBoard.readSensors();
-      for (YoSensorInterface yoEtherSnacksSensor : yoEtherSnacksSensors)
-         yoEtherSnacksSensor.update();
-      etherSnacksReadTime.set(RealtimeThread.getCurrentMonotonicClockTime() - etherSnacksReadStartTime);
+      forceSensorReadTime.set(RealtimeThread.getCurrentMonotonicClockTime() - forceSensorReadStartTime);
 
       // Update hardware status manager for hardware status UI
       hardwareStatusManager.updateDeviceStatusHolders();
@@ -184,10 +184,10 @@ public abstract class AbstractHardwareManager
       long writeStartTime = RealtimeThread.getCurrentMonotonicClockTime();
 
       //write the F/T sensors
-      long ftWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
+      long forceSensorWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
       for (ForceSensorManagerInterface forceSensorManager : forceSensorManagers)
          forceSensorManager.write();
-      ftWriteTime.set(RealtimeThread.getCurrentMonotonicClockTime() - ftWriteStartTime);
+      forceSensorWriteTime.set(RealtimeThread.getCurrentMonotonicClockTime() - forceSensorWriteStartTime);
 
       //compute actuator desireds from Controller Joint setpoints
       long mechanismWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
@@ -233,6 +233,17 @@ public abstract class AbstractHardwareManager
    }
 
    /**
+    * Try to clear faults on each motor
+    */
+   public void clearMotorFaults()
+   {
+      for (MechanismManagerInterface mechanismManager : mechanismManagers)
+      {
+         mechanismManager.clearFaults();
+      }
+   }
+
+   /**
     * Set if compensation should be enabled for the actuators
     *
     * @param enableCompensation Enable if true, disable if false
@@ -259,14 +270,13 @@ public abstract class AbstractHardwareManager
    }
 
    /**
-    * Try to clear faults on each motor
+    * Set the master gain in the range [0.0, 1.0]. Any other inputs will be clamped to that range
+    *
+    * @param desiredMasterGain desired master gain for robot
     */
-   public void clearMotorFaults()
+   public void setMasterGain(double desiredMasterGain)
    {
-      for (MechanismManagerInterface mechanismManager : mechanismManagers)
-      {
-         mechanismManager.clearFaults();
-      }
+      masterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
    /**
@@ -275,16 +285,6 @@ public abstract class AbstractHardwareManager
    public YoBoolean getAreMotorsFaulted()
    {
       return areMotorsFaulted;
-   }
-
-   /**
-    * Set the master gain in the range [0.0, 1.0]. Any other inputs will be clamped to that range
-    *
-    * @param desiredMasterGain desired master gain for robot
-    */
-   public void setMasterGain(double desiredMasterGain)
-   {
-      masterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
    public static interface RobotOverHeatedListener
