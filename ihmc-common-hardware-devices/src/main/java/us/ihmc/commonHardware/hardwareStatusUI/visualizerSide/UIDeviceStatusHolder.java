@@ -3,6 +3,7 @@ package us.ihmc.commonHardware.hardwareStatusUI.visualizerSide;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
+import us.ihmc.commonHardware.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -11,30 +12,57 @@ import java.util.ArrayList;
 
 public class UIDeviceStatusHolder
 {
-   private final SimpleStringProperty name = new SimpleStringProperty();
-   private final SimpleStringProperty childDescription = new SimpleStringProperty();
-   private final SimpleStringProperty description = new SimpleStringProperty();
-   private final SimpleBooleanProperty isResponding = new SimpleBooleanProperty();
+   protected final SimpleStringProperty name = new SimpleStringProperty();
+   protected final SimpleStringProperty childDescription = new SimpleStringProperty();
+   protected final SimpleStringProperty description = new SimpleStringProperty();
+   protected final SimpleBooleanProperty isResponding = new SimpleBooleanProperty();
 
-   private final SimpleStringProperty readStatus = new SimpleStringProperty();
-   private final SimpleStringProperty writeStatus = new SimpleStringProperty();
-   private final SimpleStringProperty state = new SimpleStringProperty();
+   protected final SimpleStringProperty readStatus = new SimpleStringProperty();
+   protected final SimpleStringProperty writeStatus = new SimpleStringProperty();
+   protected final SimpleStringProperty state = new SimpleStringProperty();
 
-   private final SimpleStringProperty id = new SimpleStringProperty();
+   protected final SimpleStringProperty id = new SimpleStringProperty();
 
-   private final AbstractUIHardwareStatusManager.DeviceType deviceType;
+   protected final AbstractUIHardwareStatusManager.DeviceType deviceType;
 
-   private final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
+   protected final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
 
-   public UIDeviceStatusHolder(String name, String description, String childDescription, YoBoolean isResponding, YoEnumAsStringProperty<Slave.State> state, int position, int alias, AbstractUIHardwareStatusManager.DeviceType deviceType)
+   public UIDeviceStatusHolder(String name,
+                               String description,
+                               String childDescription,
+                               YoBoolean isResponding,
+                               YoEnumAsStringProperty<Slave.State> state,
+                               int position,
+                               int alias,
+                               AbstractUIHardwareStatusManager.DeviceType deviceType)
    {
-      this(name, description, childDescription, isResponding.getBooleanValue(), "", "", state.getValue(), "", Integer.toString(position), Integer.toString(alias), deviceType);
+      this(name,
+           description,
+           childDescription,
+           isResponding.getBooleanValue(),
+           "",
+           "",
+           state.getValue(),
+           "",
+           Integer.toString(position),
+           Integer.toString(alias),
+           deviceType);
 
       isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
       state.addListener(change -> this.state.set(state.getValue()));
    }
 
-   public UIDeviceStatusHolder(String name, String description, String childDescription, boolean isResponding, String readStatus, String writeStatus, String state, String canID, String position, String alias, AbstractUIHardwareStatusManager.DeviceType deviceType)
+   public UIDeviceStatusHolder(String name,
+                               String description,
+                               String childDescription,
+                               boolean isResponding,
+                               String readStatus,
+                               String writeStatus,
+                               String state,
+                               String canID,
+                               String position,
+                               String alias,
+                               AbstractUIHardwareStatusManager.DeviceType deviceType)
    {
       this.name.set(name);
       this.description.set(description);
@@ -115,7 +143,7 @@ public class UIDeviceStatusHolder
       return id.get();
    }
 
-   public AbstractUIHardwareStatusManager.DeviceType getDeviceType()
+   public DeviceType getDeviceType()
    {
       return deviceType;
    }
