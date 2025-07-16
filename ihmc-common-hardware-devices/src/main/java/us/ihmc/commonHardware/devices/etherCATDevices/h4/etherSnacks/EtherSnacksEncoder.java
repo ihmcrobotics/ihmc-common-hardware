@@ -17,7 +17,7 @@ public class EtherSnacksEncoder implements EncoderInterface
    {
       this.name = name;
       this.conversionToRadians = conversionToRadians;
-      rawPosition = 0;
+      rawPosition = 0L;
    }
 
    public void setConversionToRadians(double conversionToRadians)
