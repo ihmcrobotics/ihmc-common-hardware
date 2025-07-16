@@ -226,6 +226,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    int outputOffset,
                                    double dt,
                                    YoRegistry parentRegistry)
+
+   {
+      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, inputOffset, outputOffset, dt, false, parentRegistry);
+   }
+   public YoCycloidPlatinumTwitter(String prefix,
+                                   CycloidPlatinumTwitter twitter,
+                                   DoubleProvider time,
+                                   String actuatorDirectory,
+                                   String actuatorPackage,
+                                   boolean isMotorDirectionReversed,
+                                   int inputOffset,
+                                   int outputOffset,
+                                   double dt,
+                                   boolean enableCompensationAtStart,
+                                   YoRegistry parentRegistry)
    {
       this.time = time;
       this.dt = dt;
@@ -358,9 +373,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
       dahlSlope.set(silParameters.getDahlFrictionSlope());
       linearDampingCompensation.set(silParameters.getLinearDampingCompensationGain());
-      coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
-      dahlOutputScalar.set(silParameters.getDahlOutputScalar());
-      linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+      if (enableCompensationAtStart)
+      {
+         enableCompensation.set(true);
+         coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
+         dahlOutputScalar.set(silParameters.getDahlOutputScalar());
+         linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+      }
 
       enableCompensation.addListener(new YoVariableChangedListener()
       {
