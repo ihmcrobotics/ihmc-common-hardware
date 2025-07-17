@@ -37,7 +37,6 @@ import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMotorMechan
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlTransmissions;
 import us.ihmc.etherCAT.master.MasterInterface;
 import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.outputData.JointDesiredOutput;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
@@ -54,10 +53,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class provides abstract structure for the hardware map of any robot we develop. It creates
+ * the devices, transmissions, and joints that describe the robot based on the provided xml files.
+ *
+ * @author Reese Peterson
+ */
 public abstract class AbstractHardwareMap
 {
    protected final YoRegistry registry = new YoRegistry("HardwareMap");
-   protected final YoGraphicsListRegistry yoGraphicsListRegistry;
    protected final MasterInterface etherCATMaster;
    protected final double dt;
    protected final YoDouble yoTime;
@@ -89,15 +93,22 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
+   /**
+    * Construct the hardware map for the robot
+    *
+    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param dt                      desired control timesteo
+    * @param yoTime                  YoDouble that holds the current time of the robot
+    * @param parentRegistry          Parent YoRegistry
+    */
    public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
                               MasterInterface etherCATMaster,
                               double dt,
                               YoDouble yoTime,
-                              YoRegistry parentRegistry,
-                              YoGraphicsListRegistry yoGraphicsListRegistry)
+                              YoRegistry parentRegistry)
    {
       this.yoTime = yoTime;
-      this.yoGraphicsListRegistry = yoGraphicsListRegistry;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
@@ -163,6 +174,9 @@ public abstract class AbstractHardwareMap
       }
    }
 
+   /**
+    * Create the sensor definitions for all devices
+    */
    protected abstract void createSensorDefinitions();
 
    /**
@@ -257,6 +271,11 @@ public abstract class AbstractHardwareMap
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
    }
 
+   /**
+    * Create the cycloid mechanism manager described in the xml
+    *
+    * @param mechanism mechanism information from the xmls
+    */
    protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism)
    {
       String jointName = mechanism.getJointName();
@@ -353,6 +372,13 @@ public abstract class AbstractHardwareMap
       return imu;
    }
 
+   /**
+    * Create encoder for an ethersnacks board
+    *
+    * @param xmlEncoder Encoder to be initialized
+    * @param parentName name of the parent board
+    * @return ethersnacks IMU object
+    */
    protected EtherSnacksEncoder createEtherSnacksEncoder(XmlEncoder xmlEncoder, String parentName)
    {
       String name = xmlEncoder.getName();
@@ -365,6 +391,13 @@ public abstract class AbstractHardwareMap
       return encoder;
    }
 
+   /**
+    * Create load cell for an ethersnacks board
+    *
+    * @param xmlLoadCell Load cell to be initialized
+    * @param parentName  name of the parent board
+    * @return ethersnacks IMU object
+    */
    protected EtherSnacksLoadCell createEtherSnacksLoadCell(XmlLoadCell xmlLoadCell, String parentName)
    {
       String name = xmlLoadCell.getName();
@@ -381,76 +414,121 @@ public abstract class AbstractHardwareMap
       return loadCell;
    }
 
+   /**
+    * @return array of ethercat devices
+    */
    public Slave[] getEtherCATDevices()
    {
       return etherCATDevices.toArray(new Slave[0]);
    }
 
+   /**
+    * @return array of all IMU managers
+    */
    public IMUManagerInterface[] getImuManagers()
    {
       return imuManagers.toArray(new IMUManagerInterface[0]);
    }
 
-   public Map<String, ImuData> getMeasuredImuData()
-   {
-      return measuredIMUData;
-   }
-
+   /**
+    * @return array of all cycloid platinum twitters
+    */
    public YoCycloidPlatinumTwitter[] getCycloidActuators()
    {
       return cycloidTwitters.toArray(new YoCycloidPlatinumTwitter[0]);
    }
 
+   /**
+    * @return array of all ethersnacks boards
+    */
    public EtherSnacksBoardInterface[] getEtherSnacksBoards()
    {
       return etherSnacksBoards.toArray(new EtherSnacksBoardInterface[0]);
    }
 
+   /**
+    * @return array of all ethersnacks sensors
+    */
    public YoSensorInterface[] getYoEtherSnacksSensors()
    {
       return yoEtherSnacksSensors.toArray(new YoSensorInterface[0]);
    }
 
+   /**
+    * @return array of all mechanism managers
+    */
    public MechanismManagerInterface[] getMechanismManagers()
    {
       return mechanismManagers.toArray(new MechanismManagerInterface[0]);
    }
 
+   /**
+    * @return array of joint names as strings
+    */
    public String[] getJointNames()
    {
       return jointNames;
    }
 
+   /**
+    * @return array of IMU sensor names as strings
+    */
    public String[] getIMUNames()
    {
       return imuNames;
    }
 
+   /**
+    * @return array of force sensor names as strings
+    */
    public String[] getForceSensorNames()
    {
       return forceSensorNames;
    }
 
+   /**
+    * @return array of all force sensor managers
+    */
    public ForceSensorManagerInterface[] getForceSensorManagers()
    {
       return forceSensorManagers.toArray(new ForceSensorManagerInterface[0]);
    }
 
-   public Map<String, DMatrixRMaj> getMeasuredFTData()
+   /**
+    * @return map tying measured IMU data to the specific imu sensor name
+    */
+   public Map<String, ImuData> getMeasuredImuData()
+   {
+      return measuredIMUData;
+   }
+
+   /**
+    * @return map tying force sensor data to the respective force sensor name
+    */
+   public Map<String, DMatrixRMaj> getMeasuredForceSensorData()
    {
       return forceSensorData;
    }
 
+   /**
+    * @return map tying measured joint data to the respective joint name
+    */
    public Map<String, LowLevelState> getMeasuredJointData()
    {
       return measuredJointData;
    }
 
+   /**
+    * @return map tying desired joint data to the respective joint name
+    */
    public Map<String, JointDesiredOutputBasics> getDesiredJointData()
    {
       return desiredJointData;
    }
 
+   /**
+    * @return hardware status manager for the robot
+    */
    public HardwareStatusManager getHardwareStatusManager()
    {
       return hardwareStatusManager;
