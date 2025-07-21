@@ -22,6 +22,12 @@ import us.ihmc.yoVariables.variable.YoLong;
 
 import java.util.Map;
 
+/**
+ * This class implements the mechanism manager for all cycloids. This converts signals between motor and joint space,
+ * including both control and sensing signals.
+ *
+ * @author Reese Peterson
+ */
 public class CycloidMotorMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
@@ -80,6 +86,19 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    private final double jointLimitLower;
    private final double jointLimitUpper;
 
+   /**
+    * Initialize the cycloid mechanism manager
+    *
+    * @param jointOffset Initial joint offset between actuator 0 and joint 0 in radians
+    * @param jointLimitLower Lower joint limit in radians
+    * @param jointLimitUpper Upper joint limit in radians
+    * @param jointName Name of the joint the cycloid is controlling
+    * @param platinumTwitter The {@code YoCycloidPlatinumTwitter} for the cycloid
+    * @param yoTime The controller time
+    * @param estimatorDT The controller timestep
+    * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
+    * @param parentRegistry Parent {@code YoRegistry}
+    */
    public CycloidMotorMechanismManager(double jointOffset,
                                        double jointLimitLower,
                                        double jointLimitUpper,
@@ -93,6 +112,20 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       this(jointOffset, jointLimitLower, jointLimitUpper, jointName, platinumTwitter, yoTime, estimatorDT, doPDControlOnTwitter, DEFAULT_TORQUE_BREAK_FREQUENCY, parentRegistry);
    }
 
+   /**
+    * Initialize the cycloid mechanism manager
+    *
+    * @param jointOffset Initial joint offset between actuator 0 and joint 0 in radians
+    * @param jointLimitLower Lower joint limit in radians
+    * @param jointLimitUpper Upper joint limit in radians
+    * @param jointName Name of the joint the cycloid is controlling
+    * @param platinumTwitter The {@code YoCycloidPlatinumTwitter} for the cycloid
+    * @param yoTime The controller time
+    * @param estimatorDT The controller timestep
+    * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
+    * @param torqueBreakFrequency Initial break frequency for desired torque filtering
+    * @param parentRegistry Parent {@code YoRegistry}
+    */
    public CycloidMotorMechanismManager(double jointOffset,
                                        double jointLimitLower,
                                        double jointLimitUpper,
@@ -289,6 +322,10 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       write(desiredData);
    }
 
+   /**
+    * Helper class to write to specific {@code JointDesiredOutputReadOnly} data to the cycloid
+    * @param desiredJointData Holds desired data to be written to cycloid
+    */
    public void write(JointDesiredOutputReadOnly desiredJointData)
    {
       long startTime = System.nanoTime();
@@ -413,6 +450,9 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       writeTime.set(System.nanoTime() - startTime);
    }
 
+   /**
+    * Clear any faults that may be triggered on the cycloid
+    */
    public void clearFaults()
    {
       platinumTwitter.clearFaults();
@@ -423,12 +463,19 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    {
       yoJointOffset.set(-1.0 * platinumTwitter.getMeasuredOutputPosition());
    }
-   
+
+   /**
+    * @return the current joint offset in radians
+    */
    public double getJointOffset()
    {
       return yoJointOffset.getDoubleValue();
    }
-   
+
+   /**
+    * Set the joint offset
+    * @param jointOffset new joint offset in radians
+    */
    public void setJointOffset(double jointOffset)
    {
       yoJointOffset.set(jointOffset);
@@ -482,30 +529,11 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       return platinumTwitter.getMeasuredMotorCurrent();
    }
 
-   private void calculateJointOffsetInterval()
-   {
-      int bestOffsetInterval = -1;
-      double minimumAngleOffset = Double.MAX_VALUE;
-
-      for (int offsetInterval : validOffsetIntervals)
-      {
-         double candidateOffset = yoJointOffset.getValue() + TWO_PI * offsetInterval;
-         double jointPosition = computeJointPosition(platinumTwitter.getMeasuredOutputPosition(), candidateOffset);
-         double clippedJointPosition = EuclidCoreTools.clamp(jointPosition, jointLimitLower, jointLimitUpper);
-         double angleOffset = Math.abs(jointPosition - clippedJointPosition);
-
-         if (angleOffset < minimumAngleOffset)
-         {
-            bestOffsetInterval = offsetInterval;
-            minimumAngleOffset = angleOffset;
-         }
-      }
-
-      yoJointOffset.set(yoJointOffset.getValue() + TWO_PI * bestOffsetInterval);
-   }
-
    /**
-    * Output position ---> Joint position
+    * Compute the current joint position based on the cycloid output
+    * @param outputPosition Output position of the cycloid in radians
+    * @param jointOffset Offset between cycloid and joint in radians
+    * @return Estimated joint position in radians
     */
    private static double computeJointPosition(double outputPosition, double jointOffset)
    {
@@ -513,7 +541,10 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    }
 
    /**
-    * Joint position ---> Output position
+    * Compute the current cycloid output position based on the joint
+    * @param jointPosition Joint position in radians
+    * @param jointOffset Offset between cycloid and joint in radians
+    * @return Estimated cycloid output position in radians
     */
    private static double computeOutputPosition(double jointPosition, double jointOffset)
    {
@@ -521,38 +552,63 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    }
 
    /**
-    * Output position ---> Motor position
+    * Compute the motor position based on the output position of the cycloid
+    * @param outputPosition Cycloid output poisition in radians
+    * @param gearRatio Gear ratio of the cycloid
+    * @param motorEncoderToOutputEncoderOffset Offset between output encoder and motor encoder in radians
+    * @return Estimated motor position
     */
    private static double computeMotorPosition(double outputPosition, double gearRatio, double motorEncoderToOutputEncoderOffset)
    {
       return outputPosition * gearRatio - motorEncoderToOutputEncoderOffset;
    }
 
+   /**
+    * @return The measured temperature of the cycloid in deg Celsius
+    */
    public double getTwitterAnalogTemperatureReading()
    {
       return platinumTwitter.getStatorTemperature();
    }
 
-   public void setTemperatureProvider(DoubleProvider integerProvider)
+   /**
+    * Set a {@code DoubleProvider} to record temperature
+    * @param temperatureProvider
+    */
+   public void setTemperatureProvider(DoubleProvider temperatureProvider)
    {
-      this.temperatureProvider = integerProvider;
+      this.temperatureProvider = temperatureProvider;
    }
 
+   /**
+    * @return True if stator is above the shutdown temp, false otherwise
+    */
    public boolean getIsStatorAboveShutDownTemperature()
    {
       return isStatorAboveShutDownTemperature.getBooleanValue();
    }
 
+   /**
+    * Set if the stator is above the shutdown temperature
+    * @param isStatorAboveShutDownTemperature boolean dictating if the stator is above the shutdown temperature
+    */
    public void setIsStatorAboveShutDownTemperature(boolean isStatorAboveShutDownTemperature)
    {
       this.isStatorAboveShutDownTemperature.set(isStatorAboveShutDownTemperature);
    }
 
+   /**
+    * @return True if the stator is above recommended temp, false otherwise
+    */
    public boolean getIsStatorAboveRecommendedTemperature()
    {
       return isStatorAboveRecommendedTemperature.getValue();
    }
 
+   /**
+    * Set if the stator is above the recommended temperature
+    * @param isStatorAboveRecommendedTemperature boolean dictating if the stator is above the recommended temperature
+    */
    public void setIsStatorAboveRecommendedTemperature(boolean isStatorAboveRecommendedTemperature)
    {
       this.isStatorAboveRecommendedTemperature.set(isStatorAboveRecommendedTemperature);

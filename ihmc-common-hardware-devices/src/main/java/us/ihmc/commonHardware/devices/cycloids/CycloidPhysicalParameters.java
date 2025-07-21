@@ -2,16 +2,15 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidPhysicalParameters;
 
+/**
+ * This class defines the physical parameters of a cycloid, including the motor and output enocder revolution counts
+ */
 public class CycloidPhysicalParameters
 {
    private int countsPerMotorRevolution;
    private int countsPerOutputRevolution;
    private double gearRatio;
    private double kt;
-
-   public CycloidPhysicalParameters()
-   {
-   }
 
    public CycloidPhysicalParameters(XmlCycloidPhysicalParameters physicalParameters)
    {
