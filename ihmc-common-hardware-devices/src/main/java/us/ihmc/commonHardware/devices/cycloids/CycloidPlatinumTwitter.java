@@ -30,6 +30,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
 
    static final double AMPS_PER_MILLIAMPS = 1.0e-3;
 
+   /**
+    * This class contains some of the variables commanded for the twitter, assigned to 0x1600
+    * Each value is written by the master and read by the twitter
+    */
    public class RPDO_1600 extends RxPDO
    {
       public RPDO_1600()
@@ -46,6 +50,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Signed32 velocityOffset = new Signed32(); //0x607a
    }
 
+   /**
+    * This class contains some of the variables commanded for the twitter, assigned to 0x1601
+    * Each value is written by the master and read by the twitter
+    */
    public class RPDO_1601 extends RxPDO
    {
       public RPDO_1601()
@@ -63,6 +71,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Float64 coggingOutputScalar = new Float64(); // Cogging Output Scalar
    }
 
+   /**
+    * This class contains some of the variables commanded for the twitter, assigned to 0x1602
+    * Each value is written by the master and read by the twitter
+    */
    public class RPDO_1602 extends RxPDO
    {
       public RPDO_1602()
@@ -79,6 +91,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Float64 accelerationIntegrationMaxVelocityError = new Float64(); // R2[54]
    }
 
+   /**
+    * This class contains some of the variables received from the twitter, assigned to 0x1A00
+    * Each value is written by the twitter and read by the master
+    */
    public class TPDO_1a00 extends TxPDO
    {
       public TPDO_1a00()
@@ -96,6 +112,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Unsigned32 statusRegister = new Unsigned32();
    }
 
+   /**
+    * This class contains some of the variables received from the twitter, assigned to 0x1A01
+    * Each value is written by the twitter and read by the master
+    */
    public class TPDO_1a01 extends TxPDO
    {
       public TPDO_1a01()
@@ -115,6 +135,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       Float64 sil_desiredTotalCurrent = new Float64();
    }
 
+   /**
+    * This class contains some of the variables received from the twitter, assigned to 0x1A02
+    * Each value is written by the twitter and read by the master
+    */
    public class TPDO_1a02 extends TxPDO
    {
       public TPDO_1a02()
@@ -136,9 +160,12 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    }
 
    /**
-    * @param alias
-    * @param ringPosition
-    * @throws IOException
+    * Constructs the cycloid platinum twitter
+    *
+    * @param alias        Alias of the twitter for etherCAT
+    * @param ringPosition Position of the twitter for etherCAT
+    * @param productCode  Specific product code for the type of twitter
+    * @throws IOException If there is an issue with initialization or registration for the read or write, an exception will be thrown
     */
    public CycloidPlatinumTwitter(int alias, int ringPosition, TWITTER_PRODUCT_CODE productCode)
    {
@@ -195,6 +222,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDOASCII(0x1010, 1, "save"), "failed to write to 0x1010 1");
    }
 
+   /**
+    * Configure all the registries on master to correspond with the correct registries on the twitter for their specific action
+    */
    private void configurePDOs()
    {
       // Configure RPDOs
@@ -222,8 +252,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(0x22F4, 10, 64)), "failed to write to 0x1600 - 0x22F4 10"); // R2 index 10
       verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(0x22F4, 11, 64)), "failed to write to 0x1600 - 0x22F4 11"); // R2 index 11
       verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(0x22F4, 12, 64)), "failed to write to 0x1600 - 0x22F4 12"); // R2 index 12
-//      verifyWorkingCounter(writeSDO(0x1601, 8, computePdoMapValue(0x22F4, 13, 64)),
-//                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
+      //      verifyWorkingCounter(writeSDO(0x1601, 8, computePdoMapValue(0x22F4, 13, 64)),
+      //                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
       verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1600 (max 8)
 
       //1602 PDO
@@ -311,12 +341,26 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       super.doStateControl();
    }
 
+   /**
+    * Verify that the registration of the specific registry
+    *
+    * @param success If 1, the registration is a success, else a fail
+    * @param msg     Failure message to be printed out
+    */
    private void verifyWorkingCounter(int success, String msg)
    {
       if (success != 1)
          System.out.println(success + "," + msg);
    }
 
+   /**
+    * Compute the actual pdo map value for registration
+    *
+    * @param index     Initial index of the pdo
+    * @param subindex  Index offset of the pdo
+    * @param bitLength Length of the data desired
+    * @return The actual pdo map value
+    */
    private static int computePdoMapValue(int index, int subindex, int bitLength)
    {
       return ((index & 0xFFFF) << 16) + ((subindex & 0xFF) << 8) + (bitLength & 0xFF);
