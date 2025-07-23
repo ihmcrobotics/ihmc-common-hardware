@@ -24,6 +24,10 @@ import us.ihmc.yoVariables.variable.YoDouble;
 
 import java.util.Map;
 
+/**
+ * This class can act as the manager for any generic IMU. It allows for the application of reference frames
+ * to transform the raw signals into the correct orientation, as well as compute the quaternion of the imu
+ */
 public class GeneralIMUManager implements IMUManagerInterface
 {
    /**
@@ -57,6 +61,14 @@ public class GeneralIMUManager implements IMUManagerInterface
 
    private final String name;
 
+   /**
+    * Construct the IMU manager
+    *
+    * @param imuDefinition  Defines the name of the IMU as well as the rigid body connection
+    * @param yoIMU          generic IMU yo variable
+    * @param dt             controller timestep
+    * @param parentRegistry Parent {@code YoRegistry} of the IMU
+    */
    public GeneralIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
    {
       this.imuDefinition = imuDefinition;
@@ -85,7 +97,11 @@ public class GeneralIMUManager implements IMUManagerInterface
       YoDouble h4IMULinearAccelerationFilterAlpha = new YoDouble(prefix + "h4IMULinearAccelerationFilterAlpha", registry);
 
       filteredAngularVelocity = new AlphaFilteredYoFrameVector3D(prefix, "filteredAngularVelocity", registry, h4IMUAngularVelocityFilterAlpha, imuFrame);
-      filteredLinearAcceleration = new AlphaFilteredYoFrameVector3D(prefix, "filteredLinearAcceleration", registry, h4IMULinearAccelerationFilterAlpha, imuFrame);
+      filteredLinearAcceleration = new AlphaFilteredYoFrameVector3D(prefix,
+                                                                    "filteredLinearAcceleration",
+                                                                    registry,
+                                                                    h4IMULinearAccelerationFilterAlpha,
+                                                                    imuFrame);
 
       if (COMPUTE_ROOT_JOINT_IMU)
       {

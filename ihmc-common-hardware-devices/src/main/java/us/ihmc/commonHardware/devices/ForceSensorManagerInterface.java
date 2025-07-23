@@ -17,7 +17,7 @@ public interface ForceSensorManagerInterface
     */
    default void write()
    {
-
+      //do nothing
    }
 
    /**

@@ -29,7 +29,7 @@ public class YoGenericIMU implements YoSensorInterface
    /**
     * YoWrapper class for the IMU component of an Ethersnacks board. Reads sensor measurements and
     * updates corresponding yovariables
-    * 
+    *
     * @param prefix         prefix for the named YoVariables in this class
     * @param imu            the Ethersnacks daughter board the IMU is located on
     * @param parentRegistry the initial parent registry for this object
@@ -72,7 +72,7 @@ public class YoGenericIMU implements YoSensorInterface
    /**
     * Sets linear accelerometer bias. bias is subtracted from the accelerometer measurements to obtain
     * a more accurate measurement
-    * 
+    *
     * @param x bias in the x direction (in sensor frame)
     * @param y bias in the y direction (in sensor frame)
     * @param z bias in the z direction (in sensor frame)
@@ -85,7 +85,7 @@ public class YoGenericIMU implements YoSensorInterface
    /**
     * Sets gyroscope bias. bias is subtracted from the gyroscope measurements to obtain
     * a more accurate measurement
-    * 
+    *
     * @param x bias about the x axis (in sensor frame)
     * @param y bias about the y axis (in sensor frame)
     * @param z bias about the z axis (in sensor frame)
@@ -96,7 +96,6 @@ public class YoGenericIMU implements YoSensorInterface
    }
 
    /**
-    * 
     * @return the raw angular velocity measurement from the IMU hashtag no filter
     */
    public Vector3DReadOnly getUnbiasedAngularVelocity()
@@ -105,12 +104,10 @@ public class YoGenericIMU implements YoSensorInterface
    }
 
    /**
-    * 
     * @return the raw acceleration measurement from the IMU hashtag no filter
     */
    public Vector3DReadOnly getUnbiasedLinearAcceleration()
    {
       return unbiasedLinearAcceleration;
    }
-
 }
