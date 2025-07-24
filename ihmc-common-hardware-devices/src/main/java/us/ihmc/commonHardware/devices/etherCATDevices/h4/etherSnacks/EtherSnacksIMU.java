@@ -2,6 +2,9 @@ package us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks;
 
 import us.ihmc.commonHardware.devices.IMUInterface;
 
+/**
+ * Implements the use of an IMU on an EtherSnacks board
+ */
 public class EtherSnacksIMU implements IMUInterface
 {
    private double accelerationConversion, gyroConversion, temperatureScale, temperatureOffset;
@@ -14,15 +17,25 @@ public class EtherSnacksIMU implements IMUInterface
 
    private final String name;
 
+   /**
+    * Create an IMU for an EtherSnacks board. Sets all conversion factors to 1.0
+    *
+    * @param name Name of the IMU
+    */
    public EtherSnacksIMU(String name)
    {
-      this.name = name;
-      this.accelerationConversion = 1.0;
-      this.gyroConversion = 1.0;
-      this.temperatureScale = 1.0;
-      this.temperatureOffset = 1.0;
+      this(name, 1.0, 1.0, 1.0, 0.0);
    }
 
+   /**
+    * Create an IMU for an EtherSnacks board.
+    *
+    * @param name                   Name of the IMU
+    * @param accelerationConversion Conversion factor from raw acceleration to m/s^2
+    * @param gyroConversion         Conversion factor from raw gyroscope to rad/s
+    * @param temperaturScale        Conversion factor from raw temperature to deg Celsius
+    * @param temperatureOffset      Constant temperature offset in deg Celsius
+    */
    public EtherSnacksIMU(String name, double accelerationConversion, double gyroConversion, double temperaturScale, double temperatureOffset)
    {
       this.name = name;
@@ -46,6 +59,7 @@ public class EtherSnacksIMU implements IMUInterface
       rawAccelY = y;
       rawAccelZ = z;
    }
+
    public void setRawGyros(double x, double y, double z)
    {
       rawGyroX = x;

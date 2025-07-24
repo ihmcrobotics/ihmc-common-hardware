@@ -21,6 +21,9 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
    private final IMUData imuData = new IMUData();
    private final IMUControl imuControl = new IMUControl();
 
+   /**
+    * This class designates the order and type of information that is read from the IMU
+    */
    class IMUData extends TxPDO
    {
       Signed16 accelX = new Signed16();
@@ -40,6 +43,9 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
       }
    }
 
+   /**
+    * This class designates the type of commands that are written to the IMU
+    */
    class IMUControl extends RxPDO
    {
       Unsigned8 reset = new Unsigned8();
@@ -50,6 +56,12 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
       }
    }
 
+   /**
+    * Construct the H4 IMU
+    *
+    * @param aliasAddress EtherCAT alias
+    * @param position EtherCAT position
+    */
    public H4IMU(int aliasAddress, int position)
    {
       super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);

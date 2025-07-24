@@ -7,12 +7,21 @@ public class EtherSnacksTemperatureSensor implements TemperatureSensorInterface
    private double temperatureScale, temperatureOffset;
    private double rawTemperature;
 
+   /**
+    * Create a temperature sensor for an EtherSnacks board. Initializes The scale to 1 and offset to 0
+    */
    public EtherSnacksTemperatureSensor()
    {
       temperatureScale = 1.0;
       temperatureOffset = 0.0;
    }
 
+   /**
+    * Create a temperature sensor for an EtherSnacks board
+    *
+    * @param temperatureScale  Conversion factor from raw temperature to deg Celsius
+    * @param temperatureOffset Constant temperature offset in deg Celsius
+    */
    public EtherSnacksTemperatureSensor(double temperatureScale, double temperatureOffset)
    {
       this.temperatureScale = temperatureScale;

@@ -2,6 +2,9 @@ package us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks;
 
 import us.ihmc.commonHardware.devices.LoadCellInterface;
 
+/**
+ * Implements the use of an load cell on an EtherSnacks board
+ */
 public class EtherSnacksLoadCell implements LoadCellInterface
 {
    private final String name;
@@ -11,11 +14,23 @@ public class EtherSnacksLoadCell implements LoadCellInterface
 
    private int rawVoltage;
 
+   /**
+    * Create a load cell for an EtherSnacks board. Sets all conversion factors to 1
+    *
+    * @param name Name of the load cell
+    */
    public EtherSnacksLoadCell(String name)
    {
       this(name, 1.0, 1);
    }
 
+   /**
+    * Create a load cell for an EtherSnacks board
+    *
+    * @param name          Name of the load cell
+    * @param adcConversion Conversion factor from raw voltage to V
+    * @param voltageGain   On-board voltage gain applied to the raw signal
+    */
    public EtherSnacksLoadCell(String name, double adcConversion, int voltageGain)
    {
       this.name = name;
