@@ -33,6 +33,11 @@ public class ElmoTwitterStatusRegisterProcessor
    private final YoBoolean didProfilerStopDueToSwitch;
    private final YoBoolean isPTPBufferFull;
 
+   /**
+    * Creates a yovariable wrapper around all of the information provided by the twitter status register.
+    *
+    * @param parentRegistry Parent registru of the status register
+    */
    public ElmoTwitterStatusRegisterProcessor(YoRegistry parentRegistry)
    {
       String prefix = "SR_";
@@ -62,6 +67,11 @@ public class ElmoTwitterStatusRegisterProcessor
       parentRegistry.addChild(this.registry);
    }
 
+   /**
+    * Convert the status register integer received from the twitter into the statuses assigned to each bit
+    *
+    * @param statusRegisterBits Integer representation of the status register
+    */
    public void processStatusRegisterBits(int statusRegisterBits)
    {
       // bits 0 -> 3
@@ -69,80 +79,80 @@ public class ElmoTwitterStatusRegisterProcessor
 
       // bit 4, servo enabled
       this.isServoEnabled.set(getBit(statusRegisterBits, 4));
-//      processSingleBitAsBoolean(statusRegisterBits, 4, this.isServoEnabled);
+      //      processSingleBitAsBoolean(statusRegisterBits, 4, this.isServoEnabled);
 
       // bit 5
       processReferenceMode(statusRegisterBits);
 
       // bit 6, has Fault Occured
       this.faultOccurred.set(getBit(statusRegisterBits, 6));
-//      processSingleBitAsBoolean(statusRegisterBits, 6, this.faultOccurred);
+      //      processSingleBitAsBoolean(statusRegisterBits, 6, this.faultOccurred);
 
       // bit 7, is Elmo Homing/Capture active
       this.isElmoHomingOrCaptureActive.set(getBit(statusRegisterBits, 7));
-//      processSingleBitAsBoolean(statusRegisterBits, 7, this.isElmoHomingOrCaptureActive);
+      //      processSingleBitAsBoolean(statusRegisterBits, 7, this.isElmoHomingOrCaptureActive);
 
       // bits 8 -> 11
       processProfileOrMotionMode(statusRegisterBits);
 
       // bit 12, is User Program Running
       this.isUserProgramRunning.set(getBit(statusRegisterBits, 12));
-//      processSingleBitAsBoolean(statusRegisterBits, 12, this.isUserProgramRunning);
+      //      processSingleBitAsBoolean(statusRegisterBits, 12, this.isUserProgramRunning);
 
       // bit 13, is current limit on
       this.isCurrentLimitOn.set(getBit(statusRegisterBits, 13));
-//      processSingleBitAsBoolean(statusRegisterBits, 13, this.isCurrentLimitOn);
+      //      processSingleBitAsBoolean(statusRegisterBits, 13, this.isCurrentLimitOn);
 
       // bit 14, is STO_DSP unsafe
       this.isSTO_DSPUnsafe.set(getBit(statusRegisterBits, 14));
-//      processSingleBitAsBoolean(statusRegisterBits, 14, this.isSTO_DSPUnsafe);
+      //      processSingleBitAsBoolean(statusRegisterBits, 14, this.isSTO_DSPUnsafe);
 
       // bit 15, is STO_PWM unsafe
       this.isSTO_PWMUnsafe.set(getBit(statusRegisterBits, 15));
-//      processSingleBitAsBoolean(statusRegisterBits, 15, this.isSTO_PWMUnsafe);
+      //      processSingleBitAsBoolean(statusRegisterBits, 15, this.isSTO_PWMUnsafe);
 
       // bits 16 -> 17
       processRecorderStatus(statusRegisterBits);
 
       // bit 18, is target reached
       this.isTargetReached.set(getBit(statusRegisterBits, 18));
-//      processSingleBitAsBoolean(statusRegisterBits, 18, this.isTargetReached);
+      //      processSingleBitAsBoolean(statusRegisterBits, 18, this.isTargetReached);
 
       /* ---- bits 19 and 20 are reserved ---- */
 
       // bit 21, is shunt switched off
       this.isShuntSwitchedOff.set(getBit(statusRegisterBits, 21));
-//      processSingleBitAsBoolean(statusRegisterBits, 21, this.isShuntSwitchedOff);
+      //      processSingleBitAsBoolean(statusRegisterBits, 21, this.isShuntSwitchedOff);
 
       // bit 22, is motor on
       this.isMotorOn.set(getBit(statusRegisterBits, 22));
-//      processSingleBitAsBoolean(statusRegisterBits, 22, this.isMotorOn);
+      //      processSingleBitAsBoolean(statusRegisterBits, 22, this.isMotorOn);
 
       // bit 23, is moving
       this.isMoving.set(getBit(statusRegisterBits, 23));
-//      processSingleBitAsBoolean(statusRegisterBits, 23, this.isMoving);
+      //      processSingleBitAsBoolean(statusRegisterBits, 23, this.isMoving);
 
       // bits 24, 25, 26 are hall states; meaning of these bits undocumented
       this.hallAState.set(getBit(statusRegisterBits, 24));
       this.hallBState.set(getBit(statusRegisterBits, 25));
       this.hallCState.set(getBit(statusRegisterBits, 26));
-//      processSingleBitAsBoolean(statusRegisterBits, 24, this.hallAState);
-//      processSingleBitAsBoolean(statusRegisterBits, 25, this.hallBState);
-//      processSingleBitAsBoolean(statusRegisterBits, 26, this.hallCState);
+      //      processSingleBitAsBoolean(statusRegisterBits, 24, this.hallAState);
+      //      processSingleBitAsBoolean(statusRegisterBits, 25, this.hallBState);
+      //      processSingleBitAsBoolean(statusRegisterBits, 26, this.hallCState);
 
       // bit 27, did STO Diagnostics fail
       this.didSTODiagnosticFail.set(getBit(statusRegisterBits, 27));
-//      processSingleBitAsBoolean(statusRegisterBits, 27, this.didSTODiagnosticFail);
+      //      processSingleBitAsBoolean(statusRegisterBits, 27, this.didSTODiagnosticFail);
 
       // bit 28, did profiler stop due to switch
       this.didProfilerStopDueToSwitch.set(getBit(statusRegisterBits, 28));
-//      processSingleBitAsBoolean(statusRegisterBits, 28, this.didProfilerStopDueToSwitch);
+      //      processSingleBitAsBoolean(statusRegisterBits, 28, this.didProfilerStopDueToSwitch);
 
       /* ---- bit 29 is reserved ---- */
 
       // bit 30, is PTP buffer full
       this.isPTPBufferFull.set(getBit(statusRegisterBits, 30));
-//      processSingleBitAsBoolean(statusRegisterBits, 30, this.isPTPBufferFull);
+      //      processSingleBitAsBoolean(statusRegisterBits, 30, this.isPTPBufferFull);
 
       /* ---- bit 31 is reserved ---- */
    }
@@ -152,6 +162,11 @@ public class ElmoTwitterStatusRegisterProcessor
       return faultOccurred.getBooleanValue();
    }
 
+   /**
+    * Convert the recorder status integer received from the twitter into the statuses assigned to each bit
+    *
+    * @param statusRegisterBits Integer representation of the recorder status
+    */
    private void processRecorderStatus(int statusRegisterBits)
    {
       int recorderStatus = getBitRange(statusRegisterBits, 2, 16);
@@ -174,6 +189,11 @@ public class ElmoTwitterStatusRegisterProcessor
       }
    }
 
+   /**
+    * Convert the control mode integer received from the twitter into the mode assigned to each bit
+    *
+    * @param statusRegisterBits Integer representation of the control
+    */
    private void processProfileOrMotionMode(int statusRegisterBits)
    {
       int profileOrMotionMode = this.getBitRange(statusRegisterBits, 4, 8);
@@ -214,19 +234,24 @@ public class ElmoTwitterStatusRegisterProcessor
       }
    }
 
-//   private void processSingleBitAsBoolean(int statusRegisterBits, int i, YoBoolean bitBoolean)
-//   {
-//      boolean isBitHigh = getBit(statusRegisterBits, i);
-//      bitBoolean.set(isBitHigh);
-//   }
-
+   /**
+    * Convert the reference mode integer received from the twitter into the reference mode assigned to each bit
+    *
+    * @param statusRegisterBits Integer representation of the reference mode
+    */
    private void processReferenceMode(int statusRegisterBits)
    {
       boolean referenceMode = !getBit(statusRegisterBits, 5);
-      this.referenceMode.set(referenceMode ? ElmoTwitterStatusRegisterEnums.ReferenceMode.EXTERNAL_REFERENCE_GENERATOR_DISABLED
-            : ElmoTwitterStatusRegisterEnums.ReferenceMode.EXTERNAL_REFERENCE_GENERATOR_ENABLED);
+      this.referenceMode.set(referenceMode ?
+                                   ElmoTwitterStatusRegisterEnums.ReferenceMode.EXTERNAL_REFERENCE_GENERATOR_DISABLED :
+                                   ElmoTwitterStatusRegisterEnums.ReferenceMode.EXTERNAL_REFERENCE_GENERATOR_ENABLED);
    }
 
+   /**
+    * Convert the amplifier status integer received from the twitter into the statuses assigned to each bit
+    *
+    * @param statusRegisterBits Integer representation of the amplifier status
+    */
    private void processAmplifierStatus(int statusRegisterBits)
    {
       int amplifierStatus = getBitRange(statusRegisterBits, 4, 0);
@@ -272,11 +297,11 @@ public class ElmoTwitterStatusRegisterProcessor
     * </p>
     * <p>
     * Bits: <br />
-    * 
+    *
     * <pre>
     * | 1 | 1 | 0 | 0 | 0 | 1 | 0 | 1 |
     * </pre>
-    * 
+    *
     * Bit address: | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
     * </p>
     * <p>

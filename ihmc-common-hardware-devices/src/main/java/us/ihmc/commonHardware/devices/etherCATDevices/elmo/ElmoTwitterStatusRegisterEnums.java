@@ -5,16 +5,26 @@ package us.ihmc.commonHardware.devices.etherCATDevices.elmo;
  */
 public class ElmoTwitterStatusRegisterEnums
 {
+
+   /**
+    * This enum holds the operational statuses of the twitter
+    */
    public enum AmplifierStatus
    {
       ALL_OK, UNDERVOLTAGE, OVERVOLTAGE, SAFETY, SHORT_PROTECTION, OVER_TEMPERATURE, ADDITIONAL_ABORT
    }
 
+   /**
+    * This enum indicates the possible reference modes
+    */
    public enum ReferenceMode
    {
       EXTERNAL_REFERENCE_GENERATOR_DISABLED, EXTERNAL_REFERENCE_GENERATOR_ENABLED
    }
 
+   /**
+    * List of possible comtrol modes available on the twitter
+    */
    public enum ProfileOrMotionMode
    {
       NO_MOTION,
@@ -29,6 +39,9 @@ public class ElmoTwitterStatusRegisterEnums
       N_A
    }
 
+   /**
+    * List of operational statuses of the recorder on the twitter
+    */
    public enum RecorderStatus
    {
       NOT_ACTIVE, WAITING_FOR_TRIGGER, COMPLETED, RECORDING

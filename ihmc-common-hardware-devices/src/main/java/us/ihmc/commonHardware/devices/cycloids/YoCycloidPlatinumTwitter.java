@@ -233,17 +233,18 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    /**
     * Construct the vovariable wrapper of the platinum twitter connected to the cycloid
-    * @param prefix Prefix to be applied to yovariable names
-    * @param twitter Twitter to be wrapped
-    * @param time Controller time in seconds
-    * @param actuatorDirectory Directory where the xml for the cycloid parameters lives
-    * @param actuatorPackage Name of the actuator package
-    * @param isMotorDirectionReversed Decides if the signals from the motor are inverted or not relative to robot orientation
-    * @param inputOffset Offset of the input encoder in bits
-    * @param outputOffset Offset of the output encoder in bits
-    * @param dt Controller timestep
+    *
+    * @param prefix                    Prefix to be applied to yovariable names
+    * @param twitter                   Twitter to be wrapped
+    * @param time                      Controller time in seconds
+    * @param actuatorDirectory         Directory where the xml for the cycloid parameters lives
+    * @param actuatorPackage           Name of the actuator package
+    * @param isMotorDirectionReversed  Decides if the signals from the motor are inverted or not relative to robot orientation
+    * @param inputOffset               Offset of the input encoder in bits
+    * @param outputOffset              Offset of the output encoder in bits
+    * @param dt                        Controller timestep
     * @param enableCompensationAtStart Decide if SIL compensation currents are initially enabled or not
-    * @param parentRegistry Parent {code YoRegistry} of the twitter
+    * @param parentRegistry            Parent {code YoRegistry} of the twitter
     */
    public YoCycloidPlatinumTwitter(String prefix,
                                    CycloidPlatinumTwitter twitter,
@@ -831,9 +832,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    /**
     * Apply limits to a {@code YoDouble} to bound possible values to [lowerLimit, upperLimit]
+    *
     * @param variableToLimit variable to be limited
-    * @param lowerLimit Lower value limit, inclusive
-    * @param upperLimit Upper value limit, inclusiv
+    * @param lowerLimit      Lower value limit, inclusive
+    * @param upperLimit      Upper value limit, inclusiv
     */
    private void applyValueLimits(YoDouble variableToLimit, double lowerLimit, double upperLimit)
    {
