@@ -7,5 +7,8 @@ package us.ihmc.commonHardware.hardwareStatusUI.controllerSide;
  */
 public interface DeviceStatusProvider
 {
+   /**
+    * @return True if the sensor is responding properly, false otherwise
+    */
    boolean isResponding();
 }

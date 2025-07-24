@@ -10,6 +10,9 @@ import us.ihmc.yoVariables.variable.YoBoolean;
 
 import java.util.ArrayList;
 
+/**
+ * Holds all the status information for a specific EtherCAT device, including identifying information, list of child devices, and statuses
+ */
 public class UIDeviceStatusHolder
 {
    protected final SimpleStringProperty name = new SimpleStringProperty();
@@ -27,6 +30,18 @@ public class UIDeviceStatusHolder
 
    protected final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
 
+   /**
+    * Create a UI device status holder for an EtherCAT device
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of the child device
+    * @param isResponding     {@code YoBoolean} to set and track if the device is responding
+    * @param state            Tracker of the state of the EtherCAT device
+    * @param position         EtherCAT position
+    * @param alias            EtherCAT alias
+    * @param deviceType       Type of device
+    */
    public UIDeviceStatusHolder(String name,
                                String description,
                                String childDescription,
@@ -36,32 +51,34 @@ public class UIDeviceStatusHolder
                                int alias,
                                AbstractUIHardwareStatusManager.DeviceType deviceType)
    {
-      this(name,
-           description,
-           childDescription,
-           isResponding.getBooleanValue(),
-           "",
-           "",
-           state.getValue(),
-           "",
-           Integer.toString(position),
-           Integer.toString(alias),
-           deviceType);
+      this(name, description, childDescription, isResponding.getBooleanValue(), "", "", "", deviceType);
+
+      this.id.set("EtherCAT " + alias + "-" + position);
+      this.state.set(state.getValue());
 
       isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
       state.addListener(change -> this.state.set(state.getValue()));
    }
 
+   /**
+    * Create a device status holder for a CAN device
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of the child device
+    * @param isResponding     {@code YoBoolean} to set and track if the device is responding
+    * @param readStatus       Initial CAN read status of the device
+    * @param writeStatus      Initial CAN write status of the device
+    * @param canID            ID of the device
+    * @param deviceType       Type of device
+    */
    public UIDeviceStatusHolder(String name,
                                String description,
                                String childDescription,
                                boolean isResponding,
                                String readStatus,
                                String writeStatus,
-                               String state,
                                String canID,
-                               String position,
-                               String alias,
                                AbstractUIHardwareStatusManager.DeviceType deviceType)
    {
       this.name.set(name);
@@ -71,21 +88,24 @@ public class UIDeviceStatusHolder
 
       this.readStatus.set(readStatus);
       this.writeStatus.set(writeStatus);
-      this.state.set(state);
+      this.state.set("");
 
       this.id.set("CAN " + canID);
-
-      if (!position.isEmpty() && !alias.isEmpty())
-         this.id.set("EtherCAT " + alias + "-" + position);
 
       this.deviceType = deviceType;
    }
 
+   /**
+    * @param listener Listener to track if device is responding
+    */
    public void addDataBooleanChangeListener(ChangeListener<? super Boolean> listener)
    {
       isResponding.addListener(listener);
    }
 
+   /**
+    * @param listener Listener to track any changes in read status, write status, or state
+    */
    public void addDataStringChangeListener(ChangeListener<? super String> listener)
    {
       readStatus.addListener(listener);
@@ -93,6 +113,11 @@ public class UIDeviceStatusHolder
       state.addListener(listener);
    }
 
+   /**
+    * Add a child device to the list of child devices
+    *
+    * @param childDevice Child device to be added
+    */
    public void addChildDevice(UIDeviceStatusHolder childDevice)
    {
       this.childDevices.add(childDevice);
