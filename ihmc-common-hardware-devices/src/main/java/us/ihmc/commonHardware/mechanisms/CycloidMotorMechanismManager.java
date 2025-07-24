@@ -2,7 +2,6 @@ package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.commons.InterpolationTools;
-import us.ihmc.commonHardware.devices.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;

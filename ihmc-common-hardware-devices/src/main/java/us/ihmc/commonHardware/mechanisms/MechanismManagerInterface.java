@@ -1,8 +1,7 @@
-package us.ihmc.commonHardware.devices;
+package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
-import us.ihmc.commons.lists.PairList;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 
 import java.util.Map;

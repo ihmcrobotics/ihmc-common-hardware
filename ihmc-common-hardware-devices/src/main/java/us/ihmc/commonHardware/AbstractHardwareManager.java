@@ -1,8 +1,8 @@
 package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
-import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
-import us.ihmc.commonHardware.devices.MechanismManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
 import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;

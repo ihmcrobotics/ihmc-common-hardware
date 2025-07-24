@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices;
+package us.ihmc.commonHardware.devices.genericSensor;
 
 import org.ejml.data.DMatrixRMaj;
 import java.util.Map;

@@ -1,8 +1,8 @@
 package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
-import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
-import us.ihmc.commonHardware.devices.MechanismManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.cycloids.CycloidPlatinumTwitter;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
