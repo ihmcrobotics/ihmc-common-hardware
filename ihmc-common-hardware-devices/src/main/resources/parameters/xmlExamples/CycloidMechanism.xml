@@ -1,0 +1,9 @@
+<XmlCycloidMotorMechanism>
+    <jointName>jointName</jointName>
+    <motorName>motorName</motorName>
+    <jointPositionOffset>0.0</jointPositionOffset>
+    <lowerJointLimit>0.0</lowerJointLimit>
+    <upperJointLimit>0.0</upperJointLimit>
+    <torqueBreakFrequency>100.0</torqueBreakFrequency>
+    <present>true</present>
+</XmlCycloidMotorMechanism>

@@ -1,0 +1,4 @@
+<XmlTemperatureSensor>
+    <name>sensorName</name>
+    <conversionConstant>1.0</conversionConstant>
+</XmlTemperatureSensor>
