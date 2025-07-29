@@ -858,6 +858,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.enableDrive.set(enable);
    }
 
+   /**
+    * Clear all possible faults on the twitter by setting them to false
+    */
    public void clearFaults()
    {
       clearFaults.set(true);
@@ -870,6 +873,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       OVER_TEMPERATURE.set(false);
    }
 
+   /**
+    * Check to see if the output encoder offset is off by less than pi, since anything more than pi means the encoder signal
+    * shifted by 2*pi. If off by more, update the offset until it is less than pi
+    */
    private void checkAndUpdateOutputOffset()
    {
       int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
@@ -890,6 +897,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       }
    }
 
+   /**
+    * Check if the output position estimated from the input encoder is within pi/gearRatio of the output position.
+    * If not, updates the input encoder offset to be within range.
+    */
    private void checkAndUpdateInputOffset()
    {
       double maxDifference = Math.PI / gearRatio.getDoubleValue();
@@ -910,6 +921,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       }
    }
 
+   /**
+    * Check the encoder offsets and update them if necessary
+    */
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
@@ -921,6 +935,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       checkAndUpdateInputOffset();
    }
 
+   /**
+    * Sets the input and output encoder offsets to the current raw positions
+    */
    public void zeroEncoders()
    {
       rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
