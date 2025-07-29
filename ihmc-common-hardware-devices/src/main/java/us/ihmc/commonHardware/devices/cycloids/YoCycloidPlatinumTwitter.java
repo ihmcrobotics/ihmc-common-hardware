@@ -381,6 +381,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       dahlOutputScalar = new YoDouble(prefix + "dahlOutputScalar", registry); // Dahl Output Scalar                            
       linearDampingOutputScalar = new YoDouble(prefix + "linearDampingOutputScalar", registry); // Linear Damping Output Scalar         
       coggingOutputScalar = new YoDouble(prefix + "coggingOutputScalar", registry); // Cogging Output Scalar
+      accelerationIntegrationScalar = new YoDouble(prefix + "AccelerationIntegration_Scalar", registry);
       //Compensation Scalars should only be between 0 and 1
       applyValueLimits(dahlOutputScalar, 0.0, 1.0);
       applyValueLimits(linearDampingOutputScalar, 0.0, 1.0);
@@ -395,6 +396,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
          dahlOutputScalar.set(silParameters.getDahlOutputScalar());
          linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+         accelerationIntegrationScalar.set(silParameters.getAccelerationIntegrationScalar());
       }
 
       enableCompensation.addListener(new YoVariableChangedListener()
@@ -407,12 +409,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
                dahlOutputScalar.set(silParameters.getDahlOutputScalar());
                linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
+               accelerationIntegrationScalar.set(silParameters.getAccelerationIntegrationScalar());
             }
             else
             {
                coggingOutputScalar.set(0.0);
                dahlOutputScalar.set(0.0);
                linearDampingOutputScalar.set(0.0);
+               accelerationIntegrationScalar.set(0.0);
             }
          }
       });
@@ -422,7 +426,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       accelerationIntegrationDesiredMotorVelocity = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorVelocity", registry);
       accelerationIntegrationStiffness = new YoDouble(prefix + "AccelerationIntegration_Stiffness", registry);
       accelerationIntegrationDamping = new YoDouble(prefix + "AccelerationIntegration_Damping", registry);
-      accelerationIntegrationScalar = new YoDouble(prefix + "AccelerationIntegration_Scalar", registry);
       accelerationIntegrationMaxPositionError = new YoDouble(prefix + "AccelerationIntegration_MaxPositionError", registry);
       accelerationIntegrationMaxVelocityError = new YoDouble(prefix + "AccelerationIntegration_MaxVelocityError", registry);
 
@@ -781,8 +784,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                   + rawInputPositionOffset.getIntegerValue());
 
       // Set the desired motor velocity in encoder counts per second. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts))
-                                  + rawOutputPositionOffset.getIntegerValue());
+      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
 
       // Compute the total desired current for the drive. This is the summation of the feedforward motor current, the desired motor current, which is the main
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
@@ -856,9 +858,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.enableDrive.set(enable);
    }
 
-   /**
-    * Clear all possible faults on the twitter
-    */
    public void clearFaults()
    {
       clearFaults.set(true);
@@ -871,10 +870,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       OVER_TEMPERATURE.set(false);
    }
 
-   /**
-    * Check to see if the output encoder offset is off by less than pi, since anything more than pi means the encoder signal
-    * shifted by 2*pi. If off by more, update the offset until it is less than pi
-    */
    private void checkAndUpdateOutputOffset()
    {
       int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
@@ -895,23 +890,26 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       }
    }
 
-   /**
-    * Check if the output position estimated from the input encoder is reasonably close to the output encoder.
-    * If not, updates the input encoder offset to be within reasonable range.
-    */
    private void checkAndUpdateInputOffset()
    {
-      double maxDifference = 2 * Math.PI / gearRatio.getDoubleValue();
-      int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / maxDifference);
+      double maxDifference = Math.PI / gearRatio.getDoubleValue();
+      int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / (maxDifference * 2));
       if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
-         rawInputPositionOffset.add(rotationInterval * inputCountsPerRevolution);
+      {
+         if (rotationInterval == 0)
+            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+         else
+            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+      }
       if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
-         rawInputPositionOffset.sub(rotationInterval * inputCountsPerRevolution);
+      {
+         if (rotationInterval == 0)
+            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+         else
+            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+      }
    }
 
-   /**
-    * Check the encoder offsets and update them if necessary
-    */
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
@@ -923,9 +921,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       checkAndUpdateInputOffset();
    }
 
-   /**
-    * Sets the input and output encoder offsets to the current position
-    */
    public void zeroEncoders()
    {
       rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
