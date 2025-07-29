@@ -39,8 +39,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
 
-   // RTD 1000 temperature sensor function coefficients
-   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
+   // temperature sensor calibrated coefficients
+   private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
+   private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
 
    private final double dt;
    private final String name;
@@ -950,9 +951,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     */
    public double convertAnalogInputToTemperatureInDegreeCelsius(double voltage)
    {
-      //TODO figure out why this doesn't work
-      return 0.0; // (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * Math.sqrt(voltage) + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
-      //              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
+      return TEMPERATURE_SENSOR_OFFSET + VOLTAGE_TEMPERATURE_GAIN * voltage;
    }
 
    public void setMotorDirection(boolean isMotorDirectionReversed)
