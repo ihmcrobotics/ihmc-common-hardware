@@ -33,6 +33,11 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement(defaultValue = "0.0")
    protected double rollJointOffset;
 
+   @XmlElement(defaultValue = "1.0")
+   protected double rollSign;
+   @XmlElement(defaultValue = "1.0")
+   protected double pitchSign;
+
    @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
    protected double torqueBreakFrequency = Double.POSITIVE_INFINITY;
 
@@ -114,5 +119,15 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    public double getTorqueBreakFrequency()
    {
       return torqueBreakFrequency;
+   }
+
+   public double getPitchSign()
+   {
+      return pitchSign;
+   }
+
+   public double getRollSign()
+   {
+      return rollSign;
    }
 }
