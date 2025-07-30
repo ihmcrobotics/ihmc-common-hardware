@@ -193,13 +193,13 @@ public abstract class AbstractHardwareMap
       int alias = xmlIMU.getAlias();
       int position = xmlIMU.getPosition();
 
-      double angularBiasX = xmlIMU.getAngularBiasX();
-      double angularBiasY = xmlIMU.getAngularBiasY();
-      double angularBiasZ = xmlIMU.getAngularBiasZ();
+      double angularBiasX = xmlIMU.getAngularVelocityBiasX();
+      double angularBiasY = xmlIMU.getAngularVelocityBiasY();
+      double angularBiasZ = xmlIMU.getAngularVelocityBiasZ();
 
-      double linearBiasX = xmlIMU.getLinearBiasX();
-      double linearBiasY = xmlIMU.getLinearBiasY();
-      double linearBiasZ = xmlIMU.getLinearBiasZ();
+      double linearBiasX = xmlIMU.getLinearAccelerationBiasX();
+      double linearBiasY = xmlIMU.getLinearAccelerationBiasY();
+      double linearBiasZ = xmlIMU.getLinearAccelerationBiasZ();
 
       if (type == XmlIMUType.H4)
       {
@@ -331,13 +331,13 @@ public abstract class AbstractHardwareMap
    {
       String name = xmlIMU.getName();
 
-      double angularBiasX = xmlIMU.getAngularBiasX();
-      double angularBiasY = xmlIMU.getAngularBiasY();
-      double angularBiasZ = xmlIMU.getAngularBiasZ();
+      double angularBiasX = xmlIMU.getAngularVelocityBiasX();
+      double angularBiasY = xmlIMU.getAngularVelocityBiasY();
+      double angularBiasZ = xmlIMU.getAngularVelocityBiasZ();
 
-      double linearBiasX = xmlIMU.getLinearBiasX();
-      double linearBiasY = xmlIMU.getLinearBiasY();
-      double linearBiasZ = xmlIMU.getLinearBiasZ();
+      double linearBiasX = xmlIMU.getLinearAccelerationBiasX();
+      double linearBiasY = xmlIMU.getLinearAccelerationBiasY();
+      double linearBiasZ = xmlIMU.getLinearAccelerationBiasZ();
 
       EtherSnacksIMU imu = new EtherSnacksIMU(name);
       YoGenericIMU yoImu = new YoGenericIMU(name, imu, registry);
