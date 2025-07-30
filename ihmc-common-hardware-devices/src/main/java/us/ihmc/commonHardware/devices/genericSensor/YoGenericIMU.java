@@ -3,6 +3,7 @@ package us.ihmc.commonHardware.devices.genericSensor;
 import us.ihmc.commonHardware.devices.IMUInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
+import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameVector3D;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -63,8 +64,8 @@ public class YoGenericIMU implements YoSensorInterface
       linearAcceleration.set(imu.getAccelX(), imu.getAccelY(), imu.getAccelZ());
       rawLinearAcceleration.set(imu.getRawAccelX(), imu.getRawAccelY(), imu.getRawAccelZ());
 
-      unbiasedAngularVelocity.sub(angularVelocity, angularVelocityBias);
-      unbiasedLinearAcceleration.sub(linearAcceleration, linearAccelerationBias);
+      unbiasedAngularVelocity.add(angularVelocity, angularVelocityBias);
+      unbiasedLinearAcceleration.add(linearAcceleration, linearAccelerationBias);
 
       imuTemp.set(imu.getTemp());
    }
@@ -82,6 +83,11 @@ public class YoGenericIMU implements YoSensorInterface
       linearAccelerationBias.set(x, y, z);
    }
 
+   public FrameVector3DReadOnly getLinearAccelerationBias()
+   {
+      return linearAccelerationBias;
+   }
+
    /**
     * Sets gyroscope bias. bias is subtracted from the gyroscope measurements to obtain
     * a more accurate measurement
@@ -95,8 +101,13 @@ public class YoGenericIMU implements YoSensorInterface
       angularVelocityBias.set(x, y, z);
    }
 
+   public FrameVector3DReadOnly getAngularVelocityBias()
+   {
+      return angularVelocityBias;
+   }
+
    /**
-    * @return the raw angular velocity measurement from the IMU hashtag no filter
+    * @return the unbiased angular velocity measurement (bias removed from original signal)
     */
    public Vector3DReadOnly getUnbiasedAngularVelocity()
    {
@@ -104,10 +115,28 @@ public class YoGenericIMU implements YoSensorInterface
    }
 
    /**
-    * @return the raw acceleration measurement from the IMU hashtag no filter
+    * @return the angular velocity measurement from the IMU (original signal, but not raw)
+    */
+   public Vector3DReadOnly getAngularVelocity()
+   {
+      return angularVelocity;
+   }
+
+   /**
+    * 
+    * @return the unbiased linear acceleration measurement (bias removed from original signal)
     */
    public Vector3DReadOnly getUnbiasedLinearAcceleration()
    {
       return unbiasedLinearAcceleration;
+   }
+
+   /**
+    *
+    * @return the linear acceleration measurement from the IMU (original signal, but not raw)
+    */
+   public Vector3DReadOnly getLinearAcceleration()
+   {
+      return linearAcceleration;
    }
 }

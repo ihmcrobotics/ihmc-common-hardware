@@ -16,18 +16,18 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
    protected double gravity;
 
    @XmlElement(defaultValue = "0.0")
-   protected double linearBiasX;
+   protected double linearAccelerationBiasX;
    @XmlElement(defaultValue = "0.0")
-   protected double linearBiasY;
+   protected double linearAccelerationBiasY;
    @XmlElement(defaultValue = "0.0")
-   protected double linearBiasZ;
+   protected double linearAccelerationBiasZ;
 
    @XmlElement(defaultValue = "0.0")
-   protected double angularBiasX;
+   protected double angularVelocityBiasX;
    @XmlElement(defaultValue = "0.0")
-   protected double angularBiasY;
+   protected double angularVelocityBiasY;
    @XmlElement(defaultValue = "0.0")
-   protected double angularBiasZ;
+   protected double angularVelocityBiasZ;
 
    public XmlIMUType getIMUType()
    {
@@ -49,64 +49,64 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
       this.gravity = gravity;
    }
 
-   public double getLinearBiasX()
+   public double getLinearAccelerationBiasX()
    {
-      return linearBiasX;
+      return linearAccelerationBiasX;
    }
 
-   public void setLinearBiasX(double linearBiasX)
+   public void setLinearAccelerationBiasX(double linearAccelerationBiasX)
    {
-      this.linearBiasX = linearBiasX;
+      this.linearAccelerationBiasX = linearAccelerationBiasX;
    }
 
-   public double getLinearBiasY()
+   public double getLinearAccelerationBiasY()
    {
-      return linearBiasY;
+      return linearAccelerationBiasY;
    }
 
-   public void setLinearBiasY(double linearBiasY)
+   public void setLinearAccelerationBiasY(double linearAccelerationBiasY)
    {
-      this.linearBiasY = linearBiasY;
+      this.linearAccelerationBiasY = linearAccelerationBiasY;
    }
 
-   public double getLinearBiasZ()
+   public double getLinearAccelerationBiasZ()
    {
-      return linearBiasZ;
+      return linearAccelerationBiasZ;
    }
 
-   public void setLinearBiasZ(double linearBiasZ)
+   public void setLinearAccelerationBiasZ(double linearAccelerationBiasZ)
    {
-      this.linearBiasZ = linearBiasZ;
+      this.linearAccelerationBiasZ = linearAccelerationBiasZ;
    }
 
-   public double getAngularBiasX()
+   public double getAngularVelocityBiasX()
    {
-      return angularBiasX;
+      return angularVelocityBiasX;
    }
 
-   public void setAngularBiasX(double angularBiasX)
+   public void setAngularVelocityBiasX(double angularVelocityBiasX)
    {
-      this.angularBiasX = angularBiasX;
+      this.angularVelocityBiasX = angularVelocityBiasX;
    }
 
-   public double getAngularBiasY()
+   public double getAngularVelocityBiasY()
    {
-      return angularBiasY;
+      return angularVelocityBiasY;
    }
 
-   public void setAngularBiasY(double angularBiasY)
+   public void setAngularVelocityBiasY(double angularVelocityBiasY)
    {
-      this.angularBiasY = angularBiasY;
+      this.angularVelocityBiasY = angularVelocityBiasY;
    }
 
-   public double getAngularBiasZ()
+   public double getAngularVelocityBiasZ()
    {
-      return angularBiasZ;
+      return angularVelocityBiasZ;
    }
 
-   public void setAngularBiasZ(double angularBiasZ)
+   public void setAngularVelocityBiasZ(double angularVelocityBiasZ)
    {
-      this.angularBiasZ = angularBiasZ;
+      this.angularVelocityBiasZ = angularVelocityBiasZ;
    }
 
    public void setPresent(boolean present)
