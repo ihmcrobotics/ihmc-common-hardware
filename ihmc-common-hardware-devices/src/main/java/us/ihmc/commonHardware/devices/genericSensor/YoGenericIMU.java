@@ -22,8 +22,8 @@ public class YoGenericIMU implements YoSensorInterface
    protected final YoFrameVector3D linearAcceleration;
    protected final YoFrameVector3D rawLinearAcceleration;
    protected final YoFrameVector3D unbiasedLinearAcceleration;
-   protected final YoFrameVector3D initialLinearAccelerationBias;
-   protected final YoFrameVector3D initialAngularVelocityBias;
+   protected final YoFrameVector3D linearAccelerationBias;
+   protected final YoFrameVector3D angularVelocityBias;
    protected final YoFrameVector3D unbiasedAngularVelocity;
    protected final YoDouble imuTemp;
 
@@ -45,9 +45,9 @@ public class YoGenericIMU implements YoSensorInterface
       linearAcceleration = new YoFrameVector3D(prefix + "LinearAccel", worldFrame, registry);
       rawLinearAcceleration = new YoFrameVector3D(prefix + "RawLinearAccel", worldFrame, registry);
       unbiasedLinearAcceleration = new YoFrameVector3D(prefix + "UnbiasedLinearAccel", worldFrame, registry);
-      initialLinearAccelerationBias = new YoFrameVector3D(prefix + "InitialLinearAccelBias", worldFrame, registry);
+      linearAccelerationBias = new YoFrameVector3D(prefix + "LinearAccelBias", worldFrame, registry);
       unbiasedAngularVelocity = new YoFrameVector3D(prefix + "unbiasedAngularVelocity", worldFrame, registry);
-      initialAngularVelocityBias = new YoFrameVector3D(prefix + "InitialAngularVelBias", worldFrame, registry);
+      angularVelocityBias = new YoFrameVector3D(prefix + "AngularVelBias", worldFrame, registry);
 
       imuTemp = new YoDouble(prefix + "IMUTemp", registry);
 
@@ -64,8 +64,8 @@ public class YoGenericIMU implements YoSensorInterface
       linearAcceleration.set(imu.getAccelX(), imu.getAccelY(), imu.getAccelZ());
       rawLinearAcceleration.set(imu.getRawAccelX(), imu.getRawAccelY(), imu.getRawAccelZ());
 
-      unbiasedAngularVelocity.sub(angularVelocity, initialAngularVelocityBias);
-      unbiasedLinearAcceleration.sub(linearAcceleration, initialLinearAccelerationBias);
+      unbiasedAngularVelocity.add(angularVelocity, angularVelocityBias);
+      unbiasedLinearAcceleration.add(linearAcceleration, linearAccelerationBias);
 
       imuTemp.set(imu.getTemp());
    }
@@ -80,12 +80,12 @@ public class YoGenericIMU implements YoSensorInterface
     */
    public void setLinearAccelerationBias(double x, double y, double z)
    {
-      initialLinearAccelerationBias.set(x, y, z);
+      linearAccelerationBias.set(x, y, z);
    }
 
-   public FrameVector3DReadOnly getInitialLinearAccelerationBias()
+   public FrameVector3DReadOnly getLinearAccelerationBias()
    {
-      return initialLinearAccelerationBias;
+      return linearAccelerationBias;
    }
 
    /**
@@ -98,12 +98,12 @@ public class YoGenericIMU implements YoSensorInterface
     */
    public void setAngularVelocityBias(double x, double y, double z)
    {
-      initialAngularVelocityBias.set(x, y, z);
+      angularVelocityBias.set(x, y, z);
    }
 
-   public FrameVector3DReadOnly getInitialAngularVelocityBias()
+   public FrameVector3DReadOnly getAngularVelocityBias()
    {
-      return initialAngularVelocityBias;
+      return angularVelocityBias;
    }
 
    /**
