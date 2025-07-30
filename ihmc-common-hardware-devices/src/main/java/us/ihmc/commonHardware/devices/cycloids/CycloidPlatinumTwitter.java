@@ -252,8 +252,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(0x22F4, 10, 64)), "failed to write to 0x1600 - 0x22F4 10"); // R2 index 10
       verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(0x22F4, 11, 64)), "failed to write to 0x1600 - 0x22F4 11"); // R2 index 11
       verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(0x22F4, 12, 64)), "failed to write to 0x1600 - 0x22F4 12"); // R2 index 12
-      //      verifyWorkingCounter(writeSDO(0x1601, 8, computePdoMapValue(0x22F4, 13, 64)),
-      //                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
       verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1600 (max 8)
 
       //1602 PDO
@@ -327,12 +325,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
       verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
       verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 3), "failed to write to 0x1C13 -- 0x2");
-
-      //      writeSDO(0x1010, 1, (byte) 4);
-
-      //set the digital outputs
-      //      byte digitalOutputs = 0x0;
-      //      writeSDO(0x60FE, 1, digitalOutputs);
    }
 
    @Override
@@ -600,10 +592,4 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    {
       return tpdo_1a02.sil_Socket2Error.get();
    }
-
-   //TODO Implement when ready
-   //   public double getMeasuredAnalogInput1a02()
-   //   {
-   //      return tpdo_1a02.measuredAnalogInput.get();
-   //   }
 }

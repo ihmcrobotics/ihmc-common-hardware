@@ -14,7 +14,7 @@ import java.util.List;
 @XmlType(name = "XmlTransmissions")
 public class XmlTransmissions
 {
-   @XmlElements({@XmlElement(name = "XmlCycloidMotorMechanism", type = XmlCycloidMotorMechanism.class),
+   @XmlElements({@XmlElement(name = "XmlCycloidMotorMechanism", type = XmlCycloidMechanism.class),
                  @XmlElement(name = "XmlSakeFingerMechanism", type = XmlSakeFingerMechanism.class),
                  @XmlElement(name = "XmlJointPairMechanism", type = XmlJointPairMechanism.class)})
    protected List<? extends AbstractXmlObject> transmissions;

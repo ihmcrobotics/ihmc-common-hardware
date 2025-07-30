@@ -6,8 +6,6 @@ import us.ihmc.euclid.referenceFrame.FrameVector3D;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.euclid.tuple4D.Quaternion;
-import us.ihmc.euclid.tuple4D.interfaces.QuaternionBasics;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
 import us.ihmc.robotics.math.filters.YoIMUMahonyFilter;
@@ -26,7 +24,7 @@ import java.util.Map;
  * This class can act as the manager for any generic IMU. It allows for the application of reference frames
  * to transform the raw signals into the correct orientation, as well as compute the quaternion of the imu
  */
-public class GeneralIMUManager implements IMUManagerInterface
+public class GenericIMUManager implements IMUManagerInterface
 {
    /**
     * Useful for debugging the main IMU on the pelvis.
@@ -66,7 +64,7 @@ public class GeneralIMUManager implements IMUManagerInterface
     * @param dt             controller timestep
     * @param parentRegistry Parent {@code YoRegistry} of the IMU
     */
-   public GeneralIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
+   public GenericIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
    {
       this.imuDefinition = imuDefinition;
       this.yoIMU = yoIMU;

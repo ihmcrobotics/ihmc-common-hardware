@@ -53,11 +53,13 @@ public class EtherSnacksLoadCell implements LoadCellInterface
       this.rawVoltage = rawVoltage;
    }
 
+   @Override
    public int getRawVoltage()
    {
       return rawVoltage;
    }
 
+   @Override
    public double getVoltage()
    {
       return ((double) rawVoltage / voltageGain) * adcConversion;

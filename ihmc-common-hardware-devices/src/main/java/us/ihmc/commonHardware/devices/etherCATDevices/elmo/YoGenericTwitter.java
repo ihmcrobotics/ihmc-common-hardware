@@ -3,7 +3,7 @@ package us.ihmc.commonHardware.devices.etherCATDevices.elmo;
 import us.ihmc.etherCAT.master.Slave;
 
 /**
- * This interface provides a skeleton for any twitter motor control implementation
+ * This interface provides a skeleton for a yovariable wrapper around any twitter for motor control purposes
  */
 public interface YoGenericTwitter
 {

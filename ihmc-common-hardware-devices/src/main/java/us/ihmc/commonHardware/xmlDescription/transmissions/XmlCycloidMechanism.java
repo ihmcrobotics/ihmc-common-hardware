@@ -7,8 +7,8 @@ import jakarta.xml.bind.annotation.XmlType;
 import us.ihmc.commonHardware.xmlDescription.AbstractXmlObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "XmlCycloidMotorMechanism")
-public class XmlCycloidMotorMechanism extends AbstractXmlObject
+@XmlType(name = "XmlCycloidMechanism")
+public class XmlCycloidMechanism extends AbstractXmlObject
 {
    @XmlElement(required = true)
    protected String jointName;

@@ -7,6 +7,11 @@ import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
 
+/**
+ * This class implements the lowlevel communication with an H4 IMU, including the reception of information
+ * and the conversion from raw signals to accelerations in m/s^2 and gyroscope in rad/s. It also includes
+ * information from a built-in temperature sensor and information about the cycle time and number of cycles
+ */
 public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusProvider
 {
    private static final int VENDOR_ID = 0x1011;

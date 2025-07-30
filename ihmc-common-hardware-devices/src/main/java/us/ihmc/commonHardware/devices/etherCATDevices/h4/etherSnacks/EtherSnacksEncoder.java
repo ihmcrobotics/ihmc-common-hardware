@@ -56,6 +56,7 @@ public class EtherSnacksEncoder implements EncoderInterface
       return rawPosition * conversionToRadians;
    }
 
+   @Override
    public String getName()
    {
       return name;

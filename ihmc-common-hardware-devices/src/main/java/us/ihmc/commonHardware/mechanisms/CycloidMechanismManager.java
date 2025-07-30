@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * @author Reese Peterson
  */
-public class CycloidMotorMechanismManager implements MechanismManagerInterface
+public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
@@ -98,15 +98,15 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
     * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
     * @param parentRegistry Parent {@code YoRegistry}
     */
-   public CycloidMotorMechanismManager(double jointOffset,
-                                       double jointLimitLower,
-                                       double jointLimitUpper,
-                                       String jointName,
-                                       YoCycloidPlatinumTwitter platinumTwitter,
-                                       YoDouble yoTime,
-                                       double estimatorDT,
-                                       BooleanProvider doPDControlOnTwitter,
-                                       YoRegistry parentRegistry)
+   public CycloidMechanismManager(double jointOffset,
+                                  double jointLimitLower,
+                                  double jointLimitUpper,
+                                  String jointName,
+                                  YoCycloidPlatinumTwitter platinumTwitter,
+                                  YoDouble yoTime,
+                                  double estimatorDT,
+                                  BooleanProvider doPDControlOnTwitter,
+                                  YoRegistry parentRegistry)
    {
       this(jointOffset, jointLimitLower, jointLimitUpper, jointName, platinumTwitter, yoTime, estimatorDT, doPDControlOnTwitter, DEFAULT_TORQUE_BREAK_FREQUENCY, parentRegistry);
    }
@@ -125,16 +125,16 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
     * @param torqueBreakFrequency Initial break frequency for desired torque filtering
     * @param parentRegistry Parent {@code YoRegistry}
     */
-   public CycloidMotorMechanismManager(double jointOffset,
-                                       double jointLimitLower,
-                                       double jointLimitUpper,
-                                       String jointName,
-                                       YoCycloidPlatinumTwitter platinumTwitter,
-                                       YoDouble yoTime,
-                                       double estimatorDT,
-                                       BooleanProvider doPDControlOnTwitter,
-                                       double torqueBreakFrequency,
-                                       YoRegistry parentRegistry)
+   public CycloidMechanismManager(double jointOffset,
+                                  double jointLimitLower,
+                                  double jointLimitUpper,
+                                  String jointName,
+                                  YoCycloidPlatinumTwitter platinumTwitter,
+                                  YoDouble yoTime,
+                                  double estimatorDT,
+                                  BooleanProvider doPDControlOnTwitter,
+                                  double torqueBreakFrequency,
+                                  YoRegistry parentRegistry)
    {
       this.time = yoTime;
       this.jointName = jointName;
@@ -219,7 +219,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
    @Override
    public void initialize()
    {
-      platinumTwitter.checkAndUpdateEncoderOffsets(); //(jointLimitLower, jointLimitUpper);
+      platinumTwitter.checkAndUpdateEncoderOffsets();
    }
 
    @Override
@@ -238,6 +238,10 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       read(measuredJointData.get(jointName));
    }
 
+   /**
+    * Helper class to read the current state of the cycloid and place the information into the correct {@code LowLevelState}
+    * @param measuredJointDataToPack Holder for the measured data from the cycloid
+    */
    public void read(LowLevelState measuredJointDataToPack)
    {
       long startTime = System.nanoTime();
@@ -275,7 +279,7 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       measuredMotorData.setTorque(platinumTwitter.getMeasuredMotorTorque());
       
       statorTemperature.set(temperatureProvider.getValue());
-      if(statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature()) //twitterController.getMaximumAllowableStatorTemperature())
+      if(statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature())
       {
          if(!isStatorAboveShutDownTemperature.getValue())
          {
@@ -366,10 +370,6 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 
       q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
-      // The high-level controller is running, we do a proportional controller here and keep the Twitter in velocity + feed-forward mode.
-      //      tau_d += stiffness * (q_d - joint.getQ()) + damping * (qd_d - joint.getQd());
-      //      tau_d += stiffness * (q_d - yoSensedJointData.getPosition()) + damping * (qd_d - yoSensedJointData.getVelocity());
-
       // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
       double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
       qd_d = InterpolationTools.linearInterpolate(0.0, qd_d, velocityFeedbackAlpha);
@@ -434,16 +434,13 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
 
       platinumTwitter.setDesiredMotorPosition(desiredMotorData.getPosition());
       platinumTwitter.setDesiredMotorVelocity(desiredMotorData.getVelocity());
-//      platinumTwitter.setDesiredMotorAcceleration(desiredMotorData.getAcceleration());
       platinumTwitter.setDesiredMotorTorque(desiredMotorData.getTorque());
       platinumTwitter.setDesiredMotorStiffness(desiredMotorData.getStiffness());
       platinumTwitter.setDesiredMotorDamping(desiredMotorData.getDamping());
-//      platinumTwitter.setDesiredControlMode(desiredJointData.getControlMode());
 
       platinumTwitter.setMaxPositionFeedbackError(maxPositionFeedbackError * gearRatio);
       platinumTwitter.setMaxVelocityFeedbackError(maxVeloctyFeedbackError * gearRatio);
 
-//      platinumTwitter.doControl();
       platinumTwitter.write();
 
       writeTime.set(System.nanoTime() - startTime);
@@ -457,6 +454,9 @@ public class CycloidMotorMechanismManager implements MechanismManagerInterface
       platinumTwitter.clearFaults();
    }
 
+   /**
+    * This class is only used as an alternative to the low-level raw encoder zeroing used in {@code YoCycloidPlatinumTwitter}
+    */
    @Override
    public void updateJointOffset()
    {

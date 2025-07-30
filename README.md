@@ -9,9 +9,10 @@ Main subproject containing code for etherCAT device communication and control, a
 ### Structure
 
 - commonHardware: Main directory of the project, contains abstract classes for creating a hardware map and manager
-    - devices: Contains code for commonly used devices and interfaces for easy integration of new devices into the system
+    - devices: Contains code for commonly used devices (IMU, encoder, load cell) and interfaces for easy integration of new devices into the system
     - hardwareStatusUI: Contains all code relevant to creating a UI for easier debugging of device statuses
-    - mechanisms: Contains code for managing cycloid mechanisms and interfaces for integration of new mechanisms into the system
+    - mechanisms: Contains code for managing actuation mechanisms and interfaces for integration of new types into the system. Currently, only cycloids have a
+      full implementation
     - xmlDescription: Contains code for XML-formatted descriptions of all devices and mechanisms in the project, as well as methods for loading XML descriptions
 
 ### How to Implement for your own robot
@@ -27,7 +28,7 @@ There are four steps to follow for basic implementation for your own robot using
 2. Create a class that extends [
    `AbstractHardwareMap`](https://github.com/ihmcrobotics/ihmc-common-hardware/blob/develop/ihmc-common-hardware-devices/src/main/java/us/ihmc/commonHardware/AbstractHardwareMap.java)
    to properly create and register all devices and mechanisms
-3. Create a class that extends `AbstractHardwareManager` to properly manage reading and writing to each device and mechanism
+3. Create a class that extends `AbstractHardwareManager (make a link)` to properly manage reading and writing to each device and mechanism
 4. Create a controller that can communicate using EtherCAT. You can either extend the pre-made [
    `EtherCATRealtimeThread`](https://github.com/ihmcrobotics/ihmc-ethercat-master/blob/develop/src/main/java/us/ihmc/etherCAT/master/EtherCATRealtimeThread.java)
    for simplicity or implement your own
@@ -37,8 +38,8 @@ There are four steps to follow for basic implementation for your own robot using
 
 ## Maintainers
 
-* Stefan Fasano (sfasano@ihmc.org)
 * Reese Peterson (rpeterson@ihmc.org)
+* Stefan Fasano (sfasano@ihmc.org)
 * Dexton Anderson (danderson@ihmc.org)
-* Robert Griffin (rgriffin@ihmc.org)
 * Duncan Calvert (dcalvert@ihmc.org)
+* Robert Griffin (rgriffin@ihmc.org)

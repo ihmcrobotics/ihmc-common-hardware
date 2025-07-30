@@ -16,13 +16,13 @@ import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacks
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksLoadCell;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksTemperatureSensor;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.YoTemperatureSensor;
-import us.ihmc.commonHardware.devices.genericSensor.GeneralIMUManager;
+import us.ihmc.commonHardware.devices.genericSensor.GenericIMUManager;
 import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericEncoder;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
-import us.ihmc.commonHardware.mechanisms.CycloidMotorMechanismManager;
+import us.ihmc.commonHardware.mechanisms.CycloidMechanismManager;
 import us.ihmc.commonHardware.xmlDescription.XmlHardwareDescription;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlDevices;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlEncoder;
@@ -33,7 +33,7 @@ import us.ihmc.commonHardware.xmlDescription.devices.XmlLoadCell;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlPlatinumTwitter;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.commonHardware.xmlDescription.joints.XmlJoints;
-import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMotorMechanism;
+import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMechanism;
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlTransmissions;
 import us.ihmc.etherCAT.master.MasterInterface;
 import us.ihmc.etherCAT.master.Slave;
@@ -223,7 +223,7 @@ public abstract class AbstractHardwareMap
          yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
          yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
 
-         GeneralIMUManager imuManager = new GeneralIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+         GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
          System.out.println("Registering " + name + " on " + alias + ":" + position);
 
@@ -276,7 +276,7 @@ public abstract class AbstractHardwareMap
     *
     * @param mechanism mechanism information from the xmls
     */
-   protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism)
+   protected void createCycloidMechanismManager(XmlCycloidMechanism mechanism)
    {
       String jointName = mechanism.getJointName();
       String motorName = mechanism.getMotorName();
@@ -285,37 +285,37 @@ public abstract class AbstractHardwareMap
       double lowerLimit = mechanism.getLowerJointLimit();
       double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
 
-      CycloidMotorMechanismManager cycloidMotorMechanismManager = createCycloidMechanismManager(jointName,
-                                                                                                motorName,
-                                                                                                jointOffset,
-                                                                                                lowerLimit,
-                                                                                                upperLimit,
-                                                                                                torqueBreakFrequency); //TODO add joint limits to xml
-      mechanismManagers.add(cycloidMotorMechanismManager);
-      measuredJointData.put(cycloidMotorMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
-      desiredJointData.put(cycloidMotorMechanismManager.getName(), new JointDesiredOutput());
+      CycloidMechanismManager cycloidMechanismManager = createCycloidMechanismManager(jointName,
+                                                                                      motorName,
+                                                                                      jointOffset,
+                                                                                      lowerLimit,
+                                                                                      upperLimit,
+                                                                                      torqueBreakFrequency); //TODO add joint limits to xml
+      mechanismManagers.add(cycloidMechanismManager);
+      measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
+      desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
    }
 
-   protected CycloidMotorMechanismManager createCycloidMechanismManager(String jointName,
-                                                                        String motorName,
-                                                                        double jointOffset,
-                                                                        double jointLimitLower,
-                                                                        double jointLimitUpper,
-                                                                        double torqueBreakFrequency)
+   protected CycloidMechanismManager createCycloidMechanismManager(String jointName,
+                                                                   String motorName,
+                                                                   double jointOffset,
+                                                                   double jointLimitLower,
+                                                                   double jointLimitUpper,
+                                                                   double torqueBreakFrequency)
    {
       YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
       nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
 
-      return new CycloidMotorMechanismManager(jointOffset,
-                                              jointLimitLower,
-                                              jointLimitUpper,
-                                              jointName,
-                                              platinumTwitter,
-                                              yoTime,
-                                              this.dt,
-                                              doCycloidPDControlOnTwitters,
-                                              torqueBreakFrequency,
-                                              registry);
+      return new CycloidMechanismManager(jointOffset,
+                                         jointLimitLower,
+                                         jointLimitUpper,
+                                         jointName,
+                                         platinumTwitter,
+                                         yoTime,
+                                         this.dt,
+                                         doCycloidPDControlOnTwitters,
+                                         torqueBreakFrequency,
+                                         registry);
    }
 
    /**
@@ -364,7 +364,7 @@ public abstract class AbstractHardwareMap
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
 
-      GeneralIMUManager imuManager = new GeneralIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+      GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
       imuManagers.add(imuManager);
       measuredIMUData.put(imuManager.getName(), new ImuData());
@@ -433,7 +433,7 @@ public abstract class AbstractHardwareMap
    /**
     * @return array of all cycloid platinum twitters
     */
-   public YoCycloidPlatinumTwitter[] getCycloidActuators()
+   public YoCycloidPlatinumTwitter[] getCycloidTwitters()
    {
       return cycloidTwitters.toArray(new YoCycloidPlatinumTwitter[0]);
    }

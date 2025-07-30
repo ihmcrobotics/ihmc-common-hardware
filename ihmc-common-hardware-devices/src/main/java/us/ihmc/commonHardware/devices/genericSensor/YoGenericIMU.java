@@ -28,7 +28,7 @@ public class YoGenericIMU implements YoSensorInterface
    protected final YoDouble imuTemp;
 
    /**
-    * YoWrapper class for the IMU component of an Ethersnacks board. Reads sensor measurements and
+    * YoWrapper class for an IMU. Reads sensor measurements and
     * updates corresponding yovariables
     *
     * @param prefix         prefix for the named YoVariables in this class

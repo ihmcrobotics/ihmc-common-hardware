@@ -12,8 +12,7 @@ public class EtherSnacksTemperatureSensor implements TemperatureSensorInterface
     */
    public EtherSnacksTemperatureSensor()
    {
-      temperatureScale = 1.0;
-      temperatureOffset = 0.0;
+      this(1.0, 0.0);
    }
 
    /**

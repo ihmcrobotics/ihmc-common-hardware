@@ -3,7 +3,9 @@ package us.ihmc.commonHardware.devices.cycloids;
 import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidSILParameters;
 
 /**
- * This class holds all the initial parameters for the SIL system run on the twitters
+ * This class holds all the initial parameters for the SIL system run on the twitters.
+ * SIL is a user-defined, Simulink-based control system that is run on the twitters and provides
+ * compensation currents for Dahl friction, cogging, and linear damping.
  */
 public class CycloidSILParameters
 {
