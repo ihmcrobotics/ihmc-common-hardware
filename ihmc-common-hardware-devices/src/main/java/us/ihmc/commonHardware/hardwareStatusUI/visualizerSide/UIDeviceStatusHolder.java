@@ -15,18 +15,18 @@ import java.util.ArrayList;
  */
 public class UIDeviceStatusHolder
 {
-   protected final SimpleStringProperty name = new SimpleStringProperty();
-   protected final SimpleStringProperty childDescription = new SimpleStringProperty();
-   protected final SimpleStringProperty description = new SimpleStringProperty();
-   protected final SimpleBooleanProperty isResponding = new SimpleBooleanProperty();
+   protected final SimpleStringProperty name = new SimpleStringProperty("");
+   protected final SimpleStringProperty childDescription = new SimpleStringProperty("");
+   protected final SimpleStringProperty description = new SimpleStringProperty("");
+   protected final SimpleBooleanProperty isResponding = new SimpleBooleanProperty(false);
 
-   protected final SimpleStringProperty readStatus = new SimpleStringProperty();
-   protected final SimpleStringProperty writeStatus = new SimpleStringProperty();
-   protected final SimpleStringProperty state = new SimpleStringProperty();
+   protected final SimpleStringProperty readStatus = new SimpleStringProperty("");
+   protected final SimpleStringProperty writeStatus = new SimpleStringProperty("");
+   protected final SimpleStringProperty state = new SimpleStringProperty("");
 
-   protected final SimpleStringProperty id = new SimpleStringProperty();
+   protected final SimpleStringProperty id = new SimpleStringProperty("");
 
-   protected final AbstractUIHardwareStatusManager.DeviceType deviceType;
+   protected DeviceType deviceType;
 
    protected final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
 
@@ -49,14 +49,13 @@ public class UIDeviceStatusHolder
                                YoEnumAsStringProperty<Slave.State> state,
                                int position,
                                int alias,
-                               AbstractUIHardwareStatusManager.DeviceType deviceType)
+                               DeviceType deviceType)
    {
-      this(name, description, childDescription, isResponding.getBooleanValue(), "", "", "", deviceType);
+      initializeCommonProperties(name, description, childDescription, isResponding, deviceType);
 
       this.id.set("EtherCAT " + alias + "-" + position);
       this.state.set(state.getValue());
 
-      isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
       state.addListener(change -> this.state.set(state.getValue()));
    }
 
@@ -75,24 +74,39 @@ public class UIDeviceStatusHolder
    public UIDeviceStatusHolder(String name,
                                String description,
                                String childDescription,
-                               boolean isResponding,
+                               YoBoolean isResponding,
                                String readStatus,
                                String writeStatus,
                                String canID,
-                               AbstractUIHardwareStatusManager.DeviceType deviceType)
+                               DeviceType deviceType)
+   {
+      initializeCommonProperties(name, description, childDescription, isResponding, deviceType);
+
+      this.readStatus.set(readStatus);
+      this.writeStatus.set(writeStatus);
+      this.id.set("CAN " + canID);
+
+      this.deviceType = deviceType;
+   }
+
+   /**
+    * Initialize any common properties between types of devices
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of a child of the device
+    * @param isResponding     {@code YoBoolean} tracking if the device is responding
+    * @param deviceType       Type of device being initialized
+    */
+   private void initializeCommonProperties(String name, String description, String childDescription, YoBoolean isResponding, DeviceType deviceType)
    {
       this.name.set(name);
       this.description.set(description);
       this.childDescription.set(childDescription);
-      this.isResponding.set(isResponding);
-
-      this.readStatus.set(readStatus);
-      this.writeStatus.set(writeStatus);
-      this.state.set("");
-
-      this.id.set("CAN " + canID);
-
+      this.isResponding.set(isResponding.getBooleanValue());
       this.deviceType = deviceType;
+
+      isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
    }
 
    /**
