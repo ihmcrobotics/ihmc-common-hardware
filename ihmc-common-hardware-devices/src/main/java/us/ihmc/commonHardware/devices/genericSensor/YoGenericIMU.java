@@ -27,6 +27,11 @@ public class YoGenericIMU implements YoSensorInterface
    protected final YoFrameVector3D unbiasedAngularVelocity;
    protected final YoDouble imuTemp;
 
+   public YoGenericIMU(String prefix, IMUInterface imu, YoRegistry parentRegistry)
+   {
+      this(prefix, imu, worldFrame, parentRegistry);
+   }
+
    /**
     * YoWrapper class for the IMU component of an Ethersnacks board. Reads sensor measurements and
     * updates corresponding yovariables
@@ -35,19 +40,19 @@ public class YoGenericIMU implements YoSensorInterface
     * @param imu            the Ethersnacks daughter board the IMU is located on
     * @param parentRegistry the initial parent registry for this object
     */
-   public YoGenericIMU(String prefix, IMUInterface imu, YoRegistry parentRegistry)
+   public YoGenericIMU(String prefix, IMUInterface imu, ReferenceFrame imuFrame, YoRegistry parentRegistry)
    {
       this.imu = imu;
       registry = new YoRegistry(prefix + name);
 
-      angularVelocity = new YoFrameVector3D(prefix + "AngularVel", worldFrame, registry);
-      rawAngularVelocity = new YoFrameVector3D(prefix + "RawAngularVel", worldFrame, registry);
-      linearAcceleration = new YoFrameVector3D(prefix + "LinearAccel", worldFrame, registry);
-      rawLinearAcceleration = new YoFrameVector3D(prefix + "RawLinearAccel", worldFrame, registry);
-      unbiasedLinearAcceleration = new YoFrameVector3D(prefix + "UnbiasedLinearAccel", worldFrame, registry);
-      linearAccelerationBias = new YoFrameVector3D(prefix + "LinearAccelBias", worldFrame, registry);
-      unbiasedAngularVelocity = new YoFrameVector3D(prefix + "unbiasedAngularVelocity", worldFrame, registry);
-      angularVelocityBias = new YoFrameVector3D(prefix + "AngularVelBias", worldFrame, registry);
+      angularVelocity = new YoFrameVector3D(prefix + "AngularVel", imuFrame, registry);
+      rawAngularVelocity = new YoFrameVector3D(prefix + "RawAngularVel", imuFrame, registry);
+      linearAcceleration = new YoFrameVector3D(prefix + "LinearAccel", imuFrame, registry);
+      rawLinearAcceleration = new YoFrameVector3D(prefix + "RawLinearAccel", imuFrame, registry);
+      unbiasedLinearAcceleration = new YoFrameVector3D(prefix + "UnbiasedLinearAccel", imuFrame, registry);
+      linearAccelerationBias = new YoFrameVector3D(prefix + "LinearAccelBias", imuFrame, registry);
+      unbiasedAngularVelocity = new YoFrameVector3D(prefix + "unbiasedAngularVelocity", imuFrame, registry);
+      angularVelocityBias = new YoFrameVector3D(prefix + "AngularVelBias", imuFrame, registry);
 
       imuTemp = new YoDouble(prefix + "IMUTemp", registry);
 

@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4;
 
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
+import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -15,7 +16,12 @@ public class YoH4IMU extends YoGenericIMU
 
    public YoH4IMU(String prefix, H4IMU imu, YoRegistry registry)
    {
-      super(prefix, imu, registry);
+      this(prefix, imu, ReferenceFrame.getWorldFrame(), registry);
+   }
+
+   public YoH4IMU(String prefix, H4IMU imu, ReferenceFrame imuFrame, YoRegistry registry)
+   {
+      super(prefix, imu, imuFrame, registry);
       this.h4IMU = imu;
 
       cycleTime = new YoDouble(prefix + "CycleTime", registry);
