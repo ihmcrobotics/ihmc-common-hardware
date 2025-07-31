@@ -128,7 +128,7 @@ public class YoGenericIMU implements YoSensorInterface
     * 
     * @return the unbiased linear acceleration measurement (bias removed from original signal)
     */
-   public Vector3DReadOnly getUnbiasedLinearAcceleration()
+   public YoFrameVector3D getUnbiasedLinearAcceleration()
    {
       return unbiasedLinearAcceleration;
    }
@@ -137,7 +137,7 @@ public class YoGenericIMU implements YoSensorInterface
     *
     * @return the linear acceleration measurement from the IMU (original signal, but not raw)
     */
-   public Vector3DReadOnly getLinearAcceleration()
+   public YoFrameVector3D getLinearAcceleration()
    {
       return linearAcceleration;
    }
