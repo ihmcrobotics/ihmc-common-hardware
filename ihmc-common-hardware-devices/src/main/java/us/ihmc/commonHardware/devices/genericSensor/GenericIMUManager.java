@@ -79,10 +79,7 @@ public class GenericIMUManager implements IMUManagerInterface
       mahonyFilter = new YoIMUMahonyFilter(prefix, prefix + "Mahony", "", dt, true, imuFrame, registry);
 
       // Initialize the orientation such that the robot faces x+, also apply initial biases
-      mahonyFilter.initialize(imuDefinition.getIMUFrame().getTransformToRoot().getRotation(),
-                              yoIMU.getAngularVelocityBias().getX(),
-                              yoIMU.getAngularVelocityBias().getY(),
-                              yoIMU.getAngularVelocityBias().getZ());
+      mahonyFilter.initialize(imuDefinition.getIMUFrame().getTransformToRoot().getRotation());
       mahonyFilter.setGains(0.5, 0.01);
       mahonyFilter.setYawDriftParameters(0.01, 1.0e-4);
       mahonyYawPitchRoll = new YoFrameYawPitchRoll(prefix + "Mahony", worldFrame, registry);
