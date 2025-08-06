@@ -43,11 +43,13 @@ import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+import us.ihmc.sensorProcessing.simulatedSensors.StateEstimatorSensorDefinitions;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -108,11 +110,31 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
+      this(xmlHardwareDescriptions, etherCATMaster, null, dt, yoTime, parentRegistry);
+   }
+
+   /**
+    * Construct the hardware map for the robot
+    *
+    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param stateEstimatorSensorDefinitions Sensor definitions for the state estimator. If there is no state estimator, then leave as null
+    * @param dt                      desired control timesteo
+    * @param yoTime                  YoDouble that holds the current time of the robot
+    * @param parentRegistry          Parent YoRegistry
+    */
+   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+                              MasterInterface etherCATMaster,
+                              @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
+                              double dt,
+                              YoDouble yoTime,
+                              YoRegistry parentRegistry)
+   {
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
-      createSensorDefinitions();
+      createSensorDefinitions(stateEstimatorSensorDefinitions);
 
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
@@ -177,7 +199,7 @@ public abstract class AbstractHardwareMap
    /**
     * Create the sensor definitions for all devices
     */
-   protected abstract void createSensorDefinitions();
+   protected abstract void createSensorDefinitions(StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
