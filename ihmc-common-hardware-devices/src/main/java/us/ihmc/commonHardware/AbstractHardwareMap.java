@@ -204,7 +204,7 @@ public abstract class AbstractHardwareMap
       if (type == XmlIMUType.H4)
       {
          H4IMU imu = new H4IMU(alias, position);
-         YoH4IMU yoImu = new YoH4IMU(name, imu, imuDefinitions.get(name).getIMUFrame(), registry);
+         YoH4IMU yoImu = new YoH4IMU(name, imu, registry);
 
          yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
          yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
@@ -340,7 +340,7 @@ public abstract class AbstractHardwareMap
       double linearBiasZ = xmlIMU.getLinearAccelerationBiasZ();
 
       EtherSnacksIMU imu = new EtherSnacksIMU(name);
-      YoGenericIMU yoImu = new YoGenericIMU(name, imu, imuDefinitions.get(name).getIMUFrame(), registry);
+      YoGenericIMU yoImu = new YoGenericIMU(name, imu, registry);
 
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);

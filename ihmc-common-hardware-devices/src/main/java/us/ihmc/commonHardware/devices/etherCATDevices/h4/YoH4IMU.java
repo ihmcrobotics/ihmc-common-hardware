@@ -16,12 +16,7 @@ public class YoH4IMU extends YoGenericIMU
 
    public YoH4IMU(String prefix, H4IMU imu, YoRegistry registry)
    {
-      this(prefix, imu, ReferenceFrame.getWorldFrame(), registry);
-   }
-
-   public YoH4IMU(String prefix, H4IMU imu, ReferenceFrame imuFrame, YoRegistry registry)
-   {
-      super(prefix, imu, imuFrame, registry);
+      super(prefix, imu, registry);
       this.h4IMU = imu;
 
       cycleTime = new YoDouble(prefix + "CycleTime", registry);
