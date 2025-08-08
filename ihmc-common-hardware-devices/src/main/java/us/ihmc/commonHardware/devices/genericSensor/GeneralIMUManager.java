@@ -1,5 +1,6 @@
 package us.ihmc.commonHardware.devices.genericSensor;
 
+import com.barchart.udt.EpollUDT;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
@@ -24,7 +25,9 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
+import javax.swing.text.html.Option;
 import java.util.Map;
+import java.util.Optional;
 
 public class GeneralIMUManager implements IMUManagerInterface
 {
@@ -46,8 +49,8 @@ public class GeneralIMUManager implements IMUManagerInterface
 
    private static final ReferenceFrame worldFrame = ReferenceFrame.getWorldFrame();
    private final ReferenceFrame originalIMUFrame;
-   private final OptionalFactoryField<YoFramePoseUsingYawPitchRoll> imuCorrectionOffset = new OptionalFactoryField<>("imuCorrectionOffset");
-   private final OptionalFactoryField<ReferenceFrame> correctedIMUFrame = new OptionalFactoryField<>("correctedIMUFrame");
+   private final Optional<YoFramePoseUsingYawPitchRoll> imuCorrectionOffset;
+   private final Optional<ReferenceFrame> correctedIMUFrame;
 
    private final MovingReferenceFrame rootJointFrame;
    private final YoFrameYawPitchRoll rootJointEstimate;
@@ -56,9 +59,9 @@ public class GeneralIMUManager implements IMUManagerInterface
    private final YoFrameVector3D angularVelocityInIMUFrame;
    private final YoFrameVector3D linearAccelerationInIMUFrame;
 
-   private final OptionalFactoryField<YoFrameQuaternion> orientationInCorrectedIMUFrame = new OptionalFactoryField<>("orientationInCorrectedIMUFrame");
-   private final OptionalFactoryField<YoFrameVector3D> angularVelocityInCorrectedIMUFrame = new OptionalFactoryField<>("angularVelocityInCorrectedIMUFrame");
-   private final OptionalFactoryField<YoFrameVector3D> linearAccelerationInCorrectedIMUFrame = new OptionalFactoryField<>("linearAccelerationInCorrectedIMUFrame");
+   private final Optional<YoFrameQuaternion> orientationInCorrectedIMUFrame;
+   private final Optional<YoFrameVector3D> angularVelocityInCorrectedIMUFrame;
+   private final Optional<YoFrameVector3D> linearAccelerationInCorrectedIMUFrame;
 
    private final YoIMUMahonyFilter mahonyFilter;
    private final YoFrameYawPitchRoll mahonyYawPitchRoll;
@@ -98,9 +101,9 @@ public class GeneralIMUManager implements IMUManagerInterface
       // These are for finding the offset between the expected and true IMU mounting orientation
       if (COMPUTE_IMU_ORIENTATION_OFFSETS)
       {
-         imuCorrectionOffset.set(new YoFramePoseUsingYawPitchRoll(prefix + "IMUCorrectionOffset", originalIMUFrame.getParent(), registry));
+         imuCorrectionOffset = Optional.of(new YoFramePoseUsingYawPitchRoll(prefix + "IMUCorrectionOffset", originalIMUFrame.getParent(), registry));
          imuCorrectionOffset.get().set(originalIMUFrame.getTransformToParent());
-         correctedIMUFrame.set(new ReferenceFrame(prefix + "CorrectedIMUFrame", originalIMUFrame.getParent())
+         correctedIMUFrame = Optional.of(new ReferenceFrame(prefix + "CorrectedIMUFrame", originalIMUFrame.getParent())
          {
             @Override
             protected void updateTransformToParent(RigidBodyTransform transformToParent)
@@ -109,14 +112,19 @@ public class GeneralIMUManager implements IMUManagerInterface
             }
          });
 
-         orientationInCorrectedIMUFrame.set(new YoFrameQuaternion(prefix + "OrientationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
-         angularVelocityInCorrectedIMUFrame.set(new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
-         linearAccelerationInCorrectedIMUFrame.set(new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
+         orientationInCorrectedIMUFrame = Optional.of(new YoFrameQuaternion(prefix + "OrientationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
+         angularVelocityInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
+         linearAccelerationInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
 
          imuFrame = correctedIMUFrame.get();
       }
       else
       {
+         imuCorrectionOffset = Optional.empty();
+         correctedIMUFrame = Optional.empty();
+         orientationInCorrectedIMUFrame = Optional.empty();
+         angularVelocityInCorrectedIMUFrame = Optional.empty();
+         linearAccelerationInCorrectedIMUFrame = Optional.empty();
          imuFrame = originalIMUFrame;
       }
 
@@ -135,12 +143,10 @@ public class GeneralIMUManager implements IMUManagerInterface
       useMahoneyFilterAngularVelocity = new YoBoolean(prefix + "useMahonyFilterAngularVelocity", registry);
       useMahoneyFilterAngularVelocity.set(true);
 
-      if (correctedIMUFrame.hasValue())
-         correctedIMUFrame.get()
-                          .addListener((v) -> mahonyFilter.initialize(imuFrame.getTransformToRoot().getRotation(),
-                                                                      yoIMU.getAngularVelocityBias().getX(),
-                                                                      yoIMU.getAngularVelocityBias().getY(),
-                                                                      yoIMU.getAngularVelocityBias().getZ()));
+      correctedIMUFrame.ifPresent(value -> value.addListener((v) -> mahonyFilter.initialize(imuFrame.getTransformToRoot().getRotation(),
+                                                                                            yoIMU.getAngularVelocityBias().getX(),
+                                                                                            yoIMU.getAngularVelocityBias().getY(),
+                                                                                            yoIMU.getAngularVelocityBias().getZ())));
 
       // This is for recording a filtered steady state signal of linear accel and angular vel to estimate biases
       averagedIMUs = new SimpleMovingAverageFilteredYoVariable[6];
@@ -194,8 +200,7 @@ public class GeneralIMUManager implements IMUManagerInterface
       // Update the IMU
       yoIMU.update();
 
-      if (correctedIMUFrame.hasValue())
-         correctedIMUFrame.get().update();
+      correctedIMUFrame.ifPresent(ReferenceFrame::update);
 
       ImuData measuredIMUDataToPack = measuredIMUDataMap.get(name);
 
@@ -217,14 +222,9 @@ public class GeneralIMUManager implements IMUManagerInterface
       linearAccelerationInIMUFrame.setMatchingFrame(imuFrame, linearAcceleration);
 
       // Set the imu signals in the corrected IMU frames that we hand tuned
-      if (orientationInCorrectedIMUFrame.hasValue())
-         orientationInCorrectedIMUFrame.get().setMatchingFrame(imuFrame, orientation);
-
-      if (angularVelocityInCorrectedIMUFrame.hasValue())
-         angularVelocityInCorrectedIMUFrame.get().setMatchingFrame(imuFrame, angularVelocity);
-
-      if (linearAccelerationInCorrectedIMUFrame.hasValue())
-         linearAccelerationInCorrectedIMUFrame.get().setMatchingFrame(imuFrame, linearAcceleration);
+      orientationInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, orientation));
+      angularVelocityInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, angularVelocity));
+      linearAccelerationInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, linearAcceleration));
 
       // These are useful for debugging and seeing if the measured gravity vector is in the right place
       linearAccelerationInWorld.setMatchingFrame(imuFrame, yoIMU.getUnbiasedLinearAcceleration());
@@ -234,6 +234,10 @@ public class GeneralIMUManager implements IMUManagerInterface
       // Here we use signal in original IMU frame since high-level control will assume that from URDF
       filteredAngularVelocity.update(angularVelocityInIMUFrame);
       filteredLinearAcceleration.update(linearAccelerationInIMUFrame);
+
+      // Pack the orientation data into measuredIMUDataToPack
+      // Here we use signal in original IMU frame since high-level control will assume that from URDF
+      measuredIMUDataToPack.setOrientation(orientationInIMUFrame);
 
       // Pack the linear acceleration and angular velocity data into measuredIMUDataToPack
       // Here we use signal in original IMU frame since high-level control will assume that from URDF
@@ -247,10 +251,6 @@ public class GeneralIMUManager implements IMUManagerInterface
          measuredIMUDataToPack.setAngularVelocity(angularVelocityInIMUFrame);
          measuredIMUDataToPack.setLinearAcceleration(linearAccelerationInIMUFrame);
       }
-
-      // Pack the orientation data into measuredIMUDataToPack
-      // Here we use signal in original IMU frame since high-level control will assume that from URDF
-      measuredIMUDataToPack.setOrientation(orientationInIMUFrame);
 
       // Collect steady-state averages from IMU signals to estimate biases by hand
       if (isAveraging.getBooleanValue())
