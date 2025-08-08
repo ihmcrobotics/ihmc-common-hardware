@@ -39,7 +39,7 @@ public abstract class AbstractUIHardwareStatusManager
    protected final SessionVisualizerToolkit toolkit;
 
    /**
-    * Creates the status UI and add all the devices
+    * Creates and manages all UI-side device status holders
     *
     * @param xmlDevices                Descriptions of all devices taken from xml descriptions of the robot
     * @param sessionVisualizerControls Controls for adding items to and controlling visualizer

@@ -35,15 +35,15 @@ public class HardwareStatusManager
    }
 
    /**
-    * Registers a generic EtherSnacks device and status provider by creating a {@code DeviceStatusHolder} and adding it to the list
+    * Registers a generic EtherSnacks daughter device and status provider by creating a {@code DeviceStatusHolder} and adding it to the list
     *
-    * @param xmlDevice            EtherSnacks device to be added
+    * @param xmlDaughterDevice            EtherSnacks daughter device to be added
     * @param xmlParentDevice      Parent EtherSnacks board
     * @param deviceStatusProvider Status provider for the EtherSnacks device
     */
-   public void registerDevice(AbstractXmlDevice xmlDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
+   public void registerDevice(AbstractXmlDevice xmlDaughterDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
    {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry));
+      deviceStatusHolders.add(new DeviceStatusHolder(xmlDaughterDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry));
    }
 
    /**

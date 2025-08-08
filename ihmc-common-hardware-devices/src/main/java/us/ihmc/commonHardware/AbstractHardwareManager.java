@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class provides abstract structure for managing all of the devices and mechanisms of a robot
+ * This class provides abstract structure for managing all the devices and mechanisms of a robot
  *
  * @author Reese Peterson
  */
