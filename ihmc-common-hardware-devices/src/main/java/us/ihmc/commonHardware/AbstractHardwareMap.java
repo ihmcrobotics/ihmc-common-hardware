@@ -198,8 +198,10 @@ public abstract class AbstractHardwareMap
 
    /**
     * Create the sensor definitions for all devices
+    *
+    * @param stateEstimatorSensorDefinitions If not null, use the definitions provided to create the sensor definitions
     */
-   protected abstract void createSensorDefinitions(StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
+   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
