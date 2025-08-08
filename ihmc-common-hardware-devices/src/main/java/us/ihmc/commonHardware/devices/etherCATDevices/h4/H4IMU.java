@@ -1,11 +1,11 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4;
 
 import us.ihmc.commonHardware.devices.IMUInterface;
-import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
+import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusProvider
 {

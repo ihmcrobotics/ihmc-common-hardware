@@ -1,6 +1,6 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidSILParameters;
+import us.ihmc.xmlToolkit.devices.parameters.XmlCycloidSILParameters;
 
 public class CycloidSILParameters
 {

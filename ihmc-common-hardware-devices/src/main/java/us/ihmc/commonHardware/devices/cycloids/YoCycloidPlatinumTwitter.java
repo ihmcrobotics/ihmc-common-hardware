@@ -2,8 +2,8 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidParameters;
+import us.ihmc.xmlToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.xmlToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;

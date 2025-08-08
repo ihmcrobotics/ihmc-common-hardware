@@ -1,13 +1,13 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.PlatinumTwitter;
-import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.javalution.Struct.Unsigned16;
 import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
+import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 import java.io.IOException;
 
