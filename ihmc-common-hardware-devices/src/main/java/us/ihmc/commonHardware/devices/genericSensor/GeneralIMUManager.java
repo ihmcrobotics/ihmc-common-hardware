@@ -1,20 +1,16 @@
 package us.ihmc.commonHardware.devices.genericSensor;
 
-import com.barchart.udt.EpollUDT;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DBasics;
 import us.ihmc.euclid.orientation.interfaces.Orientation3DReadOnly;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.referenceFrame.interfaces.*;
 import us.ihmc.euclid.transform.RigidBodyTransform;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
-import us.ihmc.euclid.tuple4D.interfaces.QuaternionReadOnly;
 import us.ihmc.euclid.tuple4D.interfaces.Tuple4DReadOnly;
 import us.ihmc.mecano.frames.MovingReferenceFrame;
 import us.ihmc.mecano.tools.MultiBodySystemTools;
 import us.ihmc.robotics.math.filters.YoIMUMahonyFilter;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
-import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.yoVariables.euclid.filters.AlphaFilteredYoFrameVector3D;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFramePoseUsingYawPitchRoll;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameQuaternion;
@@ -25,7 +21,6 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-import javax.swing.text.html.Option;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,7 +37,7 @@ public class GeneralIMUManager implements IMUManagerInterface
     * pelvis IMU which, when zeroing the robot, usually needs to be perfectly level in world
     * with 0.0 x and y linear acceleration and a linear acceleration in z equivalent to gravity
     */
-   public static boolean COMPUTE_IMU_ORIENTATION_OFFSETS = false;
+   public static boolean DEBUG_IMU_ORIENTATION_OFFSETS = false;
 
    private final YoGenericIMU yoIMU;
    private final ReferenceFrame imuFrame;
@@ -99,7 +94,7 @@ public class GeneralIMUManager implements IMUManagerInterface
       linearAccelerationInIMUFrame = new YoFrameVector3D(prefix + "LinearAccelerationInIMUFrame", originalIMUFrame, registry);
 
       // These are for finding the offset between the expected and true IMU mounting orientation
-      if (COMPUTE_IMU_ORIENTATION_OFFSETS)
+      if (DEBUG_IMU_ORIENTATION_OFFSETS)
       {
          imuCorrectionOffset = Optional.of(new YoFramePoseUsingYawPitchRoll(prefix + "IMUCorrectionOffset", originalIMUFrame.getParent(), registry));
          imuCorrectionOffset.get().set(originalIMUFrame.getTransformToParent());
