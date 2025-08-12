@@ -258,8 +258,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       verifyWorkingCounter(writeSDO(0x1A00, 3, computePdoMapValue(0x6064, 0, 32)), "failed to write to 0x1A00 -- 0x6064"); // position actual
       verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(0x6079, 0, 32)), "failed to write to 0x1A00 -- 0x6079"); // bus voltage
       verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(0x6077, 0, 16)), "failed to write to 0x1A00 -- 0x6077"); // torque actual
-      verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x22F4, 19, 64)),
-                           "failed to write to 0x1A00 -- 0x22F4"); // From SIL - Getting Analog Input 2 value for stator temperature
+      verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x22F4, 18, 64)),
+                           "failed to write to 0x1A00 -- 0x22F4"); // From SIL - Getting Analog Input 1 value for stator temperature
 
       verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(0x2FE4, 2, 64)), "failed to write to 0x1A00 -- 0x2FE4"); // aux position 1
       verifyWorkingCounter(writeSDO(0x1A00, 8, computePdoMapValue(0x3607, 1, 32)), "failed to write to 0x1A00 -- 0x3607"); // status register
