@@ -1,0 +1,7 @@
+<XmlIMU>
+    <name>imuName</name>
+    <alias>0</alias>
+    <address>0</address>
+    <imuType>imuType</imuType>
+    <present>true</present>
+</XmlIMU>

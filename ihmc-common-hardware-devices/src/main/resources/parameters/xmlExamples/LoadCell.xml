@@ -1,0 +1,8 @@
+<XmlLoadCell>
+    <name>sensorName</name>
+    <nominalSensitivity>0.0</nominalSensitivity>
+    <zeroBalance>0.0</zeroBalance>
+    <nominalLoad>0.0</nominalLoad>
+    <excitationVoltage>0.0</excitationVoltage>
+    <present>true</present>
+</XmlLoadCell>

@@ -31,6 +31,13 @@ public class H4EtherCATJunctionPort extends Slave implements EtherCATDeviceStatu
    private final JunctionControl junctionControl = new JunctionControl();
    private final JunctionData junctionData = new JunctionData();
 
+   /**
+    * Create an H4 ethercat junction port
+    *
+    * @param alias EtherCAT alias
+    * @param position EtherCAT position
+    * @param junctionPort Junction port number. This specifies which product code to use
+    */
    public H4EtherCATJunctionPort(int alias, int position, int junctionPort)
    {
       super(VENDOR_ID, PRODUCT_CODES[junctionPort], alias, position);

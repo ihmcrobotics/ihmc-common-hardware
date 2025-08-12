@@ -15,9 +15,16 @@ public class YoTemperatureSensor implements YoSensorInterface
 
    private final TemperatureSensorInterface tempSensor;
 
+   /**
+    * Create a yovariable wrapper for a temperature sensor
+    *
+    * @param prefix         Prefix applied to all yovariable names
+    * @param tempSensor     The temperature sensor to be wrapped
+    * @param parentRegistry Parent registry
+    */
    public YoTemperatureSensor(String prefix, TemperatureSensorInterface tempSensor, YoRegistry parentRegistry)
    {
-      registry = new YoRegistry(prefix+ "TemperatureSensor");
+      registry = new YoRegistry(prefix + "TemperatureSensor");
 
       this.tempSensor = tempSensor;
 

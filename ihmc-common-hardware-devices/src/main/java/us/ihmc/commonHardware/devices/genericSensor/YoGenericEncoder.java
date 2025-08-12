@@ -35,17 +35,11 @@ public class YoGenericEncoder implements YoSensorInterface
     *
     * @param prefix          the name prefix for named yovariables in this class
     * @param input           the daughter board object the load cell is located on
-    * @param invertDirection whether or not to negate the position and velocity values sent by the
-    *                        encoder
+    * @param invertDirection whether or not to negate the position and velocity values sent by the encoder
     * @param controllerDt    the period of the controller
     * @param parentRegistry  initial parent registry for this object
     */
-
-   public YoGenericEncoder(String prefix,
-                           EncoderInterface input,
-                           boolean invertDirection,
-                           double controllerDt,
-                           YoRegistry parentRegistry)
+   public YoGenericEncoder(String prefix, EncoderInterface input, boolean invertDirection, double controllerDt, YoRegistry parentRegistry)
    {
       this.input = input;
       registry = new YoRegistry("JointEncoder_" + prefix);
@@ -70,9 +64,6 @@ public class YoGenericEncoder implements YoSensorInterface
       parentRegistry.addChild(registry);
    }
 
-   /**
-    * Reads sensor measurements and updates corresponding yovariables
-    */
    @Override
    public void update()
    {
@@ -118,6 +109,10 @@ public class YoGenericEncoder implements YoSensorInterface
    }
 
    //TODO: ADD DATA VALID STATUS TO PDO ON DAUGHTER BOARD
+
+   /**
+    * @return true if the encoder data is valid, false otherwise
+    */
    public boolean isDataValid()
    {
       return true;
@@ -125,7 +120,7 @@ public class YoGenericEncoder implements YoSensorInterface
 
    /**
     * adds a position bias to the encoder readings
-    * 
+    *
     * @param offset bias to add to subsequent position measurements
     */
    public void setEncoderOffset(double offset)

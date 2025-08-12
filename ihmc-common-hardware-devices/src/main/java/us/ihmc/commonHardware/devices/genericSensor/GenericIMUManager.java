@@ -24,7 +24,11 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import java.util.Map;
 import java.util.Optional;
 
-public class GeneralIMUManager implements IMUManagerInterface
+/**
+ * This class can act as the manager for any generic IMU. It allows for the application of reference frames
+ * to transform the raw signals into the correct orientation, as well as compute the quaternion of the imu
+ */
+public class GenericIMUManager implements IMUManagerInterface
 {
    /**
     * Useful for debugging the main IMU on the pelvis.
@@ -79,7 +83,15 @@ public class GeneralIMUManager implements IMUManagerInterface
 
    private final String name;
 
-   public GeneralIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
+   /**
+    * Construct the IMU manager
+    *
+    * @param imuDefinition  Defines the name of the IMU as well as the rigid body connection
+    * @param yoIMU          generic IMU yo variable
+    * @param dt             controller timestep
+    * @param parentRegistry Parent {@code YoRegistry} of the IMU
+    */
+   public GenericIMUManager(IMUDefinition imuDefinition, YoGenericIMU yoIMU, double dt, YoRegistry parentRegistry)
    {
       this.yoIMU = yoIMU;
 
@@ -108,8 +120,12 @@ public class GeneralIMUManager implements IMUManagerInterface
          });
 
          orientationInCorrectedIMUFrame = Optional.of(new YoFrameQuaternion(prefix + "OrientationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
-         angularVelocityInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
-         linearAccelerationInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
+         angularVelocityInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame",
+                                                                              correctedIMUFrame.get(),
+                                                                              registry));
+         linearAccelerationInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame",
+                                                                                 correctedIMUFrame.get(),
+                                                                                 registry));
 
          imuFrame = correctedIMUFrame.get();
       }
@@ -166,9 +182,11 @@ public class GeneralIMUManager implements IMUManagerInterface
       YoDouble h4IMUAngularVelocityFilterAlpha = new YoDouble(prefix + "h4IMUAngularVelocityFilterAlpha", registry);
       YoDouble h4IMULinearAccelerationFilterAlpha = new YoDouble(prefix + "h4IMULinearAccelerationFilterAlpha", registry);
 
-      filteredAngularVelocity = new AlphaFilteredYoFrameVector3D(prefix, "filteredAngularVelocity", registry, h4IMUAngularVelocityFilterAlpha,
-                                                                 imuFrame);
-      filteredLinearAcceleration = new AlphaFilteredYoFrameVector3D(prefix, "filteredLinearAcceleration", registry, h4IMULinearAccelerationFilterAlpha,
+      filteredAngularVelocity = new AlphaFilteredYoFrameVector3D(prefix, "filteredAngularVelocity", registry, h4IMUAngularVelocityFilterAlpha, imuFrame);
+      filteredLinearAcceleration = new AlphaFilteredYoFrameVector3D(prefix,
+                                                                    "filteredLinearAcceleration",
+                                                                    registry,
+                                                                    h4IMULinearAccelerationFilterAlpha,
                                                                     imuFrame);
 
       linearAccelerationInWorld = new YoFrameVector3D(prefix + "LinearAccelerationInWorld", worldFrame, registry);
@@ -201,14 +219,14 @@ public class GeneralIMUManager implements IMUManagerInterface
 
       // Update the Mahony filter. We pass in regular angular velocity because Mahony class will calculate and account for bias internally
       mahonyFilter.update(yoIMU.getAngularVelocity(), yoIMU.getUnbiasedLinearAcceleration());
-      yoIMU.setAngularVelocityBias(mahonyFilter.getIntegralTerm().getX(),
-                                   mahonyFilter.getIntegralTerm().getY(),
-                                   mahonyFilter.getIntegralTerm().getZ());
+      yoIMU.setAngularVelocityBias(mahonyFilter.getIntegralTerm().getX(), mahonyFilter.getIntegralTerm().getY(), mahonyFilter.getIntegralTerm().getZ());
       mahonyYawPitchRoll.set(mahonyFilter.getEstimatedOrientation());
 
       // Get our estimated orientation, estimated velocity (unbiased), and linear acceleration (unbiased)
       Tuple4DReadOnly orientation = mahonyFilter.getEstimatedOrientation();
-      Vector3DReadOnly angularVelocity = useMahoneyFilterAngularVelocity.getBooleanValue() ? mahonyFilter.getEstimatedAngularVelocity() : yoIMU.getUnbiasedAngularVelocity();
+      Vector3DReadOnly angularVelocity = useMahoneyFilterAngularVelocity.getBooleanValue() ?
+            mahonyFilter.getEstimatedAngularVelocity() :
+            yoIMU.getUnbiasedAngularVelocity();
       Vector3DReadOnly linearAcceleration = yoIMU.getUnbiasedLinearAcceleration();
 
       // Set the imu signals in the original, expected IMU frames provided by the URDF

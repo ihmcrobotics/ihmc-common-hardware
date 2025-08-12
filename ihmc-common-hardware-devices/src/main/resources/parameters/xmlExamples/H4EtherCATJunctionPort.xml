@@ -1,0 +1,7 @@
+<XmlH4EtherCATJunctionPort>
+    <name>junctionName</name>
+    <alias>0</alias>
+    <address>0</address>
+    <junctionPort>0</junctionPort>
+    <present>true</present>
+</XmlH4EtherCATJunctionPort>

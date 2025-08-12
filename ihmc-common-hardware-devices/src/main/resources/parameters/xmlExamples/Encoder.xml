@@ -1,0 +1,5 @@
+<XmlEncoder>
+    <name>sensorName</name>
+    <invertDirection>false</invertDirection>
+    <present>true</present>
+</XmlEncoder>

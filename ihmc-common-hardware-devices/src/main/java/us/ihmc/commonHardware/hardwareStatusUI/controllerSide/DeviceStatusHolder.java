@@ -41,6 +41,9 @@ public class DeviceStatusHolder
       update();
    }
 
+   /**
+    * Update the status of the device
+    */
    public void update()
    {
       setIsResponding(deviceStatusProvider.isResponding());
@@ -64,6 +67,9 @@ public class DeviceStatusHolder
       this.state.get().set(state);
    }
 
+   /**
+    * Add a state {@code YoEnum} if one hasn't already been created. If there already is one, nothing happens
+    */
    public void addStateDataHolder()
    {
       if (!this.state.hasValue())

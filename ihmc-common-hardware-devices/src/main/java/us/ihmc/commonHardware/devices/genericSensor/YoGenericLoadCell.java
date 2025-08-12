@@ -21,6 +21,17 @@ public class YoGenericLoadCell implements YoSensorInterface
    private final YoDouble yoNominalLoad;
    private final YoDouble yoExcitationVoltage;
 
+   /**
+    * Construct the yovariable wrapper for a generic load cell
+    *
+    * @param prefix             Prefix used for all yovariable names
+    * @param loadCell           Load cell to be yovariable-ized
+    * @param nominalSensitivity Nominal sensitivity of the load cell
+    * @param zeroBalance        Zero balance of the load cell
+    * @param nominalLoad        Nominal load of the load cell
+    * @param excitationVoltage  Excitation voltage of the load cell
+    * @param parentRegistry     Parent {@code YoRegistry} of the load cell
+    */
    public YoGenericLoadCell(String prefix,
                             LoadCellInterface loadCell,
                             double nominalSensitivity,
@@ -36,6 +47,12 @@ public class YoGenericLoadCell implements YoSensorInterface
       yoZeroBalance = new YoDouble(prefix + "ZeroBalance", registry);
       yoNominalLoad = new YoDouble(prefix + "NominalLoad", registry);
       yoExcitationVoltage = new YoDouble(prefix + "ExcitationVoltage", registry);
+
+      yoNominalSensitivity.set(nominalSensitivity);
+      yoZeroBalance.set(zeroBalance);
+      yoNominalLoad.set(nominalLoad);
+      yoExcitationVoltage.set(excitationVoltage);
+
       voltage = new YoDouble(prefix + "Voltage", registry);
       rawVoltage = new YoInteger(prefix + "RawVoltage", registry);
       force = new YoDouble(prefix + "Force", registry);

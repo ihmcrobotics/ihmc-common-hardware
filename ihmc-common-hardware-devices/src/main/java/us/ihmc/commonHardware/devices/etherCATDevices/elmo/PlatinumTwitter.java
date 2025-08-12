@@ -53,6 +53,13 @@ public abstract class PlatinumTwitter extends DSP402Slave
    private final int CURRENT_SHORT = 11;
    private final int OVER_TEMPERATURE = 13;
 
+   /**
+    * Creates the generic platinum twitter
+    *
+    * @param alias EtherCAT alias
+    * @param position EtherCAT position
+    * @param productCode Product code for the twitter
+    */
    public PlatinumTwitter(int alias, int position, TWITTER_PRODUCT_CODE productCode)
    {
       super(vendorID, productCode.getID(), alias, position);

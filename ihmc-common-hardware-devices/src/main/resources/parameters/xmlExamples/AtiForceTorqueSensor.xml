@@ -1,0 +1,12 @@
+<XmlAtiForceTorqueSensor>
+    <name>sensorName</name>
+    <alias>0</alias>
+    <address>0</address>
+    <present>true</present>
+    <fxOffset>0.0</fxOffset>
+    <fyOffset>0.0</fyOffset>
+    <fzOffset>0.0</fzOffset>
+    <txOffset>0.0</txOffset>
+    <tyOffset>0.0</tyOffset>
+    <tzOffset>0.0</tzOffset>
+</XmlAtiForceTorqueSensor>

@@ -1,8 +1,8 @@
 package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
-import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
-import us.ihmc.commonHardware.devices.MechanismManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
 import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
@@ -22,6 +22,11 @@ import us.ihmc.yoVariables.variable.YoLong;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * This class provides abstract structure for managing all the devices and mechanisms of a robot
+ *
+ * @author Reese Peterson
+ */
 public abstract class AbstractHardwareManager
 {
    protected final YoRegistry registry;
@@ -63,6 +68,12 @@ public abstract class AbstractHardwareManager
 
    protected RobotOverHeatedListener robotOverHeatedListener;
 
+   /**
+    * Constructs the hardware manager for the robot
+    * @param hardwareMap Contains objects to communicate with all devices and mechanisms
+    * @param clockTime Clock time of the robot
+    * @param parentRegistry Parent YoRegistry
+    */
    public AbstractHardwareManager(AbstractHardwareMap hardwareMap, DoubleProvider clockTime, YoRegistry parentRegistry)
    {
       registry = new YoRegistry(getClass().getSimpleName());
@@ -287,6 +298,9 @@ public abstract class AbstractHardwareManager
       return areMotorsFaulted;
    }
 
+   /**
+    * Interface used to define what happens when a robot overheats
+    */
    public static interface RobotOverHeatedListener
    {
       void changed(boolean hasRobotOverHeated);
