@@ -5,6 +5,7 @@ import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.referenceFrame.interfaces.FrameVector3DReadOnly;
 import us.ihmc.euclid.tuple3D.interfaces.Vector3DReadOnly;
+import us.ihmc.yoVariables.euclid.YoVector3D;
 import us.ihmc.yoVariables.euclid.referenceFrame.YoFrameVector3D;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -17,14 +18,14 @@ public class YoGenericIMU implements YoSensorInterface
    protected final YoRegistry registry;
    protected final IMUInterface imu;
 
-   protected final YoFrameVector3D angularVelocity;
-   protected final YoFrameVector3D rawAngularVelocity;
-   protected final YoFrameVector3D linearAcceleration;
-   protected final YoFrameVector3D rawLinearAcceleration;
-   protected final YoFrameVector3D unbiasedLinearAcceleration;
-   protected final YoFrameVector3D linearAccelerationBias;
-   protected final YoFrameVector3D angularVelocityBias;
-   protected final YoFrameVector3D unbiasedAngularVelocity;
+   protected final YoVector3D angularVelocity;
+   protected final YoVector3D rawAngularVelocity;
+   protected final YoVector3D linearAcceleration;
+   protected final YoVector3D rawLinearAcceleration;
+   protected final YoVector3D unbiasedLinearAcceleration;
+   protected final YoVector3D linearAccelerationBias;
+   protected final YoVector3D angularVelocityBias;
+   protected final YoVector3D unbiasedAngularVelocity;
    protected final YoDouble imuTemp;
 
    /**
@@ -40,14 +41,14 @@ public class YoGenericIMU implements YoSensorInterface
       this.imu = imu;
       registry = new YoRegistry(prefix + name);
 
-      angularVelocity = new YoFrameVector3D(prefix + "AngularVel", worldFrame, registry);
-      rawAngularVelocity = new YoFrameVector3D(prefix + "RawAngularVel", worldFrame, registry);
-      linearAcceleration = new YoFrameVector3D(prefix + "LinearAccel", worldFrame, registry);
-      rawLinearAcceleration = new YoFrameVector3D(prefix + "RawLinearAccel", worldFrame, registry);
-      unbiasedLinearAcceleration = new YoFrameVector3D(prefix + "UnbiasedLinearAccel", worldFrame, registry);
-      linearAccelerationBias = new YoFrameVector3D(prefix + "LinearAccelBias", worldFrame, registry);
-      unbiasedAngularVelocity = new YoFrameVector3D(prefix + "unbiasedAngularVelocity", worldFrame, registry);
-      angularVelocityBias = new YoFrameVector3D(prefix + "AngularVelBias", worldFrame, registry);
+      angularVelocity = new YoVector3D(prefix + "AngularVel", registry);
+      rawAngularVelocity = new YoVector3D(prefix + "RawAngularVel", registry);
+      linearAcceleration = new YoVector3D(prefix + "LinearAccel", registry);
+      rawLinearAcceleration = new YoVector3D(prefix + "RawLinearAccel", registry);
+      unbiasedLinearAcceleration = new YoVector3D(prefix + "UnbiasedLinearAccel", registry);
+      linearAccelerationBias = new YoVector3D(prefix + "LinearAccelBias", registry);
+      unbiasedAngularVelocity = new YoVector3D(prefix + "unbiasedAngularVelocity", registry);
+      angularVelocityBias = new YoVector3D(prefix + "AngularVelBias", registry);
 
       imuTemp = new YoDouble(prefix + "IMUTemp", registry);
 
@@ -57,7 +58,6 @@ public class YoGenericIMU implements YoSensorInterface
    @Override
    public void update()
    {
-
       angularVelocity.set(imu.getGyroX(), imu.getGyroY(), imu.getGyroZ());
       rawAngularVelocity.set(imu.getRawGyroX(), imu.getRawGyroY(), imu.getRawGyroZ());
 
@@ -81,9 +81,10 @@ public class YoGenericIMU implements YoSensorInterface
    public void setLinearAccelerationBias(double x, double y, double z)
    {
       linearAccelerationBias.set(x, y, z);
+      update();
    }
 
-   public FrameVector3DReadOnly getLinearAccelerationBias()
+   public Vector3DReadOnly getLinearAccelerationBias()
    {
       return linearAccelerationBias;
    }
@@ -99,9 +100,10 @@ public class YoGenericIMU implements YoSensorInterface
    public void setAngularVelocityBias(double x, double y, double z)
    {
       angularVelocityBias.set(x, y, z);
+      update();
    }
 
-   public FrameVector3DReadOnly getAngularVelocityBias()
+   public Vector3DReadOnly getAngularVelocityBias()
    {
       return angularVelocityBias;
    }
