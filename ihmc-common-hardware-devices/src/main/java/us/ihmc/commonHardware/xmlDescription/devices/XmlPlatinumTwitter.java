@@ -40,7 +40,7 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       return actuatorPackage;
    }
 
-   public boolean isUseLatestCode()
+   public boolean useLatestCode()
    {
       return useLatestCode;
    }

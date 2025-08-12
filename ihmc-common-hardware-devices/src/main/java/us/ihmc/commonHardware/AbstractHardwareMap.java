@@ -238,7 +238,7 @@ public abstract class AbstractHardwareMap
       int outputOffset = xmlPlatinumTwitter.getOutputOffset();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter;
-      if(xmlPlatinumTwitter.isUseLatestCode())
+      if(xmlPlatinumTwitter.useLatestCode())
          cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position);
       else
          cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position, TWITTER_PRODUCT_CODE.X00100002);
