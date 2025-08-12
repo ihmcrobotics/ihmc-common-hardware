@@ -2,6 +2,11 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidSILParameters;
 
+/**
+ * This class holds all the initial parameters for the SIL system run on the twitters.
+ * SIL is a user-defined, Simulink-based control system that is run on the twitters and provides
+ * compensation currents for Dahl friction, cogging, and linear damping.
+ */
 public class CycloidSILParameters
 {
    private double dahlFrictionForceGain;
@@ -12,11 +17,11 @@ public class CycloidSILParameters
    private double coggingOutputScalar;
    private double accelerationIntegrationScalar;
 
-   public CycloidSILParameters()
-   {
-
-   }
-
+   /**
+    * Construct the SIL parameters from an xml
+    *
+    * @param xmlCycloidSILParameters Holds the SIL parameters of the cycloid from an xml
+    */
    public CycloidSILParameters(XmlCycloidSILParameters xmlCycloidSILParameters)
    {
       dahlFrictionForceGain = xmlCycloidSILParameters.getFrictionGain();

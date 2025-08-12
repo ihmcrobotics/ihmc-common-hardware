@@ -3,61 +3,123 @@ package us.ihmc.commonHardware.hardwareStatusUI.visualizerSide;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
+import us.ihmc.commonHardware.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
 import us.ihmc.yoVariables.variable.YoBoolean;
 
 import java.util.ArrayList;
 
+/**
+ * Holds all the status information for a specific EtherCAT device, including identifying information, list of child devices, and statuses
+ */
 public class UIDeviceStatusHolder
 {
-   private final SimpleStringProperty name = new SimpleStringProperty();
-   private final SimpleStringProperty childDescription = new SimpleStringProperty();
-   private final SimpleStringProperty description = new SimpleStringProperty();
-   private final SimpleBooleanProperty isResponding = new SimpleBooleanProperty();
+   protected final SimpleStringProperty name = new SimpleStringProperty("");
+   protected final SimpleStringProperty childDescription = new SimpleStringProperty("");
+   protected final SimpleStringProperty description = new SimpleStringProperty("");
+   protected final SimpleBooleanProperty isResponding = new SimpleBooleanProperty(false);
 
-   private final SimpleStringProperty readStatus = new SimpleStringProperty();
-   private final SimpleStringProperty writeStatus = new SimpleStringProperty();
-   private final SimpleStringProperty state = new SimpleStringProperty();
+   protected final SimpleStringProperty readStatus = new SimpleStringProperty("");
+   protected final SimpleStringProperty writeStatus = new SimpleStringProperty("");
+   protected final SimpleStringProperty state = new SimpleStringProperty("");
 
-   private final SimpleStringProperty id = new SimpleStringProperty();
+   protected final SimpleStringProperty id = new SimpleStringProperty("");
 
-   private final AbstractUIHardwareStatusManager.DeviceType deviceType;
+   protected DeviceType deviceType;
 
-   private final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
+   protected final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
 
-   public UIDeviceStatusHolder(String name, String description, String childDescription, YoBoolean isResponding, YoEnumAsStringProperty<Slave.State> state, int position, int alias, AbstractUIHardwareStatusManager.DeviceType deviceType)
+   /**
+    * Create a UI device status holder for an EtherCAT device
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of the child device
+    * @param isResponding     {@code YoBoolean} to set and track if the device is responding
+    * @param state            Tracker of the state of the EtherCAT device
+    * @param position         EtherCAT position
+    * @param alias            EtherCAT alias
+    * @param deviceType       Type of device
+    */
+   public UIDeviceStatusHolder(String name,
+                               String description,
+                               String childDescription,
+                               YoBoolean isResponding,
+                               YoEnumAsStringProperty<Slave.State> state,
+                               int position,
+                               int alias,
+                               DeviceType deviceType)
    {
-      this(name, description, childDescription, isResponding.getBooleanValue(), "", "", state.getValue(), "", Integer.toString(position), Integer.toString(alias), deviceType);
+      initializeCommonProperties(name, description, childDescription, isResponding, deviceType);
 
-      isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
+      this.id.set("EtherCAT " + alias + "-" + position);
+      this.state.set(state.getValue());
+
       state.addListener(change -> this.state.set(state.getValue()));
    }
 
-   public UIDeviceStatusHolder(String name, String description, String childDescription, boolean isResponding, String readStatus, String writeStatus, String state, String canID, String position, String alias, AbstractUIHardwareStatusManager.DeviceType deviceType)
+   /**
+    * Create a device status holder for a CAN device
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of the child device
+    * @param isResponding     {@code YoBoolean} to set and track if the device is responding
+    * @param readStatus       Initial CAN read status of the device
+    * @param writeStatus      Initial CAN write status of the device
+    * @param canID            ID of the device
+    * @param deviceType       Type of device
+    */
+   public UIDeviceStatusHolder(String name,
+                               String description,
+                               String childDescription,
+                               YoBoolean isResponding,
+                               String readStatus,
+                               String writeStatus,
+                               String canID,
+                               DeviceType deviceType)
    {
-      this.name.set(name);
-      this.description.set(description);
-      this.childDescription.set(childDescription);
-      this.isResponding.set(isResponding);
+      initializeCommonProperties(name, description, childDescription, isResponding, deviceType);
 
       this.readStatus.set(readStatus);
       this.writeStatus.set(writeStatus);
-      this.state.set(state);
-
       this.id.set("CAN " + canID);
-
-      if (!position.isEmpty() && !alias.isEmpty())
-         this.id.set("EtherCAT " + alias + "-" + position);
 
       this.deviceType = deviceType;
    }
 
+   /**
+    * Initialize any common properties between types of devices
+    *
+    * @param name             Name of the device
+    * @param description      Description of the device
+    * @param childDescription Description of a child of the device
+    * @param isResponding     {@code YoBoolean} tracking if the device is responding
+    * @param deviceType       Type of device being initialized
+    */
+   private void initializeCommonProperties(String name, String description, String childDescription, YoBoolean isResponding, DeviceType deviceType)
+   {
+      this.name.set(name);
+      this.description.set(description);
+      this.childDescription.set(childDescription);
+      this.isResponding.set(isResponding.getBooleanValue());
+      this.deviceType = deviceType;
+
+      isResponding.addListener(change -> this.isResponding.set(isResponding.getBooleanValue()));
+   }
+
+   /**
+    * @param listener Listener to track if device is responding
+    */
    public void addDataBooleanChangeListener(ChangeListener<? super Boolean> listener)
    {
       isResponding.addListener(listener);
    }
 
+   /**
+    * @param listener Listener to track any changes in read status, write status, or state
+    */
    public void addDataStringChangeListener(ChangeListener<? super String> listener)
    {
       readStatus.addListener(listener);
@@ -65,6 +127,11 @@ public class UIDeviceStatusHolder
       state.addListener(listener);
    }
 
+   /**
+    * Add a child device to the list of child devices
+    *
+    * @param childDevice Child device to be added
+    */
    public void addChildDevice(UIDeviceStatusHolder childDevice)
    {
       this.childDevices.add(childDevice);
@@ -115,7 +182,7 @@ public class UIDeviceStatusHolder
       return id.get();
    }
 
-   public AbstractUIHardwareStatusManager.DeviceType getDeviceType()
+   public DeviceType getDeviceType()
    {
       return deviceType;
    }

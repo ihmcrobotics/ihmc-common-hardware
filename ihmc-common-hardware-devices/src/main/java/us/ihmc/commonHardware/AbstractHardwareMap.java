@@ -1,8 +1,8 @@
 package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
-import us.ihmc.commonHardware.devices.ForceSensorManagerInterface;
-import us.ihmc.commonHardware.devices.MechanismManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.cycloids.CycloidPlatinumTwitter;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
@@ -11,47 +11,59 @@ import us.ihmc.commonHardware.devices.etherCATDevices.h4.H4EtherCATJunctionPort;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.H4IMU;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.YoH4IMU;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
+import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksEncoder;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksIMU;
+import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksLoadCell;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksTemperatureSensor;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.YoTemperatureSensor;
-import us.ihmc.commonHardware.devices.genericIMU.GeneralIMUManager;
-import us.ihmc.commonHardware.devices.genericIMU.IMUManagerInterface;
-import us.ihmc.commonHardware.devices.genericIMU.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.GenericIMUManager;
+import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericEncoder;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.HardwareStatusManager;
-import us.ihmc.commonHardware.mechanisms.CycloidMotorMechanismManager;
+import us.ihmc.commonHardware.mechanisms.CycloidMechanismManager;
 import us.ihmc.commonHardware.xmlDescription.XmlHardwareDescription;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlDevices;
+import us.ihmc.commonHardware.xmlDescription.devices.XmlEncoder;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlH4EtherCATJunctionPort;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlIMU;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlIMUType;
+import us.ihmc.commonHardware.xmlDescription.devices.XmlLoadCell;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlPlatinumTwitter;
 import us.ihmc.commonHardware.xmlDescription.devices.XmlTemperatureSensor;
 import us.ihmc.commonHardware.xmlDescription.joints.XmlJoints;
-import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMotorMechanism;
+import us.ihmc.commonHardware.xmlDescription.transmissions.XmlCycloidMechanism;
 import us.ihmc.commonHardware.xmlDescription.transmissions.XmlTransmissions;
 import us.ihmc.etherCAT.master.MasterInterface;
 import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.graphicsDescription.yoGraphics.YoGraphicsListRegistry;
 import us.ihmc.log.LogTools;
 import us.ihmc.robotics.outputData.JointDesiredOutput;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+import us.ihmc.sensorProcessing.simulatedSensors.StateEstimatorSensorDefinitions;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class provides abstract structure for the hardware map of any robot we develop. It creates
+ * the devices, transmissions, and joints that describe the robot based on the provided xml files.
+ *
+ * @author Reese Peterson
+ */
 public abstract class AbstractHardwareMap
 {
    protected final YoRegistry registry = new YoRegistry("HardwareMap");
-   protected final YoGraphicsListRegistry yoGraphicsListRegistry;
    protected final MasterInterface etherCATMaster;
    protected final double dt;
    protected final YoDouble yoTime;
@@ -83,19 +95,46 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
+   /**
+    * Construct the hardware map for the robot
+    *
+    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param dt                      desired control timesteo
+    * @param yoTime                  YoDouble that holds the current time of the robot
+    * @param parentRegistry          Parent YoRegistry
+    */
    public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
                               MasterInterface etherCATMaster,
                               double dt,
                               YoDouble yoTime,
-                              YoRegistry parentRegistry,
-                              YoGraphicsListRegistry yoGraphicsListRegistry)
+                              YoRegistry parentRegistry)
+   {
+      this(xmlHardwareDescriptions, etherCATMaster, null, dt, yoTime, parentRegistry);
+   }
+
+   /**
+    * Construct the hardware map for the robot
+    *
+    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param stateEstimatorSensorDefinitions Sensor definitions for the state estimator. If there is no state estimator, then leave as null
+    * @param dt                      desired control timesteo
+    * @param yoTime                  YoDouble that holds the current time of the robot
+    * @param parentRegistry          Parent YoRegistry
+    */
+   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+                              MasterInterface etherCATMaster,
+                              @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
+                              double dt,
+                              YoDouble yoTime,
+                              YoRegistry parentRegistry)
    {
       this.yoTime = yoTime;
-      this.yoGraphicsListRegistry = yoGraphicsListRegistry;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
-      createSensorDefinitions();
+      createSensorDefinitions(stateEstimatorSensorDefinitions);
 
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
@@ -157,7 +196,12 @@ public abstract class AbstractHardwareMap
       }
    }
 
-   protected abstract void createSensorDefinitions();
+   /**
+    * Create the sensor definitions for all devices
+    *
+    * @param stateEstimatorSensorDefinitions If not null, use the definitions provided to create the sensor definitions
+    */
+   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
@@ -187,13 +231,13 @@ public abstract class AbstractHardwareMap
       int alias = xmlIMU.getAlias();
       int position = xmlIMU.getPosition();
 
-      double angularBiasX = xmlIMU.getAngularBiasX();
-      double angularBiasY = xmlIMU.getAngularBiasY();
-      double angularBiasZ = xmlIMU.getAngularBiasZ();
+      double angularBiasX = xmlIMU.getAngularVelocityBiasX();
+      double angularBiasY = xmlIMU.getAngularVelocityBiasY();
+      double angularBiasZ = xmlIMU.getAngularVelocityBiasZ();
 
-      double linearBiasX = xmlIMU.getLinearBiasX();
-      double linearBiasY = xmlIMU.getLinearBiasY();
-      double linearBiasZ = xmlIMU.getLinearBiasZ();
+      double linearBiasX = xmlIMU.getLinearAccelerationBiasX();
+      double linearBiasY = xmlIMU.getLinearAccelerationBiasY();
+      double linearBiasZ = xmlIMU.getLinearAccelerationBiasZ();
 
       if (type == XmlIMUType.H4)
       {
@@ -203,7 +247,7 @@ public abstract class AbstractHardwareMap
          yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
          yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
 
-         GeneralIMUManager imuManager = new GeneralIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+         GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
          System.out.println("Registering " + name + " on " + alias + ":" + position);
 
@@ -231,7 +275,12 @@ public abstract class AbstractHardwareMap
       int inputOffset = xmlPlatinumTwitter.getInputOffset();
       int outputOffset = xmlPlatinumTwitter.getOutputOffset();
 
-      CycloidPlatinumTwitter cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position, TWITTER_PRODUCT_CODE.X00100002);
+      CycloidPlatinumTwitter cycloidPlatinumTwitter;
+      if(xmlPlatinumTwitter.useLatestCode())
+         cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position);
+      else
+         cycloidPlatinumTwitter = new CycloidPlatinumTwitter(alias, position, TWITTER_PRODUCT_CODE.X00100002);
+
       YoCycloidPlatinumTwitter yoCycloidPlatinumTwitter = new YoCycloidPlatinumTwitter(name,
                                                                                        cycloidPlatinumTwitter,
                                                                                        yoTime,
@@ -251,7 +300,12 @@ public abstract class AbstractHardwareMap
       hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
    }
 
-   protected void createCycloidMechanismManager(XmlCycloidMotorMechanism mechanism, double dt)
+   /**
+    * Create the cycloid mechanism manager described in the xml
+    *
+    * @param mechanism mechanism information from the xmls
+    */
+   protected void createCycloidMechanismManager(XmlCycloidMechanism mechanism)
    {
       String jointName = mechanism.getJointName();
       String motorName = mechanism.getMotorName();
@@ -260,37 +314,37 @@ public abstract class AbstractHardwareMap
       double lowerLimit = mechanism.getLowerJointLimit();
       double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
 
-      CycloidMotorMechanismManager cycloidMotorMechanismManager = createCycloidMechanismManager(jointName,
-                                                                                                motorName,
-                                                                                                jointOffset,
-                                                                                                lowerLimit,
-                                                                                                upperLimit,
-                                                                                                torqueBreakFrequency); //TODO add joint limits to xml
-      mechanismManagers.add(cycloidMotorMechanismManager);
-      measuredJointData.put(cycloidMotorMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
-      desiredJointData.put(cycloidMotorMechanismManager.getName(), new JointDesiredOutput());
+      CycloidMechanismManager cycloidMechanismManager = createCycloidMechanismManager(jointName,
+                                                                                      motorName,
+                                                                                      jointOffset,
+                                                                                      lowerLimit,
+                                                                                      upperLimit,
+                                                                                      torqueBreakFrequency); //TODO add joint limits to xml
+      mechanismManagers.add(cycloidMechanismManager);
+      measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
+      desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
    }
 
-   protected CycloidMotorMechanismManager createCycloidMechanismManager(String jointName,
-                                                                        String motorName,
-                                                                        double jointOffset,
-                                                                        double jointLimitLower,
-                                                                        double jointLimitUpper,
-                                                                        double torqueBreakFrequency)
+   protected CycloidMechanismManager createCycloidMechanismManager(String jointName,
+                                                                   String motorName,
+                                                                   double jointOffset,
+                                                                   double jointLimitLower,
+                                                                   double jointLimitUpper,
+                                                                   double torqueBreakFrequency)
    {
       YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
       nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
 
-      return new CycloidMotorMechanismManager(jointOffset,
-                                              jointLimitLower,
-                                              jointLimitUpper,
-                                              jointName,
-                                              platinumTwitter,
-                                              yoTime,
-                                              this.dt,
-                                              doCycloidPDControlOnTwitters,
-                                              torqueBreakFrequency,
-                                              registry);
+      return new CycloidMechanismManager(jointOffset,
+                                         jointLimitLower,
+                                         jointLimitUpper,
+                                         jointName,
+                                         platinumTwitter,
+                                         yoTime,
+                                         this.dt,
+                                         doCycloidPDControlOnTwitters,
+                                         torqueBreakFrequency,
+                                         registry);
    }
 
    /**
@@ -325,13 +379,13 @@ public abstract class AbstractHardwareMap
    {
       String name = xmlIMU.getName();
 
-      double angularBiasX = xmlIMU.getAngularBiasX();
-      double angularBiasY = xmlIMU.getAngularBiasY();
-      double angularBiasZ = xmlIMU.getAngularBiasZ();
+      double angularBiasX = xmlIMU.getAngularVelocityBiasX();
+      double angularBiasY = xmlIMU.getAngularVelocityBiasY();
+      double angularBiasZ = xmlIMU.getAngularVelocityBiasZ();
 
-      double linearBiasX = xmlIMU.getLinearBiasX();
-      double linearBiasY = xmlIMU.getLinearBiasY();
-      double linearBiasZ = xmlIMU.getLinearBiasZ();
+      double linearBiasX = xmlIMU.getLinearAccelerationBiasX();
+      double linearBiasY = xmlIMU.getLinearAccelerationBiasY();
+      double linearBiasZ = xmlIMU.getLinearAccelerationBiasZ();
 
       EtherSnacksIMU imu = new EtherSnacksIMU(name);
       YoGenericIMU yoImu = new YoGenericIMU(name, imu, registry);
@@ -339,7 +393,7 @@ public abstract class AbstractHardwareMap
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
 
-      GeneralIMUManager imuManager = new GeneralIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+      GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
       imuManagers.add(imuManager);
       measuredIMUData.put(imuManager.getName(), new ImuData());
@@ -347,76 +401,163 @@ public abstract class AbstractHardwareMap
       return imu;
    }
 
+   /**
+    * Create encoder for an ethersnacks board
+    *
+    * @param xmlEncoder Encoder to be initialized
+    * @param parentName name of the parent board
+    * @return ethersnacks IMU object
+    */
+   protected EtherSnacksEncoder createEtherSnacksEncoder(XmlEncoder xmlEncoder, String parentName)
+   {
+      String name = xmlEncoder.getName();
+
+      EtherSnacksEncoder encoder = new EtherSnacksEncoder(name);
+      YoGenericEncoder yoEncoder = new YoGenericEncoder(name, encoder, xmlEncoder.isInvertDirection(), dt, registry);
+
+      yoEtherSnacksSensors.add(yoEncoder);
+
+      return encoder;
+   }
+
+   /**
+    * Create load cell for an ethersnacks board
+    *
+    * @param xmlLoadCell Load cell to be initialized
+    * @param parentName  name of the parent board
+    * @return ethersnacks IMU object
+    */
+   protected EtherSnacksLoadCell createEtherSnacksLoadCell(XmlLoadCell xmlLoadCell, String parentName)
+   {
+      String name = xmlLoadCell.getName();
+      double excitationVoltage = xmlLoadCell.getExcitationVoltage();
+      double nominalLoad = xmlLoadCell.getNominalLoad();
+      double nominalSensitivity = xmlLoadCell.getNominalSensitivity();
+      double zeroBalance = xmlLoadCell.getZeroBalance();
+
+      EtherSnacksLoadCell loadCell = new EtherSnacksLoadCell(name);
+      YoGenericLoadCell yoLoadCell = new YoGenericLoadCell(name, loadCell, nominalSensitivity, zeroBalance, nominalLoad, excitationVoltage, registry);
+
+      yoEtherSnacksSensors.add(yoLoadCell);
+
+      return loadCell;
+   }
+
+   /**
+    * @return array of ethercat devices
+    */
    public Slave[] getEtherCATDevices()
    {
       return etherCATDevices.toArray(new Slave[0]);
    }
 
+   /**
+    * @return array of all IMU managers
+    */
    public IMUManagerInterface[] getImuManagers()
    {
       return imuManagers.toArray(new IMUManagerInterface[0]);
    }
 
-   public Map<String, ImuData> getMeasuredImuData()
-   {
-      return measuredIMUData;
-   }
-
-   public YoCycloidPlatinumTwitter[] getCycloidActuators()
+   /**
+    * @return array of all cycloid platinum twitters
+    */
+   public YoCycloidPlatinumTwitter[] getCycloidTwitters()
    {
       return cycloidTwitters.toArray(new YoCycloidPlatinumTwitter[0]);
    }
 
+   /**
+    * @return array of all ethersnacks boards
+    */
    public EtherSnacksBoardInterface[] getEtherSnacksBoards()
    {
       return etherSnacksBoards.toArray(new EtherSnacksBoardInterface[0]);
    }
 
+   /**
+    * @return array of all ethersnacks sensors
+    */
    public YoSensorInterface[] getYoEtherSnacksSensors()
    {
       return yoEtherSnacksSensors.toArray(new YoSensorInterface[0]);
    }
 
+   /**
+    * @return array of all mechanism managers
+    */
    public MechanismManagerInterface[] getMechanismManagers()
    {
       return mechanismManagers.toArray(new MechanismManagerInterface[0]);
    }
 
+   /**
+    * @return array of joint names as strings
+    */
    public String[] getJointNames()
    {
       return jointNames;
    }
 
+   /**
+    * @return array of IMU sensor names as strings
+    */
    public String[] getIMUNames()
    {
       return imuNames;
    }
 
+   /**
+    * @return array of force sensor names as strings
+    */
    public String[] getForceSensorNames()
    {
       return forceSensorNames;
    }
 
+   /**
+    * @return array of all force sensor managers
+    */
    public ForceSensorManagerInterface[] getForceSensorManagers()
    {
       return forceSensorManagers.toArray(new ForceSensorManagerInterface[0]);
    }
 
-   public Map<String, DMatrixRMaj> getMeasuredFTData()
+   /**
+    * @return map tying measured IMU data to the specific imu sensor name
+    */
+   public Map<String, ImuData> getMeasuredImuData()
+   {
+      return measuredIMUData;
+   }
+
+   /**
+    * @return map tying force sensor data to the respective force sensor name
+    */
+   public Map<String, DMatrixRMaj> getMeasuredForceSensorData()
    {
       return forceSensorData;
    }
 
+   /**
+    * @return map tying measured joint data to the respective joint name
+    */
    public Map<String, LowLevelState> getMeasuredJointData()
    {
       return measuredJointData;
    }
 
+   /**
+    * @return map tying desired joint data to the respective joint name
+    */
    public Map<String, JointDesiredOutputBasics> getDesiredJointData()
    {
       return desiredJointData;
    }
 
+   /**
+    * @return hardware status manager for the robot
+    */
    public HardwareStatusManager getHardwareStatusManager()
    {
       return hardwareStatusManager;

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<XmlHardware>
+    <devices>
+        <!--Add devices here!-->
+    </devices>
+    <transmissions>
+        <!--Add transmissions here!-->
+    </transmissions>
+    <joints>
+        <!--Add joints here, if applicable-->
+    </joints>
+    <priority>
+        <!--Add priorities here!-->
+    </priority>
+    <settings>
+        <!--Add settings here!-->
+    </settings>
+</XmlHardware>

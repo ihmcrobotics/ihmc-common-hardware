@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.hardwareStatusUI.controllerSide;
 
 import us.ihmc.commonHardware.xmlDescription.devices.AbstractXmlDevice;
+import us.ihmc.commonHardware.xmlDescription.devices.AbstractXmlEtherCATDevice;
 import us.ihmc.yoVariables.registry.YoRegistry;
 
 import java.util.ArrayList;
@@ -22,24 +23,35 @@ public class HardwareStatusManager
       parentRegistry.addChild(registry);
    }
 
+   /**
+    * Registers a generic device and status provider by creating a {@code DeviceStatusHolder} and adding it to the list
+    *
+    * @param xmlDevice            Generic device description taken from an xml
+    * @param deviceStatusProvider Status provider for the specific device
+    */
    public void registerDevice(AbstractXmlDevice xmlDevice, DeviceStatusProvider deviceStatusProvider)
    {
       deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry));
    }
 
-   public void registerDevice(AbstractXmlDevice xmlDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
+   /**
+    * Registers a generic EtherSnacks daughter device and status provider by creating a {@code DeviceStatusHolder} and adding it to the list
+    *
+    * @param xmlDaughterDevice            EtherSnacks daughter device to be added
+    * @param xmlParentDevice      Parent EtherSnacks board
+    * @param deviceStatusProvider Status provider for the EtherSnacks device
+    */
+   public void registerDevice(AbstractXmlDevice xmlDaughterDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
    {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry));
+      deviceStatusHolders.add(new DeviceStatusHolder(xmlDaughterDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry));
    }
 
-   public void registerDevice(AbstractXmlDevice xmlDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
-   {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry));
-   }
-
+   /**
+    * Run through and update all the device statuses
+    */
    public void updateDeviceStatusHolders()
    {
-      for (int i = 0; i < deviceStatusHolders.size(); i ++)
+      for (int i = 0; i < deviceStatusHolders.size(); i++)
          deviceStatusHolders.get(i).update();
    }
 }

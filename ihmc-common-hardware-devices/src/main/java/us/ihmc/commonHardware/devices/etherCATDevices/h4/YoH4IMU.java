@@ -1,6 +1,6 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4;
 
-import us.ihmc.commonHardware.devices.genericIMU.YoGenericIMU;
+import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
@@ -13,6 +13,13 @@ public class YoH4IMU extends YoGenericIMU
 
    private final H4IMU h4IMU;
 
+   /**
+    * Create a yovariable wrapper for an H4 IMU
+    *
+    * @param prefix Prefix applied to all yovariable names
+    * @param imu The H4 IMU
+    * @param registry Parent registry
+    */
    public YoH4IMU(String prefix, H4IMU imu, YoRegistry registry)
    {
       super(prefix, imu, registry);

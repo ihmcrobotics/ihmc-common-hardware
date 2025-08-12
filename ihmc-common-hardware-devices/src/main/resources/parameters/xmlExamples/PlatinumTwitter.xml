@@ -1,0 +1,10 @@
+<XmlPlatinumTwitter>
+    <name>motorName</name>
+    <alias>0</alias>
+    <address>0</address>
+    <actuatorPackage>packageName</actuatorPackage>
+    <reversePositiveMotorDirection>false</reversePositiveMotorDirection>
+    <inputOffset>0</inputOffset>
+    <outputOffset>0</outputOffset>
+    <present>true</present>
+</XmlPlatinumTwitter>
