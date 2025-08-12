@@ -45,6 +45,11 @@ public class EtherSnacksIMU implements IMUInterface
       this.temperatureOffset = temperatureOffset;
    }
 
+   public void setConversionFactors(double accelerationConversion, double gyroConversion)
+   {
+      this.setConversionFactors(accelerationConversion, gyroConversion, 1.0, 0.0);
+   }
+
    public void setConversionFactors(double accelerationConversion, double gyroConversion, double temperatureScale, double temperatureOffset)
    {
       this.accelerationConversion = accelerationConversion;
