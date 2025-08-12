@@ -2,5 +2,5 @@ package us.ihmc.commonHardware.xmlDescription.devices;
 
 public enum XmlEtherSnacksBoardType
 {
-   ALEXANDER;
+   ALEXANDER, NADIA_ARM;
 }
