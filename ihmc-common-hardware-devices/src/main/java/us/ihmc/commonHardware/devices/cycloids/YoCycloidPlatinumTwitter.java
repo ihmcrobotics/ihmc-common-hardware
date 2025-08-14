@@ -193,7 +193,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoInteger rawOutputPositionOffset;
    private final YoInteger rawInputPositionOffset;
    private final YoDouble encoderDifferenceAtOutput;
-   private final YoBoolean checkEncoderOffsets;
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
    private final int inputCountsPerRevolution;
@@ -285,9 +284,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       rawOutputPositionOffset.set(outputOffset);
 
       encoderDifferenceAtOutput = new YoDouble(name + "EncoderDifferenceAtOutput", registry);
-
-      checkEncoderOffsets = new YoBoolean(name + "UpdateEncoderOffsets", registry);
-      checkEncoderOffsets.set(true);
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
 
@@ -614,10 +610,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       sil_accelerationIntegrationMeasuredMotorPosition.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
       sil_accelerationIntegrationMeasuredMotorVelocity.set(platinumTwitter.getSILDesiredTotalCurrent());
 
-      inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
-      inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
-      outputEncoderWarningValue.set(platinumTwitter.getSocket2Warning());
-      outputEncoderErrorValue.set(platinumTwitter.getSocket2Error());
+//      inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
+//      inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
+//      outputEncoderWarningValue.set(platinumTwitter.getSocket2Warning());
+//      outputEncoderErrorValue.set(platinumTwitter.getSocket2Error());
 
       updateEncoderStates();
 
@@ -707,11 +703,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
-      if (checkEncoderOffsets.getBooleanValue())
-      {
-         checkAndUpdateEncoderOffsets();
-         checkEncoderOffsets.set(false);
-      }
+
+      checkAndUpdateEncoderOffsets();
    }
 
    /**
@@ -804,8 +797,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       // Set the actual objectives for the drive. This includes the desired motor encoder counts, the desired motor encoder counts per second, and the
       // desired percentage of max effort, -1000 to 1000.
-      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
-      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
+//      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
+//      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
       platinumTwitter.setPercentageMaxEffort(rawDesiredMotorEffortPercentage.getIntegerValue());
 
       platinumTwitter.setR2NVMSaveFlag(saveR2ToNVM.getBooleanValue());
@@ -888,6 +881,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             rawOutputPositionOffset.add(outputCountsPerRevolution);
          else
             rawOutputPositionOffset.add(rotationInterval * outputCountsPerRevolution);
+         LogTools.info("Output position for " + getName() + " was too big");
       }
       if (difference <= -outputCountsPerRevolution / 2)
       {
@@ -895,7 +889,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             rawOutputPositionOffset.sub(outputCountsPerRevolution);
          else
             rawOutputPositionOffset.sub(rotationInterval * outputCountsPerRevolution);
+         LogTools.info("Output position for " + getName() + " was too small");
       }
+
+      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
+      measuredOutputPosition.set(currentMeasuredOutputPosition);
    }
 
    /**
@@ -912,6 +911,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
          else
             rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+         LogTools.info("Input position for " + getName() + " was too big, updating");
       }
       if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
       {
@@ -919,7 +919,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
          else
             rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+         LogTools.info("Input position for " + getName() + " was too small, updating");
       }
+
+      // convert the motor encoder count measurement to the motor position in radians. Flip the sign here if the directionality is reversed
+      int currentRawMotorPosition = rawMeasuredMotorPosition.getIntegerValue() - rawInputPositionOffset.getIntegerValue();
+      double currentMeasuredMotorPosition = motorDirection.getDoubleValue() * currentRawMotorPosition * motorEncoderCountsToMotorRadians;
+
+      // update the actual measured position of the motor
+      measuredMotorPosition.set(currentMeasuredMotorPosition);
    }
 
    /**
@@ -928,11 +936,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
-      //Set the output position based on new offset
-      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
-      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
-      measuredOutputPosition.set(currentMeasuredOutputPosition);
-
       checkAndUpdateInputOffset();
    }
 

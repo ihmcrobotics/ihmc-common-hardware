@@ -43,11 +43,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
 
       Unsigned16 controlWord = new Unsigned16(); //0x6040
       Unsigned8 modeOfOperation = new Unsigned8(); //0x6060
-      Signed32 targetPosition = new Signed32(); //0x607a
-      Signed32 targetVelocity = new Signed32(); //0x607a
-      Signed32 positionOffset = new Signed32(); //0x607a
       Signed16 targetTorquePercentage = new Signed16(); //0x6071
-      Signed32 velocityOffset = new Signed32(); //0x607a
    }
 
    /**
@@ -146,12 +142,11 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
          super(0x1A02);
       }
 
-      Float64 sil_Socket1Warning = new Float64();
-      Float64 sil_Socket1Error = new Float64();
-      Float64 sil_Socket2Warning = new Float64();
-      Float64 sil_Socket2Error = new Float64();
+//      Float64 sil_Socket1Warning = new Float64();
+//      Float64 sil_Socket1Error = new Float64();
+//      Float64 sil_Socket2Warning = new Float64();
+//      Float64 sil_Socket2Error = new Float64();
       Unsigned16 errorRegister = new Unsigned16();
-      //Float64 measuredAnalogInput = new Float64(); // TODO Implement if needed
    }
 
    public CycloidPlatinumTwitter(int alias, int ringPosition)
@@ -230,45 +225,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       // Configure RPDOs
       verifyWorkingCounter(writeSDO(0x1C12, 0, (byte) 0), "failed to write to 0x1C12");
 
-      //1600 PDO
-      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
-      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(0x6040, 0, 16)), "failed to write to 0x1600 - 0x6040"); // control word
-      verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(0x6060, 0, 8)), "failed to write to 0x1600 - 0x6060"); // mode of operation
-      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x607A, 0, 32)), "failed to write to 0x1600 - 0x607A"); // target position
-      verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(0x60FF, 0, 32)), "failed to write to 0x1600 - 0x60FF"); // target velocity
-      verifyWorkingCounter(writeSDO(0x1600, 5, computePdoMapValue(0x60B0, 0, 32)), "failed to write to 0x1600 - 0x60B0"); // position offset
-      verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071"); // torque demand
-      verifyWorkingCounter(writeSDO(0x1600, 7, computePdoMapValue(0x60B1, 0, 32)), "failed to write to 0x1600 - 0x60B1"); // velocity offset
-      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 7), "failed to write to 0x1600 - 0x7"); // num elements in 0x1600 (max 8)
-
-      //1601 PDO
-      verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
-      verifyWorkingCounter(writeSDO(0x1601, 1, computePdoMapValue(0x22F3, 2, 32)), "failed to write to 0x1600 - 0x22F3"); //    R1 index 2
-
-      verifyWorkingCounter(writeSDO(0x1601, 2, computePdoMapValue(0x22F4, 1, 64)), "failed to write to 0x1600 - 0x22F4 1"); //  R2 index 1
-      verifyWorkingCounter(writeSDO(0x1601, 3, computePdoMapValue(0x22F4, 2, 64)), "failed to write to 0x1600 - 0x22F4 2"); // R2 index 2
-      verifyWorkingCounter(writeSDO(0x1601, 4, computePdoMapValue(0x22F4, 3, 64)), "failed to write to 0x1600 - 0x22F4 3"); // R2 index 3
-
-      verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(0x22F4, 10, 64)), "failed to write to 0x1600 - 0x22F4 10"); // R2 index 10
-      verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(0x22F4, 11, 64)), "failed to write to 0x1600 - 0x22F4 11"); // R2 index 11
-      verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(0x22F4, 12, 64)), "failed to write to 0x1600 - 0x22F4 12"); // R2 index 12
-      verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1600 (max 8)
-
-      //1602 PDO
-      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
-
-      verifyWorkingCounter(writeSDO(0x1602, 1, computePdoMapValue(0x22F4, 51, 64)), "failed to write to 0x1600 - 0x22F4"); //   Desired Position R2[51] 
-      verifyWorkingCounter(writeSDO(0x1602, 2, computePdoMapValue(0x22F4, 52, 64)), "failed to write to 0x1600 - 0x22F4 1"); // Desired Velocity R2[52]
-
-      verifyWorkingCounter(writeSDO(0x1602, 3, computePdoMapValue(0x22F4, 55, 64)), "failed to write to 0x1600 - 0x22F4 2"); // Stiffness R2[55]
-      verifyWorkingCounter(writeSDO(0x1602, 4, computePdoMapValue(0x22F4, 56, 64)), "failed to write to 0x1600 - 0x22F4 3"); // Damping R2[56]
-
-      verifyWorkingCounter(writeSDO(0x1602, 5, computePdoMapValue(0x22F4, 53, 64)), "failed to write to 0x1600 - 0x22F4"); //   Max position error R2[53]
-      verifyWorkingCounter(writeSDO(0x1602, 6, computePdoMapValue(0x22F4, 54, 64)), "failed to write to 0x1600 - 0x22F4 1"); // Max velocity error R2[54]
-      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(0x22F4, 13, 64)),
-                           "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
-
-      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1602 (max 8)
+      configureRPDO1600();
+      configureRPDO1601();
+      configureRPDO1602();
 
       verifyWorkingCounter(writeSDO(0x1C12, 1, (short) 0x1600), "failed to write to 0x1C12 -- 0x1600");
       verifyWorkingCounter(writeSDO(0x1C12, 2, (short) 0x1601), "failed to write to 0x1C12 -- 0x1601");
@@ -279,23 +238,93 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       // Configure TPDOS
       verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 0), "failed to write to 0x1C13");
 
-      // tpdo_1a00
+      configureTPDO1A00();
+      configureTPDO1A01();
+      configureTPDO1A02();
+
+      verifyWorkingCounter(writeSDO(0x1C13, 1, (short) 0x1A00), "failed to write to 0x1C13 -- 0x1A00");
+      verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
+      verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
+      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 3), "failed to write to 0x1C13 -- 0x2");
+   }
+
+   /**
+    * Configure the RPDO connected to 0x1600 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureRPDO1600()
+   {
+      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
+
+      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(0x6040, 0, 16)), "failed to write to 0x1600 - 0x6040"); // control word
+      verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(0x6060, 0, 8)), "failed to write to 0x1600 - 0x6060"); // mode of operation
+      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071"); // torque demand
+
+      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 3), "failed to write to 0x1600 - 0x3"); // num elements in 0x1600 (max 8)
+   }
+
+   /**
+    * Configure the RPDO connected to 0x1601 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureRPDO1601()
+   {
+      verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
+
+      verifyWorkingCounter(writeSDO(0x1601, 1, computePdoMapValue(0x22F3, 2, 32)), "failed to write to 0x1600 - 0x22F3"); //    R1 index 2
+      verifyWorkingCounter(writeSDO(0x1601, 2, computePdoMapValue(0x22F4, 1, 64)), "failed to write to 0x1600 - 0x22F4 1"); //  R2 index 1
+      verifyWorkingCounter(writeSDO(0x1601, 3, computePdoMapValue(0x22F4, 2, 64)), "failed to write to 0x1600 - 0x22F4 2"); // R2 index 2
+      verifyWorkingCounter(writeSDO(0x1601, 4, computePdoMapValue(0x22F4, 3, 64)), "failed to write to 0x1600 - 0x22F4 3"); // R2 index 3
+      verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(0x22F4, 10, 64)), "failed to write to 0x1600 - 0x22F4 10"); // R2 index 10
+      verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(0x22F4, 11, 64)), "failed to write to 0x1600 - 0x22F4 11"); // R2 index 11
+      verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(0x22F4, 12, 64)), "failed to write to 0x1600 - 0x22F4 12"); // R2 index 12
+
+      verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1600 (max 8)
+   }
+
+   /**
+    * Configure the RPDO connected to 0x1602 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureRPDO1602()
+   {
+      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
+
+      verifyWorkingCounter(writeSDO(0x1602, 1, computePdoMapValue(0x22F4, 51, 64)), "failed to write to 0x1600 - 0x22F4"); //   Desired Position R2[51]
+      verifyWorkingCounter(writeSDO(0x1602, 2, computePdoMapValue(0x22F4, 52, 64)), "failed to write to 0x1600 - 0x22F4 1"); // Desired Velocity R2[52]
+      verifyWorkingCounter(writeSDO(0x1602, 3, computePdoMapValue(0x22F4, 55, 64)), "failed to write to 0x1600 - 0x22F4 2"); // Stiffness R2[55]
+      verifyWorkingCounter(writeSDO(0x1602, 4, computePdoMapValue(0x22F4, 56, 64)), "failed to write to 0x1600 - 0x22F4 3"); // Damping R2[56]
+      verifyWorkingCounter(writeSDO(0x1602, 5, computePdoMapValue(0x22F4, 53, 64)), "failed to write to 0x1600 - 0x22F4"); //   Max position error R2[53]
+      verifyWorkingCounter(writeSDO(0x1602, 6, computePdoMapValue(0x22F4, 54, 64)), "failed to write to 0x1600 - 0x22F4 1"); // Max velocity error R2[54]
+      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(0x22F4, 13, 64)), "failed to write to 0x1600 - 0x22F4 10"); // Position and Velocity Feedback Scalar R2[13]
+
+      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 7), "failed to write to 0x1601 - 0x8"); // num elements in 0x1602 (max 8)
+
+   }
+
+   /**
+    * Configure the TPDO connected to 0x1A00 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureTPDO1A00()
+   {
       verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 0), "failed to write to 0x1A00 -- 0x0"); // disable 0x1A00 while we write
+
       verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(0x6041, 0, 16)), "failed to write to 0x1A00 -- 0x6041"); // status word
       verifyWorkingCounter(writeSDO(0x1A00, 2, computePdoMapValue(0x6061, 0, 8)), "failed to write to 0x1A00 -- 0x6061"); // mode of operation display
       verifyWorkingCounter(writeSDO(0x1A00, 3, computePdoMapValue(0x6064, 0, 32)), "failed to write to 0x1A00 -- 0x6064"); // position actual
       verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(0x6079, 0, 32)), "failed to write to 0x1A00 -- 0x6079"); // bus voltage
       verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(0x6077, 0, 16)), "failed to write to 0x1A00 -- 0x6077"); // torque actual
-      verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x22F4, 19, 64)),
-                           "failed to write to 0x1A00 -- 0x22F4"); // From SIL - Getting Analog Input 2 value for stator temperature
-
+      verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x22F4, 19, 64)), "failed to write to 0x1A00 -- 0x22F4"); // From SIL - Getting Analog Input 2 value for stator temperature
       verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(0x2FE4, 2, 64)), "failed to write to 0x1A00 -- 0x2FE4"); // aux position 1
       verifyWorkingCounter(writeSDO(0x1A00, 8, computePdoMapValue(0x3607, 1, 32)), "failed to write to 0x1A00 -- 0x3607"); // status register
 
       verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 8), "failed to write to 0x1A00 -- 0x9"); // num elements in 0x1A00 (max 8)
+   }
 
-      // tpdo_1a01
+   /**
+    * Configure the TPDO connected to 0x1A00 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureTPDO1A01()
+   {
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 0), "failed to write to 0x1A01 -- 0x0"); // disable 0x1A01 while we write
+
       verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x2FE8, 1, 32)), "failed to write to 0x1A01 -- 0x2FE8"); // motor velocity
       verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(0x2FE8, 2, 32)), "failed to write to 0x1A01 -- 0x2FE8"); // output velocity
       verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x22F4, 30, 64)),
@@ -310,21 +339,24 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
                            "failed to write to  0x1A01 -- 0x22F4"); // SIL Acceleration Integration Measured Motor Position
       verifyWorkingCounter(writeSDO(0x1A01, 8, computePdoMapValue(0x22F4, 42, 64)),
                            "failed to write to 0x1A01  -- 0x22F4"); // SIL Acceleration Integration Measured Motor Velocity
+
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 8), "failed to write to 0x1A01 -- 0x8"); // num elements in 0x1A01 (max 8)
+   }
 
-      // tpdo_1a02
+   /**
+    * Configure the TPDO connected to 0x1A00 with register values from the twitter. A max of 8 variables can be mapped to the PDO
+    */
+   private void configureTPDO1A02()
+   {
       verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 0), "failed to write to 0x1A02 -- 0x0"); // disable 0x1A01 while we write
-      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(0x22F4, 61, 64)), "failed to write to  0x1A02 -- 0x22F4 index 61"); // Socket 1 Warning
-      verifyWorkingCounter(writeSDO(0x1A02, 2, computePdoMapValue(0x22F4, 62, 64)), "failed to write to  0x1A02 -- 0x22F4 index 63"); // Socket 1 Error
-      verifyWorkingCounter(writeSDO(0x1A02, 3, computePdoMapValue(0x22F4, 63, 64)), "failed to write to  0x1A02 -- 0x22F4 index 62"); // Socket 2 Warning
-      verifyWorkingCounter(writeSDO(0x1A02, 4, computePdoMapValue(0x22F4, 64, 64)), "failed to write to  0x1A02 -- 0x22F4 index 64"); // Socket 2 Error
-      verifyWorkingCounter(writeSDO(0x1A02, 5, computePdoMapValue(0x603F, 0, 16)), "failed to write to 0x1A00 -- 0x603F"); // error code
-      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 5), "failed to write to 0x1A02 -- 0x5"); // num elements in 0x1A01 (max 8)
 
-      verifyWorkingCounter(writeSDO(0x1C13, 1, (short) 0x1A00), "failed to write to 0x1C13 -- 0x1A00");
-      verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
-      verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
-      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 3), "failed to write to 0x1C13 -- 0x2");
+//      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(0x22F4, 61, 64)), "failed to write to  0x1A02 -- 0x22F4 index 61"); // Socket 1 Warning
+//      verifyWorkingCounter(writeSDO(0x1A02, 2, computePdoMapValue(0x22F4, 62, 64)), "failed to write to  0x1A02 -- 0x22F4 index 63"); // Socket 1 Error
+//      verifyWorkingCounter(writeSDO(0x1A02, 3, computePdoMapValue(0x22F4, 63, 64)), "failed to write to  0x1A02 -- 0x22F4 index 62"); // Socket 2 Warning
+//      verifyWorkingCounter(writeSDO(0x1A02, 4, computePdoMapValue(0x22F4, 64, 64)), "failed to write to  0x1A02 -- 0x22F4 index 64"); // Socket 2 Error
+      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(0x603F, 0, 16)), "failed to write to 0x1A00 -- 0x603F"); // error code
+
+      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 1), "failed to write to 0x1A02 -- 0x5"); // num elements in 0x1A01 (max 8)
    }
 
    @Override
@@ -429,16 +461,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    public double getAnalogInput1a00()
    {
       return tpdo_1a00.measuredAnalogInput.get();
-   }
-
-   public void setRawTargetPosition(int position)
-   {
-      rpdo_1600.targetPosition.set(position);
-   }
-
-   public void setRawTargetVelocity(int velocity)
-   {
-      rpdo_1600.targetVelocity.set(velocity);
    }
 
    /**
@@ -573,23 +595,23 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
       return tpdo_1a01.sil_desiredCoggingCompensationCurrent.get();
    }
 
-   public double getSocket1Warning()
-   {
-      return tpdo_1a02.sil_Socket1Warning.get();
-   }
-
-   public double getSocket1Error()
-   {
-      return tpdo_1a02.sil_Socket1Error.get();
-   }
-
-   public double getSocket2Warning()
-   {
-      return tpdo_1a02.sil_Socket2Warning.get();
-   }
-
-   public double getSocket2Error()
-   {
-      return tpdo_1a02.sil_Socket2Error.get();
-   }
+//   public double getSocket1Warning()
+//   {
+//      return tpdo_1a02.sil_Socket1Warning.get();
+//   }
+//
+//   public double getSocket1Error()
+//   {
+//      return tpdo_1a02.sil_Socket1Error.get();
+//   }
+//
+//   public double getSocket2Warning()
+//   {
+//      return tpdo_1a02.sil_Socket2Warning.get();
+//   }
+//
+//   public double getSocket2Error()
+//   {
+//      return tpdo_1a02.sil_Socket2Error.get();
+//   }
 }
