@@ -2,6 +2,10 @@ package us.ihmc.commonHardware.mechanisms;
 
 import us.ihmc.robotics.outputData.JointDesiredLoadMode;
 
+/**
+ * This interface allows for placing all joint data in a common location, including position, velocity, acceleration,torque,
+ * stiffness, damping, and the current load mode
+ */
 public interface JointDataBasics extends JointDataReadOnly
 {
    default void set(JointDataReadOnly jointData)

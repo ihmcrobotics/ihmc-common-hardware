@@ -21,6 +21,14 @@ import us.ihmc.scs2.sessionVisualizer.jfx.controllers.VisualizerController;
 import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerWindowToolkit;
 import us.ihmc.scs2.sessionVisualizer.jfx.tools.JavaFXMissingTools;
 
+/**
+ * Graphical User Interface (GUI) responsible for displaying device status info of certain
+ * hardware devices on a given robot such as motors, boards, or sensors. This status
+ * information can include the device name, its ID, whether it is responding, its state, and
+ * potentially other data as well. It is designed to attach to a Simulation Construction
+ * Set {@code SessionVisualizer} where it can be launched using an intractable GUI button,
+ * and then resized, moved, or closed like any normal graphical window.
+ */
 public class HardwareStatusUI implements VisualizerController
 {
    private final SimulationConstructionSet2 scs;
@@ -52,14 +60,15 @@ public class HardwareStatusUI implements VisualizerController
    private final Button launchHardwareStatusUIButton;
 
    /**
-    * Graphical User Interface (GUI) responsible for displaying device status info of certain
-    * hardware devices on a given robot such as motors, boards, or sensors. This status
-    * information can include the device name, its ID, whether it is responding, its state, and
-    * potentially other data as well. It is designed to attach to a Simulation Construction
-    * Set {@code SessionVisualizer} where it can be launched using an intractable GUI button,
-    * and then resized, moved, or closed like any normal graphical window.
+    * Creates the Hardware status UI
+    *
+    * @param sessionVisualizerControls   Controls for the visualizer
+    * @param hardwareStatusUIDataManager Manager for all the hardware statuses
+    * @param createLaunchUIButtonPane    If true, create a button for launching the UI manually
     */
-   public HardwareStatusUI(SessionVisualizerControls sessionVisualizerControls, AbstractUIHardwareStatusManager hardwareStatusUIDataManager, boolean createLaunchUIButtonPane)
+   public HardwareStatusUI(SessionVisualizerControls sessionVisualizerControls,
+                           AbstractUIHardwareStatusManager hardwareStatusUIDataManager,
+                           boolean createLaunchUIButtonPane)
    {
       this.hardwareStatusUIDataManager = hardwareStatusUIDataManager;
       scs = new SimulationConstructionSet2();
@@ -93,6 +102,9 @@ public class HardwareStatusUI implements VisualizerController
       JavaFXMissingTools.centerWindowInOwner(stage, toolkit.getWindow());
    }
 
+   /**
+    * Create the Pane that holds all the device statuses, with a tab for all devices, motors, boards, and sensors
+    */
    private void createDeviceStatusTablePane()
    {
       setupDataTable(allDevicesStatusTab, allDevicesStatusTable, true, true, true);
@@ -101,6 +113,12 @@ public class HardwareStatusUI implements VisualizerController
       setupDataTable(sensorsStatusTab, sensorsStatusTable, false, false, true);
    }
 
+   /**
+    * Create the button to launch the UI from SCS
+    *
+    * @param sessionVisualizerControls    Controls for the visualizer
+    * @param launchHardwareStatusUIButton The button to be used
+    */
    private void createLaunchUIButtonPane(SessionVisualizerControls sessionVisualizerControls, Button launchHardwareStatusUIButton)
    {
       Pane hardwareStatusUILaunchButtonPane = new Pane();
@@ -110,11 +128,9 @@ public class HardwareStatusUI implements VisualizerController
       sessionVisualizerControls.addCustomGUIPane("Hardware Status UI", hardwareStatusUILaunchButtonPane);
    }
 
-   public Button getLaunchUIButton()
-   {
-      return launchHardwareStatusUIButton;
-   }
-
+   /**
+    * Clear all data from the tables in each tab
+    */
    private void clearDataTables()
    {
       allDevicesStatusData.clear();
@@ -128,6 +144,9 @@ public class HardwareStatusUI implements VisualizerController
       sensorsStatusTable.getItems().clear();
    }
 
+   /**
+    * Populate each table with the necessary information for each applicable device
+    */
    private void populateDataTables()
    {
       for (int i = 0; i < hardwareStatusUIDataManager.getDeviceDataHolders().size(); i++)
@@ -139,6 +158,11 @@ public class HardwareStatusUI implements VisualizerController
       sensorsStatusTable.setItems(sensorsStatusData);
    }
 
+   /**
+    * Add the necessary information into the pane for the data holder given
+    *
+    * @param dataHolder Status holder for a specific device
+    */
    private void addData(UIDeviceStatusHolder dataHolder)
    {
       allDevicesStatusData.add(dataHolder);
@@ -168,6 +192,15 @@ public class HardwareStatusUI implements VisualizerController
       }
    }
 
+   /**
+    * Set up the data table in the specific tab in the UI pane
+    *
+    * @param tab                      Tab the devices are being added to
+    * @param table                    Table the information is being written in
+    * @param addChildDeviceNameColumn If true, add a column for the names of child devices
+    * @param showCANInfo              If true, show information for CAN communication
+    * @param showEtherCATInfo         If true, show information for EtherCAT communication
+    */
    private void setupDataTable(Tab tab, TableView<UIDeviceStatusHolder> table, boolean addChildDeviceNameColumn, boolean showCANInfo, boolean showEtherCATInfo)
    {
       // Set up table settings
@@ -198,7 +231,8 @@ public class HardwareStatusUI implements VisualizerController
       TableColumn<UIDeviceStatusHolder, Boolean> isRespondingColumn = new TableColumn<>("Is Responding");
       isRespondingColumn.setMinWidth(100);
       isRespondingColumn.setCellValueFactory(new PropertyValueFactory<>("isResponding"));
-      isRespondingColumn.setCellFactory(column -> new TableCell<>() {
+      isRespondingColumn.setCellFactory(column -> new TableCell<>()
+      {
          @Override
          protected void updateItem(Boolean item, boolean empty)
          {
@@ -211,7 +245,7 @@ public class HardwareStatusUI implements VisualizerController
 
             if (!isEmpty())
             {
-               if(!item)
+               if (!item)
                   currentRow.setStyle("-fx-background-color:red");
                else
                   currentRow.setStyle("");
@@ -274,5 +308,10 @@ public class HardwareStatusUI implements VisualizerController
    public void hide()
    {
       stage.hide();
+   }
+
+   public Button getLaunchUIButton()
+   {
+      return launchHardwareStatusUIButton;
    }
 }

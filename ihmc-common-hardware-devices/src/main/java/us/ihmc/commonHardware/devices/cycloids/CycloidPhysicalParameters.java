@@ -2,6 +2,9 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.xmlToolkit.devices.parameters.XmlCycloidPhysicalParameters;
 
+/**
+ * This class defines the physical parameters of a cycloid, including the motor and output enocder revolution counts
+ */
 public class CycloidPhysicalParameters
 {
    private int countsPerMotorRevolution;
@@ -9,15 +12,24 @@ public class CycloidPhysicalParameters
    private double gearRatio;
    private double kt;
 
-   public CycloidPhysicalParameters()
-   {
-   }
-
+   /**
+    * Construct the physical parameters from an xml
+    *
+    * @param physicalParameters Holds the physical parameters of the cycloid from an xml
+    */
    public CycloidPhysicalParameters(XmlCycloidPhysicalParameters physicalParameters)
    {
       this(physicalParameters.getInputResolution(), physicalParameters.getOutputResolution(), physicalParameters.getGearRatio(), physicalParameters.getKt());
    }
 
+   /**
+    * Construct the physical parameters using given parameters
+    *
+    * @param inputResolution  The number of bits the input encoder uses
+    * @param outputResolution The number of bits the output encoder uses
+    * @param gearRatio        Gear ratio of the actuator
+    * @param kt               ratio of current to torque for the motor
+    */
    public CycloidPhysicalParameters(int inputResolution, int outputResolution, double gearRatio, double kt)
    {
       setCountsPerMotorRevolution(1 << inputResolution);

@@ -16,23 +16,37 @@ import us.ihmc.yoVariables.variable.YoVariable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Abstract class that parses a list of generic {@code AbstractXmlDevice}, and
+ * creates a {@code UIDeviceStatusHolder} for each device in the list. In doing this,
+ * this class searches a {@code YoVariableRegistry} for the device status YoVariables
+ * corresponding to a given {@code AbstractXmlDevice} based on that xml device's name.
+ * The specific list of {@code AbstractXmlDevice} to parse, and the details of how that
+ * list is parsed is to be determined by the robot-specific child classes that extend
+ * this one.
+ */
 public abstract class AbstractUIHardwareStatusManager
 {
-   public enum DeviceType {MOTOR, BOARD, SENSOR}
+   /**
+    * Enum that dictates if the device being added is a motor, a board holding multiple devices, or a single sensor
+    */
+   public enum DeviceType
+   {MOTOR, BOARD, SENSOR}
+
    protected final ArrayList<UIDeviceStatusHolder> deviceDataHolders = new ArrayList<>();
    protected final SessionVisualizerControls sessionVisualizerControls;
    protected final SessionVisualizerToolkit toolkit;
 
    /**
-    * Abstract class that parses a list of generic {@code AbstractXmlDevice}, and
-    * creates a {@code UIDeviceStatusHolder} for each device in the list. In doing this,
-    * this class searches a {@code YoVariableRegistry} for the device status YoVariables
-    * corresponding to a given {@code AbstractXmlDevice} based on that xml device's name.
-    * The specific list of {@code AbstractXmlDevice} to parse, and the details of how that
-    * list is parsed is to be determined by the robot-specific child classes that extend
-    * this one.
+    * Creates and manages all UI-side device status holders
+    *
+    * @param xmlDevices                Descriptions of all devices taken from xml descriptions of the robot
+    * @param sessionVisualizerControls Controls for adding items to and controlling visualizer
+    * @param toolkit                   Toolkit for easier control of the visualizer
     */
-   public AbstractUIHardwareStatusManager(List<AbstractXmlDevice> xmlDevices, SessionVisualizerControls sessionVisualizerControls, SessionVisualizerToolkit toolkit)
+   public AbstractUIHardwareStatusManager(List<AbstractXmlDevice> xmlDevices,
+                                          SessionVisualizerControls sessionVisualizerControls,
+                                          SessionVisualizerToolkit toolkit)
    {
       this.sessionVisualizerControls = sessionVisualizerControls;
       this.toolkit = toolkit;
@@ -46,9 +60,31 @@ public abstract class AbstractUIHardwareStatusManager
                                                           });
    }
 
+   /**
+    * Create instances for all the devices to be added to the UI
+    *
+    * @param xmlDevices Descriptions of all devices taken from xml descriptions of the robot
+    */
    protected abstract void createDevices(List<AbstractXmlDevice> xmlDevices);
 
-   protected void createNewEtherCATDataHolder(String name, String description, int position, int alias, List<AbstractXmlDevice> daughterDevices, boolean useParentPositionAndAlias, DeviceType deviceType)
+   /**
+    * Create a data holder for an EtherSnacks device with daughter devices
+    *
+    * @param name                      Name of the device
+    * @param description               Description of the device
+    * @param position                  EtherCAT position
+    * @param alias                     EtherCAT alias
+    * @param daughterDevices           List of daughter devices
+    * @param useParentPositionAndAlias If true, uses the alias of the parent device for all daughter devices
+    * @param deviceType                Type of EtherCAT device being registered
+    */
+   protected void createNewEtherCATDataHolder(String name,
+                                              String description,
+                                              int position,
+                                              int alias,
+                                              List<AbstractXmlDevice> daughterDevices,
+                                              boolean useParentPositionAndAlias,
+                                              DeviceType deviceType)
    {
       createNewEtherCATDataHolder(name, description, position, alias, deviceType);
 
@@ -67,25 +103,51 @@ public abstract class AbstractUIHardwareStatusManager
             createNewEtherCATDataHolder(xmlH4EtherCATJunctionPort.getName() + "_" + name, "Junction Port", position, alias, DeviceType.BOARD, true);
 
          else if (daughterDevice instanceof XmlH4EtherCATJunctionPort xmlH4EtherCATJunctionPort)
-            createNewEtherCATDataHolder(xmlH4EtherCATJunctionPort.getName() + "_" + name, "Junction Port", xmlH4EtherCATJunctionPort.getPosition(), xmlH4EtherCATJunctionPort.getAlias(), DeviceType.BOARD, true);
+            createNewEtherCATDataHolder(xmlH4EtherCATJunctionPort.getName() + "_" + name,
+                                        "Junction Port",
+                                        xmlH4EtherCATJunctionPort.getPosition(),
+                                        xmlH4EtherCATJunctionPort.getAlias(),
+                                        DeviceType.BOARD,
+                                        true);
       }
    }
 
+   /**
+    * Create a data holder for an EtherCAT device
+    *
+    * @param dataHolderName Name of the data holder
+    * @param description    Description of the device
+    * @param position       EtherCAT position
+    * @param alias          EtherCAT alias
+    * @param deviceType     Type of EtherCAT device being registered
+    */
    protected void createNewEtherCATDataHolder(String dataHolderName, String description, int position, int alias, DeviceType deviceType)
    {
       createNewEtherCATDataHolder(dataHolderName, description, position, alias, deviceType, false);
    }
 
+   /**
+    * Create a data holder for an EtherCAT device
+    *
+    * @param dataHolderName Name of the data holder
+    * @param description    Description of the device
+    * @param position       EtherCAT position
+    * @param alias          EtherCAT alias
+    * @param deviceType     Type of EtherCAT device being registered
+    * @param childDevice    If true, the device is registered as a child of another device
+    */
    protected void createNewEtherCATDataHolder(String dataHolderName, String description, int position, int alias, DeviceType deviceType, boolean childDevice)
    {
       if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX))
       {
-         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX + ". Variable(s) not found in registry");
+         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX
+                       + ". Variable(s) not found in registry");
          return;
       }
       else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.STATE_SUFFIX))
       {
-         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.STATE_SUFFIX + ". Variable(s) not found in registry");
+         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.STATE_SUFFIX
+                       + ". Variable(s) not found in registry");
          return;
       }
 
@@ -93,7 +155,8 @@ public abstract class AbstractUIHardwareStatusManager
          deviceDataHolders.add(new UIDeviceStatusHolder(dataHolderName,
                                                         "",
                                                         description,
-                                                        sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX).getYoVariable(),
+                                                        sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX)
+                                                                                 .getYoVariable(),
                                                         sessionVisualizerControls.newYoEnumProperty(dataHolderName + DeviceStatusHolder.STATE_SUFFIX),
                                                         position,
                                                         alias,
@@ -102,13 +165,22 @@ public abstract class AbstractUIHardwareStatusManager
          deviceDataHolders.add(new UIDeviceStatusHolder(dataHolderName,
                                                         description,
                                                         "",
-                                                        sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX).getYoVariable(),
+                                                        sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX)
+                                                                                 .getYoVariable(),
                                                         sessionVisualizerControls.newYoEnumProperty(dataHolderName + DeviceStatusHolder.STATE_SUFFIX),
                                                         position,
                                                         alias,
                                                         deviceType));
    }
 
+   /**
+    * Checks to make sure the yovariable exists
+    *
+    * @param type         Type of yovariable being checked
+    * @param variableName Name of the yovariable
+    * @param <T>          Class type must extend {@code YoVariable}
+    * @return True if the yovariable exists
+    */
    protected <T extends YoVariable> boolean doesVariableExist(Class<T> type, String variableName)
    {
       int separatorIndex = variableName.lastIndexOf(YoTools.NAMESPACE_SEPERATOR_STRING);

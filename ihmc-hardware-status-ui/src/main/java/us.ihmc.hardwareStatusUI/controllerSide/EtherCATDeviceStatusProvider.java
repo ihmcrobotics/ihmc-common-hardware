@@ -9,5 +9,8 @@ import us.ihmc.etherCAT.master.Slave;
  */
 public interface EtherCATDeviceStatusProvider extends DeviceStatusProvider
 {
+   /**
+    * @return The current state of the EtherCAT device
+    */
    Slave.State getState();
 }

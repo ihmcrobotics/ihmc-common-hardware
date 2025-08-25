@@ -1,7 +1,12 @@
 package us.ihmc.xmlToolkit.devices;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlType;
 
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "XmlLoadCell")
 public class XmlLoadCell extends AbstractXmlDevice
 {
    @XmlElement(defaultValue = "0.002") //in volts not mV

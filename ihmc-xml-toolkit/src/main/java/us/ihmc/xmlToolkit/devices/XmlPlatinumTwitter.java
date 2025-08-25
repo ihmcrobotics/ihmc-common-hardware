@@ -11,6 +11,8 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
 {
    @XmlElement(required = true)
    protected String actuatorPackage;
+   @XmlElement(defaultValue = "false")
+   protected boolean useLatestCode;
    @XmlElement(required = true)
    protected boolean reversePositiveMotorDirection;
    @XmlElement(required = true)
@@ -28,6 +30,7 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       this.name = name;
       this.alias = alias;
       this.position = position;
+      this.useLatestCode = false;
       this.present = true;
       this.actuatorPackage = actuatorPackage;
    }
@@ -35,6 +38,11 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    public String getActuatorPackage()
    {
       return actuatorPackage;
+   }
+
+   public boolean useLatestCode()
+   {
+      return useLatestCode;
    }
 
    public int getInputOffset()

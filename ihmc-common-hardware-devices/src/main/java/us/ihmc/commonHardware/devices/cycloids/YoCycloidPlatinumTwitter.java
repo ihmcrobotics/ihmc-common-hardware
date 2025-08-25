@@ -39,8 +39,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
 
-   // RTD 1000 temperature sensor function coefficients
-   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {10.325581, 224.7863, -360.157212};
+   // temperature sensor calibrated coefficients
+   private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
+   private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
 
    private final double dt;
    private final String name;
@@ -230,6 +231,22 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, inputOffset, outputOffset, dt, false, parentRegistry);
    }
+
+   /**
+    * Construct the vovariable wrapper of the platinum twitter connected to the cycloid
+    *
+    * @param prefix                    Prefix to be applied to yovariable names
+    * @param twitter                   Twitter to be wrapped
+    * @param time                      Controller time in seconds
+    * @param actuatorDirectory         Directory where the xml for the cycloid parameters lives
+    * @param actuatorPackage           Name of the actuator package
+    * @param isMotorDirectionReversed  Decides if the signals from the motor are inverted or not relative to robot orientation
+    * @param inputOffset               Offset of the input encoder in bits
+    * @param outputOffset              Offset of the output encoder in bits
+    * @param dt                        Controller timestep
+    * @param enableCompensationAtStart Decide if SIL compensation currents are initially enabled or not
+    * @param parentRegistry            Parent {code YoRegistry} of the twitter
+    */
    public YoCycloidPlatinumTwitter(String prefix,
                                    CycloidPlatinumTwitter twitter,
                                    DoubleProvider time,
@@ -542,30 +559,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       parentRegistry.addChild(registry);
    }
 
-   public void setMotorDirection(boolean isMotorDirectionReversed)
-   {
-      if (isMotorDirectionReversed)
-         motorDirection.set(-1.0);
-      else
-         motorDirection.set(1.0);
-   }
-
-   public void setSILParameters(CycloidSILParameters parameters)
-   {
-      dahlFrictionForce.set(parameters.getDahlFrictionForceGain());
-      dahlSlope.set(parameters.getDahlFrictionSlope());
-      linearDampingCompensation.set(parameters.getLinearDampingCompensationGain());
-
-      dahlOutputScalar.set(parameters.getDahlOutputScalar());
-      linearDampingOutputScalar.set(parameters.getLinearDampingOutputScalar());
-      coggingOutputScalar.set(parameters.getCoggingOutputScalar());
-
-      // AccelerationIntegration Parameters
-      accelerationIntegrationScalar.set(parameters.getAccelerationIntegrationScalar());
-
-      accelerationIntegrationScalar.set(1.0);
-   }
-
    @Override
    public void read()
    {
@@ -721,6 +714,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       }
    }
 
+   /**
+    * Update the current encoder state based on the current error value from the twitter
+    */
    private void updateEncoderStates()
    {
 
@@ -837,6 +833,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       platinumTwitter.doStateControl();
    }
 
+   /**
+    * Apply limits to a {@code YoDouble} to bound possible values to [lowerLimit, upperLimit]
+    *
+    * @param variableToLimit variable to be limited
+    * @param lowerLimit      Lower value limit, inclusive
+    * @param upperLimit      Upper value limit, inclusiv
+    */
    private void applyValueLimits(YoDouble variableToLimit, double lowerLimit, double upperLimit)
    {
       variableToLimit.addListener(new YoVariableChangedListener()
@@ -854,6 +857,109 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void enableDrive(boolean enable)
    {
       this.enableDrive.set(enable);
+   }
+
+   /**
+    * Clear all possible faults on the twitter by setting them to false
+    */
+   public void clearFaults()
+   {
+      clearFaults.set(true);
+      MOTOR_FAULT.set(false);
+      DRIVE_FAULTED.set(false);
+      UNDER_VOLTAGE.set(false);
+      OVER_VOLTAGE.set(false);
+      STO_DISABLED.set(false);
+      CURRENT_SHORT.set(false);
+      OVER_TEMPERATURE.set(false);
+   }
+
+   /**
+    * Check to see if the output encoder offset is off by less than pi, since anything more than pi means the encoder signal
+    * shifted by 2*pi. If off by more, update the offset until it is less than pi
+    */
+   private void checkAndUpdateOutputOffset()
+   {
+      int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
+      int rotationInterval = Math.abs(difference) / outputCountsPerRevolution;
+      if (difference >= outputCountsPerRevolution / 2)
+      {
+         if (rotationInterval == 0)
+            rawOutputPositionOffset.add(outputCountsPerRevolution);
+         else
+            rawOutputPositionOffset.add(rotationInterval * outputCountsPerRevolution);
+      }
+      if (difference <= -outputCountsPerRevolution / 2)
+      {
+         if (rotationInterval == 0)
+            rawOutputPositionOffset.sub(outputCountsPerRevolution);
+         else
+            rawOutputPositionOffset.sub(rotationInterval * outputCountsPerRevolution);
+      }
+   }
+
+   /**
+    * Check if the output position estimated from the input encoder is within pi/gearRatio of the output position.
+    * If not, updates the input encoder offset to be within range.
+    */
+   private void checkAndUpdateInputOffset()
+   {
+      double maxDifference = Math.PI / gearRatio.getDoubleValue();
+      int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / (maxDifference * 2));
+      if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
+      {
+         if (rotationInterval == 0)
+            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+         else
+            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+      }
+      if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
+      {
+         if (rotationInterval == 0)
+            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+         else
+            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+      }
+   }
+
+   /**
+    * Check the encoder offsets and update them if necessary
+    */
+   public void checkAndUpdateEncoderOffsets()
+   {
+      checkAndUpdateOutputOffset();
+      //Set the output position based on new offset
+      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
+      measuredOutputPosition.set(currentMeasuredOutputPosition);
+
+      checkAndUpdateInputOffset();
+   }
+
+   /**
+    * Sets the input and output encoder offsets to the current raw positions
+    */
+   public void zeroEncoders()
+   {
+      rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
+      rawOutputPositionOffset.set((int) rawMeasuredOuputPosition.getDoubleValue());
+   }
+
+   /**
+    * @param voltage Voltage from the temperature sensor
+    * @return The temperature of the cycloid, converted from voltage to degrees Celsius
+    */
+   public double convertAnalogInputToTemperatureInDegreeCelsius(double voltage)
+   {
+      return TEMPERATURE_SENSOR_OFFSET + VOLTAGE_TEMPERATURE_GAIN * voltage;
+   }
+
+   public void setMotorDirection(boolean isMotorDirectionReversed)
+   {
+      if (isMotorDirectionReversed)
+         motorDirection.set(-1.0);
+      else
+         motorDirection.set(1.0);
    }
 
    public void setEnableCompensationCurrents(boolean enableCompensationCurrents)
@@ -891,89 +997,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       accelerationIntegrationDesiredMotorVelocity.set(motorVelocity);
    }
 
-   @Override
-   public boolean isMotorFaulted()
-   {
-      return MOTOR_FAULT.getBooleanValue();
-   }
-
    public void setKt(double kt)
    {
       this.kt.set(kt);
-   }
-
-   public void clearFaults()
-   {
-      clearFaults.set(true);
-      MOTOR_FAULT.set(false);
-      DRIVE_FAULTED.set(false);
-      UNDER_VOLTAGE.set(false);
-      OVER_VOLTAGE.set(false);
-      STO_DISABLED.set(false);
-      CURRENT_SHORT.set(false);
-      OVER_TEMPERATURE.set(false);
-   }
-
-   private void checkAndUpdateOutputOffset()
-   {
-      int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
-      int rotationInterval = Math.abs(difference) / outputCountsPerRevolution;
-      if (difference >= outputCountsPerRevolution / 2)
-      {
-         if (rotationInterval == 0)
-            rawOutputPositionOffset.add(outputCountsPerRevolution);
-         else
-            rawOutputPositionOffset.add(rotationInterval * outputCountsPerRevolution);
-      }
-      if (difference <= -outputCountsPerRevolution / 2)
-      {
-         if (rotationInterval == 0)
-            rawOutputPositionOffset.sub(outputCountsPerRevolution);
-         else
-            rawOutputPositionOffset.sub(rotationInterval * outputCountsPerRevolution);
-      }
-   }
-
-   private void checkAndUpdateInputOffset()
-   {
-      double maxDifference = Math.PI / gearRatio.getDoubleValue();
-      int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / (maxDifference * 2));
-      if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
-      {
-         if (rotationInterval == 0)
-            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
-         else
-            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
-      }
-      if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
-      {
-         if (rotationInterval == 0)
-            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
-         else
-            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
-      }
-   }
-
-   public void checkAndUpdateEncoderOffsets()
-   {
-      checkAndUpdateOutputOffset();
-      //Set the output position based on new offset
-      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
-      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
-      measuredOutputPosition.set(currentMeasuredOutputPosition);
-
-      checkAndUpdateInputOffset();
-   }
-
-   public void zeroEncoders()
-   {
-      rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
-      rawOutputPositionOffset.set((int) rawMeasuredOuputPosition.getDoubleValue());
-   }
-
-   public void reversePositiveMotorDirection()
-   {
-      motorDirection.set(-1);
    }
 
    public void setVelocityFilterBreakFrequency(double breakFrequency)
@@ -1001,6 +1027,112 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void enableCyclicSynchronousTorque()
    {
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
+   }
+
+   public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
+   {
+      if (Double.isFinite(desiredPosition))
+         accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
+      else
+         LogTools.warn("Tried to set desired impedance position to " + desiredPosition + ", which is not a valid input");
+   }
+
+   public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
+   {
+      if (Double.isFinite(desiredVelocity))
+         accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
+      else
+         LogTools.warn("Tried to set desired impedance velocity to " + desiredVelocity + ", which is not a valid input");
+   }
+
+   @Override
+   public void setDesiredMotorStiffness(double desiredMotorStiffness)
+   {
+      if (Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
+         accelerationIntegrationStiffness.set(desiredMotorStiffness);
+      else if (desiredMotorStiffness < 0)
+      {
+         LogTools.warn("Tried to set negative stiffness to " + getName() + ", setting stiffness to 0");
+         accelerationIntegrationStiffness.set(0.0);
+      }
+      else
+         LogTools.warn("Tried to set stiffness at " + getName() + " to a non-finite value of " + desiredMotorStiffness);
+   }
+
+   @Override
+   public void setDesiredMotorDamping(double desiredMotorDamping)
+   {
+      if (Double.isFinite(desiredMotorDamping) && desiredMotorDamping >= 0)
+         accelerationIntegrationDamping.set(desiredMotorDamping);
+      else if (desiredMotorDamping < 0)
+      {
+         LogTools.error("Tried to set negative damping to " + getName() + ", setting damping to 0");
+         accelerationIntegrationDamping.set(0.0);
+      }
+   }
+
+   @Override
+   public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
+   {
+      if (Double.isFinite(maxPositionFeedbackError))
+         accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
+      else
+         LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
+   }
+
+   @Override
+   public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
+   {
+      if (Double.isFinite(maxVelocityFeedbackError))
+         accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
+      else
+         LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
+   }
+
+   public void setUseOutputPositionFromMotor(boolean useOutputPositionFromMotor)
+   {
+      this.useOutputPositionFromMotor.set(useOutputPositionFromMotor);
+   }
+
+   public void setUseOutputVelocityFromMotor(boolean useOutputVelocityFromMotor)
+   {
+      this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
+   }
+
+   public void setDesiredControlMode(JointDesiredControlMode controlMode)
+   {
+      if (controlMode != null)
+      {
+         switch (controlMode)
+         {
+            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
+            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
+            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
+            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
+         }
+      }
+   }
+
+   public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
+   {
+      if (maxAllowableStatorTemperature > 0)
+         this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
+      else
+         LogTools.warn("Tried to set max allowable stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
+   }
+
+   public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
+   {
+      if (maxRecommendedStatorTemperature > 0)
+         this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
+      else
+         LogTools.warn("Tried to set max recommended stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
+   }
+
+   @Override
+   public boolean isMotorFaulted()
+   {
+      return MOTOR_FAULT.getBooleanValue();
    }
 
    public double getJointPosition()
@@ -1093,121 +1225,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return physicalParameters;
    }
 
-   public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
-   {
-      if (Double.isFinite(desiredPosition))
-         accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
-      else
-         LogTools.warn("Tried to set desired impedance position to " + desiredPosition + ", which is not a valid input");
-   }
-
-   public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
-   {
-      if (Double.isFinite(desiredVelocity))
-         accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
-      else
-         LogTools.warn("Tried to set desired impedance velocity to " + desiredVelocity + ", which is not a valid input");
-   }
-
-   @Override
-   public void setDesiredMotorStiffness(double desiredMotorStiffness)
-   {
-      if (Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
-         accelerationIntegrationStiffness.set(desiredMotorStiffness);
-      else if (desiredMotorStiffness < 0)
-      {
-         LogTools.warn("Tried to set negative stiffness to " + getName() + ", setting stiffness to 0");
-         accelerationIntegrationStiffness.set(0.0);
-      }
-      else
-         LogTools.warn("Tried to set stiffness at " + getName() + " to a non-finite value of " + desiredMotorStiffness);
-   }
-
-   @Override
-   public void setDesiredMotorDamping(double desiredMotorDamping)
-   {
-      if (Double.isFinite(desiredMotorDamping) && desiredMotorDamping >= 0)
-         accelerationIntegrationDamping.set(desiredMotorDamping);
-      else if (desiredMotorDamping < 0)
-      {
-         LogTools.error("Tried to set negative damping to " + getName() + ", setting damping to 0");
-         accelerationIntegrationDamping.set(0.0);
-      }
-   }
-
-   @Override
-   public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
-   {
-      if (Double.isFinite(maxPositionFeedbackError))
-         accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
-      else
-         LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
-   }
-
-   @Override
-   public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
-   {
-      if (Double.isFinite(maxVelocityFeedbackError))
-         accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
-      else
-         LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
-   }
-
-   public void setUseOutputPositionFromMotor(boolean useOutputPositionFromMotor)
-   {
-      this.useOutputPositionFromMotor.set(useOutputPositionFromMotor);
-   }
-
-   public void setUseOutputVelocityFromMotor(boolean useOutputVelocityFromMotor)
-   {
-      this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
-   }
-
    public double getStatorTemperature()
    {
       return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput1a00.getValue());
    }
 
-   public void setDesiredControlMode(JointDesiredControlMode controlMode)
-   {
-      if (controlMode != null)
-      {
-         switch (controlMode)
-         {
-            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
-            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
-            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
-            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
-         }
-      }
-   }
-
-   public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
-   {
-      if (maxAllowableStatorTemperature > 0)
-         this.maxAllowableStatorTemperature.set(maxAllowableStatorTemperature);
-      else
-         LogTools.warn("Tried to set max allowable stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
-   }
-
    public int getMaxAllowableStatorTemperature()
    {
       return this.maxAllowableStatorTemperature.getValue();
-   }
-
-   public double convertAnalogInputToTemperatureInDegreeCelsius(double voltage)
-   {
-      //TODO figure out why this doesn't work
-      return 0.0; // (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * Math.sqrt(voltage) + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
-      //              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
-   }
-
-   public void setMaxRecommendedStatorTemperature(int maxRecommendedStatorTemperature)
-   {
-      if (maxRecommendedStatorTemperature > 0)
-         this.maxRecommendedStatorTemperature.set(maxRecommendedStatorTemperature);
-      else
-         LogTools.warn("Tried to set max recommended stator temperature to " + maxAllowableStatorTemperature + ", which is not a valid input");
    }
 
    public int getMaxRecommendedStatorTemperature()
@@ -1253,15 +1278,5 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public CycloidPlatinumTwitter getPlatinumTwitter()
    {
       return platinumTwitter;
-   }
-
-   public boolean usingOutputPositionFromMotor()
-   {
-      return useOutputPositionFromMotor.getBooleanValue();
-   }
-
-   public boolean usingOutputVelocityFromMotor()
-   {
-      return useOutputVelocityFromMotor.getBooleanValue();
    }
 }

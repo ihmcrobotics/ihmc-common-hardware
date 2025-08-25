@@ -1,0 +1,10 @@
+<XmlEtherSnacksBoard>
+    <name>boardName</name>
+    <alias>0</alias>
+    <address>0</address>
+    <boardType>boardType</boardType>
+    <present>true</present>
+    <daughterDevices>
+        <!--Add daughter devices here!-->
+    </daughterDevices>
+</XmlEtherSnacksBoard>
