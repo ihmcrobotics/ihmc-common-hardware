@@ -1,11 +1,11 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.h4;
 
 import us.ihmc.commonHardware.devices.IMUInterface;
-import us.ihmc.commonHardware.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
+import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 /**
  * This class implements the lowlevel communication with an H4 IMU, including the reception of information

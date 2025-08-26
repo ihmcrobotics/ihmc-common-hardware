@@ -1,6 +1,6 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidSILParameters;
+import us.ihmc.xmlToolkit.devices.parameters.XmlCycloidSILParameters;
 
 /**
  * This class holds all the initial parameters for the SIL system run on the twitters.
