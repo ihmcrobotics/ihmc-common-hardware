@@ -1,10 +1,10 @@
 package us.ihmc.hardwareStatusUI.visualizerSide;
 
 import us.ihmc.hardwareStatusUI.controllerSide.DeviceStatusHolder;
-import us.ihmc.xmlToolkit.devices.AbstractXmlDevice;
-import us.ihmc.xmlToolkit.devices.XmlH4EtherCATJunctionPort;
-import us.ihmc.xmlToolkit.devices.XmlIMU;
-import us.ihmc.xmlToolkit.devices.XmlTemperatureSensor;
+import us.ihmc.hardwareXMLToolkit.devices.AbstractXmlDevice;
+import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
+import us.ihmc.hardwareXMLToolkit.devices.XmlIMU;
+import us.ihmc.hardwareXMLToolkit.devices.XmlTemperatureSensor;
 import us.ihmc.log.LogTools;
 import us.ihmc.scs2.sessionVisualizer.jfx.SessionVisualizerControls;
 import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerToolkit;
