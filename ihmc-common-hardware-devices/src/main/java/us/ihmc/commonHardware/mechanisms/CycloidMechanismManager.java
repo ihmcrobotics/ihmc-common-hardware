@@ -206,13 +206,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
 
-      // Using input velocity scaled to the output seems to work better for control
-      if(jointName.contains("RIGHT_KNEE")) // Right knee has a noisy output encoder
-      {
-         platinumTwitter.setUseOutputPositionFromMotor(true);
-         platinumTwitter.setUseOutputVelocityFromMotor(true);
-      }
-
       parentRegistry.addChild(registry);
    }
 
