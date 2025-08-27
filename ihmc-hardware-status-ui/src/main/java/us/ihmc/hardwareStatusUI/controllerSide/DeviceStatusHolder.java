@@ -88,12 +88,12 @@ public class DeviceStatusHolder
       if (deviceStatusProvider instanceof ElmoTwitterDeviceStatusProvider elmoTwitterDeviceStatusProvider)
       {
          setState(elmoTwitterDeviceStatusProvider.getState());
-         setIsFaulted(elmoTwitterDeviceStatusProvider.getIsFaulted());
-         setUnderVoltage(elmoTwitterDeviceStatusProvider.getUnderVoltage());
-         setOverVoltage(elmoTwitterDeviceStatusProvider.getOverVoltage());
-         setSTODisabled(elmoTwitterDeviceStatusProvider.getSTODisabled());
-         setCurrentShort(elmoTwitterDeviceStatusProvider.getCurrentShort());
-         setOverTemp(elmoTwitterDeviceStatusProvider.getOverTemp());
+         setIsFaulted(elmoTwitterDeviceStatusProvider.isFaulted());
+         setUnderVoltage(elmoTwitterDeviceStatusProvider.isUnderVoltage());
+         setOverVoltage(elmoTwitterDeviceStatusProvider.isOverVoltage());
+         setSTODisabled(elmoTwitterDeviceStatusProvider.isSTODisabled());
+         setCurrentShort(elmoTwitterDeviceStatusProvider.isCurrentShort());
+         setOverTemp(elmoTwitterDeviceStatusProvider.isOverTemp());
          setElmoErrorCode(elmoTwitterDeviceStatusProvider.getElmoErrorCode());
          setInputEncoderError(elmoTwitterDeviceStatusProvider.getInputEncoderError());
          setOutputEncoderError(elmoTwitterDeviceStatusProvider.getOutputEncoderError());

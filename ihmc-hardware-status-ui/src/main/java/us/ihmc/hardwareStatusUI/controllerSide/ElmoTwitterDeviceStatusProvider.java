@@ -1,20 +1,18 @@
 package us.ihmc.hardwareStatusUI.controllerSide;
 
-import us.ihmc.etherCAT.master.Slave;
-
 public interface ElmoTwitterDeviceStatusProvider extends EtherCATDeviceStatusProvider
 {
-   boolean getIsFaulted();
+   boolean isFaulted();
 
-   boolean getUnderVoltage();
+   boolean isUnderVoltage();
 
-   boolean getOverVoltage();
+   boolean isOverVoltage();
 
-   boolean getSTODisabled();
+   boolean isSTODisabled();
 
-   boolean getCurrentShort();
+   boolean isCurrentShort();
 
-   boolean getOverTemp();
+   boolean isOverTemp();
 
    int getElmoErrorCode();
 

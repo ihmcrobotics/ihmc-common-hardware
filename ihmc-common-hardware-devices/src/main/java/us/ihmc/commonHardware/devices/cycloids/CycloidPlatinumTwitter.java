@@ -7,11 +7,11 @@ import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
-import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 
 import java.io.IOException;
 
-public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATDeviceStatusProvider
+public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitterDeviceStatusProvider
 {
    private static final int MAX_CURRENT_ADDRESS = 0x6075;
    private static final int MAX_TORQUE_ADDRESS = 0x6076;
@@ -207,6 +207,60 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements EtherCATD
    public Slave.State getState()
    {
       return super.getState();
+   }
+
+   @Override
+   public boolean isFaulted()
+   {
+      return super.isFaulted();
+   }
+
+   @Override
+   public boolean isUnderVoltage()
+   {
+      return super.isUnderVoltage();
+   }
+
+   @Override
+   public boolean isOverVoltage()
+   {
+      return super.isOverVoltage();
+   }
+
+   @Override
+   public boolean isSTODisabled()
+   {
+      return super.isSTODisabled();
+   }
+
+   @Override
+   public boolean isCurrentShort()
+   {
+      return super.isCurrentShorted();
+   }
+
+   @Override
+   public boolean isOverTemp()
+   {
+      return super.isOverTemperature();
+   }
+
+   @Override
+   public int getElmoErrorCode()
+   {
+      return getErrorRegister();
+   }
+
+   @Override
+   public double getInputEncoderError()
+   {
+      return getSocket1Error();
+   }
+
+   @Override
+   public double getOutputEncoderError()
+   {
+      return getSocket2Error();
    }
 
    //untested
