@@ -14,6 +14,9 @@ public class JointLimitTorqueLimiter
    private final YoDouble startingDistanceFromLowerLimit;
    private final YoDouble endingDistanceFromLowerLimit;
 
+   private final YoDouble distanceToUpperLimit;
+   private final YoDouble distanceToLowerLimit;
+
    private final double lowerLimit;
    private final double upperLimit;
 
@@ -30,22 +33,27 @@ public class JointLimitTorqueLimiter
       startingDistanceFromLowerLimit = new YoDouble(prefix + "_StartingDistanceFromLowerLimit", registry);
       endingDistanceFromLowerLimit = new YoDouble(prefix + "_EndingDistanceFromLowerLimit", registry);
 
+      distanceToLowerLimit = new YoDouble(prefix + "_DistanceToLowerLimit", registry);
+      distanceToUpperLimit = new YoDouble(prefix + "_DistanceToUpperLimit", registry);
+
       parentRegistry.addChild(registry);
    }
 
    public double limitDesiredTorques(double desiredTorque, double jointAngle)
    {
-      if (jointAngle - endingDistanceFromLowerLimit.getDoubleValue() < lowerLimit || jointAngle + endingDistanceFromUpperLimit.getDoubleValue() > upperLimit)
+      distanceToUpperLimit.set(upperLimit - jointAngle);
+      distanceToLowerLimit.set(jointAngle - lowerLimit);
+      if (endingDistanceFromLowerLimit.getDoubleValue() > distanceToLowerLimit.getDoubleValue() || endingDistanceFromUpperLimit.getDoubleValue() > distanceToUpperLimit.getDoubleValue())
          return 0.0;
-      else if (jointAngle - startingDistanceFromLowerLimit.getDoubleValue() < lowerLimit)
+      else if (startingDistanceFromLowerLimit.getDoubleValue() > distanceToLowerLimit.getDoubleValue())
       {
-         double numerator = jointAngle - lowerLimit - endingDistanceFromLowerLimit.getDoubleValue();
+         double numerator = distanceToLowerLimit.getDoubleValue() - endingDistanceFromLowerLimit.getDoubleValue();
          double denominator = startingDistanceFromLowerLimit.getDoubleValue() - endingDistanceFromLowerLimit.getDoubleValue();
          return desiredTorque * numerator / denominator;
       }
-      else if (jointAngle + startingDistanceFromUpperLimit.getDoubleValue() > upperLimit)
+      else if (startingDistanceFromUpperLimit.getDoubleValue() > distanceToUpperLimit.getDoubleValue())
       {
-         double numerator = upperLimit - jointAngle - endingDistanceFromUpperLimit.getDoubleValue();
+         double numerator = distanceToUpperLimit.getDoubleValue() - endingDistanceFromUpperLimit.getDoubleValue();
          double denominator = startingDistanceFromUpperLimit.getDoubleValue() - endingDistanceFromUpperLimit.getDoubleValue();
          return desiredTorque * numerator / denominator;
       }
