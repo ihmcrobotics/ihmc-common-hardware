@@ -26,6 +26,16 @@ public class UIDeviceStatusHolder
 
    protected final SimpleStringProperty id = new SimpleStringProperty("");
 
+   protected final SimpleStringProperty isFaulted = new SimpleStringProperty("");
+   protected final SimpleStringProperty underVoltage = new SimpleStringProperty("");
+   protected final SimpleStringProperty overVoltage = new SimpleStringProperty("");
+   protected final SimpleStringProperty stoDisabled = new SimpleStringProperty("");
+   protected final SimpleStringProperty currentShort = new SimpleStringProperty("");
+   protected final SimpleStringProperty overTemp = new SimpleStringProperty("");
+   protected final SimpleStringProperty elmoErrorCode = new SimpleStringProperty("");
+   protected final SimpleStringProperty inputEncoderError = new SimpleStringProperty("");
+   protected final SimpleStringProperty outputEncoderError = new SimpleStringProperty("");
+
    protected DeviceType deviceType;
 
    protected final ArrayList<UIDeviceStatusHolder> childDevices = new ArrayList<>();
