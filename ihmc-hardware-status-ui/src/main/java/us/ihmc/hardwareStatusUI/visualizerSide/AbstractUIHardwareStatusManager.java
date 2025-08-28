@@ -1,6 +1,6 @@
-package hardwareStatusUI.visualizerSide;
+package us.ihmc.hardwareStatusUI.visualizerSide;
 
-import hardwareStatusUI.controllerSide.DeviceStatusHolder;
+import us.ihmc.hardwareStatusUI.controllerSide.DeviceStatusHolder;
 import us.ihmc.hardwareXMLToolkit.devices.AbstractXmlDevice;
 import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
 import us.ihmc.hardwareXMLToolkit.devices.XmlIMU;

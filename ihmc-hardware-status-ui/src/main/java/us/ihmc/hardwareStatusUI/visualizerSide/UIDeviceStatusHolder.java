@@ -1,9 +1,9 @@
-package hardwareStatusUI.visualizerSide;
+package us.ihmc.hardwareStatusUI.visualizerSide;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
-import hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
+import us.ihmc.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
 import us.ihmc.yoVariables.variable.YoBoolean;

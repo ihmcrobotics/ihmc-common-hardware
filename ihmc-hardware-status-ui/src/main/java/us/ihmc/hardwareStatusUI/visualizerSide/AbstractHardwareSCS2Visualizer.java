@@ -1,4 +1,4 @@
-package hardwareStatusUI.visualizerSide;
+package us.ihmc.hardwareStatusUI.visualizerSide;
 
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;

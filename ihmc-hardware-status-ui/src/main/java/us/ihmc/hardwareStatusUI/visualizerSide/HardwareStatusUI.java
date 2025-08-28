@@ -1,4 +1,4 @@
-package hardwareStatusUI.visualizerSide;
+package us.ihmc.hardwareStatusUI.visualizerSide;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

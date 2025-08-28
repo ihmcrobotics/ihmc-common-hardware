@@ -1,4 +1,4 @@
-package hardwareStatusUI.controllerSide;
+package us.ihmc.hardwareStatusUI.controllerSide;
 
 /**
  * Interface for any class that wishes to provide status info of a generic hardware device.

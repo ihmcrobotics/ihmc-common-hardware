@@ -5,7 +5,7 @@ import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
-import hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
+import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 public class EtherSnacksTDKIMU extends Slave implements IMUInterface, EtherCATDeviceStatusProvider
 {

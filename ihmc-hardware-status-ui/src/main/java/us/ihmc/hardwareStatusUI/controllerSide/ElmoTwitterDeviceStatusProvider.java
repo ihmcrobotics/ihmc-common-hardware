@@ -1,4 +1,4 @@
-package hardwareStatusUI.controllerSide;
+package us.ihmc.hardwareStatusUI.controllerSide;
 
 public interface ElmoTwitterDeviceStatusProvider extends EtherCATDeviceStatusProvider
 {

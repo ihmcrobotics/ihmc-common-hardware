@@ -7,7 +7,7 @@ import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
-import hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 
 import java.io.IOException;
 

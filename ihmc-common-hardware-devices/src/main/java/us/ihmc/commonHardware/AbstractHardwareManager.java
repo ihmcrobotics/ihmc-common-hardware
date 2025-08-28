@@ -8,7 +8,7 @@ import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacks
 import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave;
-import hardwareStatusUI.controllerSide.HardwareStatusManager;
+import us.ihmc.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.ImuData;
