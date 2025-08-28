@@ -1,6 +1,8 @@
-package us.ihmc.hardwareStatusUI.controllerSide;
+package hardwareStatusUI.controllerSide;
 
+import org.jline.utils.Log;
 import us.ihmc.etherCAT.master.Slave;
+import us.ihmc.log.LogTools;
 import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;

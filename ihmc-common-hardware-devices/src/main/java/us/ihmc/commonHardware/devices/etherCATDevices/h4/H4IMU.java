@@ -5,7 +5,7 @@ import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
-import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
+import hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 /**
  * This class implements the lowlevel communication with an H4 IMU, including the reception of information

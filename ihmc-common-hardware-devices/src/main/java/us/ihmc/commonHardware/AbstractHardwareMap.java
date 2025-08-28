@@ -21,7 +21,7 @@ import us.ihmc.commonHardware.devices.genericSensor.IMUManagerInterface;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericEncoder;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
-import us.ihmc.hardwareStatusUI.controllerSide.HardwareStatusManager;
+import hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.hardwareXMLToolkit.XmlHardwareDescription;
 import us.ihmc.hardwareXMLToolkit.devices.XmlDevices;
 import us.ihmc.hardwareXMLToolkit.devices.XmlEncoder;

@@ -1,4 +1,4 @@
-package us.ihmc.hardwareStatusUI.visualizerSide;
+package hardwareStatusUI.visualizerSide;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -107,7 +107,7 @@ public class HardwareStatusUI implements VisualizerController
     */
    private void createDeviceStatusTablePane()
    {
-      setupDataTable(allDevicesStatusTab, allDevicesStatusTable, true, true, true, true);
+      setupDataTable(allDevicesStatusTab, allDevicesStatusTable, true, false, true, false);
       setupDataTable(motorsStatusTab, motorsStatusTable, false, false, true, true);
       setupDataTable(boardsStatusTab, boardsStatusTable, true, false, true, false);
       setupDataTable(sensorsStatusTab, sensorsStatusTable, false, false, true, false);
@@ -229,7 +229,7 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays the device responsiveness
       TableColumn<UIDeviceStatusHolder, Boolean> isRespondingColumn = new TableColumn<>("Is Responding");
-      isRespondingColumn.setMinWidth(100);
+      isRespondingColumn.setMinWidth(125);
       isRespondingColumn.setCellValueFactory(new PropertyValueFactory<>("isResponding"));
       isRespondingColumn.setCellFactory(column -> new TableCell<>()
       {
@@ -255,22 +255,22 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays the device CAN read status
       TableColumn<UIDeviceStatusHolder, String> readStatusColumn = new TableColumn<>("CAN Read Status");
-      readStatusColumn.setMinWidth(200);
+      readStatusColumn.setMinWidth(150);
       readStatusColumn.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
 
       // Create column that displays the device CAN write status
       TableColumn<UIDeviceStatusHolder, String> writeStatusColumn = new TableColumn<>("CAN Write Status");
-      writeStatusColumn.setMinWidth(200);
+      writeStatusColumn.setMinWidth(150);
       writeStatusColumn.setCellValueFactory(new PropertyValueFactory<>("writeStatus"));
 
       // Create column that displays the device EtherCat state
       TableColumn<UIDeviceStatusHolder, String> etherCATStateColumn = new TableColumn<>("EtherCAT State");
-      etherCATStateColumn.setMinWidth(150);
+      etherCATStateColumn.setMinWidth(130);
       etherCATStateColumn.setCellValueFactory(new PropertyValueFactory<>("state"));
 
       // Create column that displays the device ID/Position/Alias
       TableColumn<UIDeviceStatusHolder, String> idColumn = new TableColumn<>("ID");
-      idColumn.setMinWidth(150);
+      idColumn.setMinWidth(75);
       idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
 
       // Create column that displays TODO
@@ -291,8 +291,8 @@ public class HardwareStatusUI implements VisualizerController
 
             if (!isEmpty())
             {
-               if (!item)
-                  currentRow.setStyle("-fx-background-color:orange");
+               if (item)
+                  currentRow.setStyle("-fx-background-color:yellow");
                else
                   currentRow.setStyle("");
             }
@@ -301,27 +301,27 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> underVoltageColumn = new TableColumn<>("Under Voltage");
-      underVoltageColumn.setMinWidth(100);
+      underVoltageColumn.setMinWidth(120);
       underVoltageColumn.setCellValueFactory(new PropertyValueFactory<>("underVoltage"));
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> overVoltageColumn = new TableColumn<>("Over Voltage");
-      overVoltageColumn.setMinWidth(100);
+      overVoltageColumn.setMinWidth(120);
       overVoltageColumn.setCellValueFactory(new PropertyValueFactory<>("overVoltage"));
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> stoDisabledColumn = new TableColumn<>("STO Disabled");
-      stoDisabledColumn.setMinWidth(100);
+      stoDisabledColumn.setMinWidth(125);
       stoDisabledColumn.setCellValueFactory(new PropertyValueFactory<>("stoDisabled"));
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> currentShortColumn = new TableColumn<>("Current Short");
-      currentShortColumn.setMinWidth(100);
+      currentShortColumn.setMinWidth(125);
       currentShortColumn.setCellValueFactory(new PropertyValueFactory<>("currentShort"));
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> overTempColumn = new TableColumn<>("Over Temp");
-      overTempColumn.setMinWidth(100);
+      overTempColumn.setMinWidth(125);
       overTempColumn.setCellValueFactory(new PropertyValueFactory<>("overTemp"));
 
       // Create column that displays TODO
@@ -331,22 +331,22 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> inputEncoderErrorColumn = new TableColumn<>("Input Encoder Error");
-      inputEncoderErrorColumn.setMinWidth(100);
+      inputEncoderErrorColumn.setMinWidth(160);
       inputEncoderErrorColumn.setCellValueFactory(new PropertyValueFactory<>("inputEncoderError"));
 
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> outputEncoderErrorColumn = new TableColumn<>("Output Encoder Error");
-      outputEncoderErrorColumn.setMinWidth(100);
+      outputEncoderErrorColumn.setMinWidth(170);
       outputEncoderErrorColumn.setCellValueFactory(new PropertyValueFactory<>("outputEncoderError"));
 
       // Add columns and column headers to table
       table.getColumns().clear();
       table.getColumns().addAll(deviceNameColumn,
+                                idColumn,
                                 isRespondingColumn,
+                                etherCATStateColumn,
                                 readStatusColumn,
                                 writeStatusColumn,
-                                etherCATStateColumn,
-                                idColumn,
                                 isFaultedColumn,
                                 underVoltageColumn,
                                 overVoltageColumn,
@@ -369,7 +369,6 @@ public class HardwareStatusUI implements VisualizerController
 
       if (!showElmoErrors)
       {
-         table.getColumns().remove(isFaultedColumn);
          table.getColumns().remove(underVoltageColumn);
          table.getColumns().remove(overVoltageColumn);
          table.getColumns().remove(stoDisabledColumn);

@@ -1,6 +1,6 @@
-package us.ihmc.hardwareStatusUI.visualizerSide;
+package hardwareStatusUI.visualizerSide;
 
-import us.ihmc.hardwareStatusUI.controllerSide.DeviceStatusHolder;
+import hardwareStatusUI.controllerSide.DeviceStatusHolder;
 import us.ihmc.hardwareXMLToolkit.devices.AbstractXmlDevice;
 import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
 import us.ihmc.hardwareXMLToolkit.devices.XmlIMU;
@@ -11,7 +11,9 @@ import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerToolkit;
 import us.ihmc.yoVariables.tools.YoSearchTools;
 import us.ihmc.yoVariables.tools.YoTools;
 import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoVariable;
 import java.util.ArrayList;
 import java.util.List;
@@ -174,31 +176,31 @@ public abstract class AbstractUIHardwareStatusManager
       else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.STATE_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.IS_FAULTED_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.IS_FAULTED_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.UNDER_VOLTAGE_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.UNDER_VOLTAGE_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.OVER_VOLTAGE_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.OVER_VOLTAGE_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.STO_DISABLED_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.STO_DISABLED_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.CURRENT_SHORT_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.CURRENT_SHORT_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.OVER_TEMP_SUFFIX))
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.OVER_TEMP_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.ELMO_ERROR_CODE_SUFFIX))
+      else if (!doesVariableExist(YoInteger.class, dataHolderName + DeviceStatusHolder.ELMO_ERROR_CODE_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.INPUT_ENCODER_ERROR_SUFFIX))
+      else if (!doesVariableExist(YoDouble.class, dataHolderName + DeviceStatusHolder.INPUT_ENCODER_ERROR_SUFFIX))
          return;
 
-      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.OUTPUT_ENCODER_ERROR_SUFFIX))
+      else if (!doesVariableExist(YoDouble.class, dataHolderName + DeviceStatusHolder.OUTPUT_ENCODER_ERROR_SUFFIX))
          return;
 
       deviceDataHolders.add(new UIDeviceStatusHolder(dataHolderName,

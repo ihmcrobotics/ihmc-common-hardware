@@ -4,7 +4,7 @@ import us.ihmc.etherCAT.master.RxPDO;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.master.SyncManager;
 import us.ihmc.etherCAT.master.TxPDO;
-import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
+import hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
 
 public class H4EtherCATJunctionPort extends Slave implements EtherCATDeviceStatusProvider
 {

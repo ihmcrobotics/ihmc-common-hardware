@@ -1,9 +1,9 @@
-package us.ihmc.hardwareStatusUI.visualizerSide;
+package hardwareStatusUI.visualizerSide;
 
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
-import us.ihmc.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
+import hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -92,24 +92,24 @@ public class UIDeviceStatusHolder
       this(name, description, childDescription, isResponding, state, position, alias, deviceType);
 
       this.isFaulted.set(isFaulted.getValue());
-      this.underVoltage.set(underVoltage.toString());
-      this.overVoltage.set(overVoltage.toString());
-      this.stoDisabled.set(stoDisabled.toString());
-      this.currentShort.set(currentShort.toString());
-      this.overTemp.set(overTemp.toString());
-      this.elmoErrorCode.set(elmoErrorCode.toString());
-      this.inputEncoderError.set(inputEncoderError.toString());
-      this.outputEncoderError.set(outputEncoderError.toString());
+      this.underVoltage.set(underVoltage.getValueAsString());
+      this.overVoltage.set(overVoltage.getValueAsString());
+      this.stoDisabled.set(stoDisabled.getValueAsString());
+      this.currentShort.set(currentShort.getValueAsString());
+      this.overTemp.set(overTemp.getValueAsString());
+      this.elmoErrorCode.set(elmoErrorCode.getValueAsString());
+      this.inputEncoderError.set(inputEncoderError.getValueAsString());
+      this.outputEncoderError.set(outputEncoderError.getValueAsString());
 
       isFaulted.addListener(change -> this.isFaulted.set(isFaulted.getValue()));
-      underVoltage.addListener(change -> this.underVoltage.set(underVoltage.toString()));
-      overVoltage.addListener(change -> this.overVoltage.set(overVoltage.toString()));
-      stoDisabled.addListener(change -> this.stoDisabled.set(stoDisabled.toString()));
-      currentShort.addListener(change -> this.currentShort.set(currentShort.toString()));
-      overTemp.addListener(change -> this.overTemp.set(overTemp.toString()));
-      elmoErrorCode.addListener(change -> this.elmoErrorCode.set(elmoErrorCode.toString()));
-      inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.toString()));
-      outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.toString()));
+      underVoltage.addListener(change -> this.underVoltage.set(underVoltage.getValueAsString()));
+      overVoltage.addListener(change -> this.overVoltage.set(overVoltage.getValueAsString()));
+      stoDisabled.addListener(change -> this.stoDisabled.set(stoDisabled.getValueAsString()));
+      currentShort.addListener(change -> this.currentShort.set(currentShort.getValueAsString()));
+      overTemp.addListener(change -> this.overTemp.set(overTemp.getValueAsString()));
+      elmoErrorCode.addListener(change -> this.elmoErrorCode.set(elmoErrorCode.getValueAsString()));
+      inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.getValueAsString()));
+      outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.getValueAsString()));
    }
 
    /**
@@ -247,5 +247,50 @@ public class UIDeviceStatusHolder
    public DeviceType getDeviceType()
    {
       return deviceType;
+   }
+
+   public Boolean getIsFaulted()
+   {
+      return isFaulted.get();
+   }
+
+   public String getUnderVoltage()
+   {
+      return underVoltage.get();
+   }
+
+   public String getOverVoltage()
+   {
+      return overVoltage.get();
+   }
+
+   public String getStoDisabled()
+   {
+      return stoDisabled.get();
+   }
+
+   public String getCurrentShort()
+   {
+      return currentShort.get();
+   }
+
+   public String getOverTemp()
+   {
+      return overTemp.get();
+   }
+
+   public String getElmoErrorCode()
+   {
+      return elmoErrorCode.get();
+   }
+
+   public String getInputEncoderError()
+   {
+      return inputEncoderError.get();
+   }
+
+   public String getOutputEncoderError()
+   {
+      return outputEncoderError.get();
    }
 }

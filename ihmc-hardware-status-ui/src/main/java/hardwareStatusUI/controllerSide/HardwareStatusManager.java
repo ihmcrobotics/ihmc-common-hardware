@@ -1,4 +1,4 @@
-package us.ihmc.hardwareStatusUI.controllerSide;
+package hardwareStatusUI.controllerSide;
 
 import us.ihmc.hardwareXMLToolkit.devices.AbstractXmlDevice;
 import us.ihmc.yoVariables.registry.YoRegistry;
