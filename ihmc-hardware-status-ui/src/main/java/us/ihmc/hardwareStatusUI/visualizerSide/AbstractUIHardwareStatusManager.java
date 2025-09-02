@@ -11,7 +11,9 @@ import us.ihmc.scs2.sessionVisualizer.jfx.managers.SessionVisualizerToolkit;
 import us.ihmc.yoVariables.tools.YoSearchTools;
 import us.ihmc.yoVariables.tools.YoTools;
 import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoVariable;
 import java.util.ArrayList;
 import java.util.List;
@@ -139,17 +141,10 @@ public abstract class AbstractUIHardwareStatusManager
    protected void createNewEtherCATDataHolder(String dataHolderName, String description, int position, int alias, DeviceType deviceType, boolean childDevice)
    {
       if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX))
-      {
-         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX
-                       + ". Variable(s) not found in registry");
          return;
-      }
+
       else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.STATE_SUFFIX))
-      {
-         LogTools.warn("Could not create Hardware Status UI Data Holder for device: " + dataHolderName + DeviceStatusHolder.STATE_SUFFIX
-                       + ". Variable(s) not found in registry");
          return;
-      }
 
       if (childDevice)
          deviceDataHolders.add(new UIDeviceStatusHolder(dataHolderName,
@@ -173,6 +168,70 @@ public abstract class AbstractUIHardwareStatusManager
                                                         deviceType));
    }
 
+   protected void createNewElmoTwitterDataHolder(String dataHolderName, String description, int position, int alias, DeviceType deviceType)
+   {
+      if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoEnum.class, dataHolderName + DeviceStatusHolder.STATE_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.IS_FAULTED_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.UNDER_VOLTAGE_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.OVER_VOLTAGE_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.STO_DISABLED_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.CURRENT_SHORT_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoBoolean.class, dataHolderName + DeviceStatusHolder.OVER_TEMP_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoInteger.class, dataHolderName + DeviceStatusHolder.ELMO_ERROR_CODE_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoDouble.class, dataHolderName + DeviceStatusHolder.INPUT_ENCODER_ERROR_SUFFIX))
+         return;
+
+      else if (!doesVariableExist(YoDouble.class, dataHolderName + DeviceStatusHolder.OUTPUT_ENCODER_ERROR_SUFFIX))
+         return;
+
+      deviceDataHolders.add(new UIDeviceStatusHolder(dataHolderName,
+                                                     description,
+                                                     "",
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_RESPONDING_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoEnumProperty(dataHolderName + DeviceStatusHolder.STATE_SUFFIX),
+                                                     position,
+                                                     alias,
+                                                     deviceType,
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.IS_FAULTED_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.UNDER_VOLTAGE_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.OVER_VOLTAGE_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.STO_DISABLED_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.CURRENT_SHORT_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoBooleanProperty(dataHolderName + DeviceStatusHolder.OVER_TEMP_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoIntegerProperty(dataHolderName + DeviceStatusHolder.ELMO_ERROR_CODE_SUFFIX)
+                                                                              .getYoVariable(),
+                                                     sessionVisualizerControls.newYoDoubleProperty(
+                                                           dataHolderName + DeviceStatusHolder.INPUT_ENCODER_ERROR_SUFFIX).getYoVariable(),
+                                                     sessionVisualizerControls.newYoDoubleProperty(
+                                                           dataHolderName + DeviceStatusHolder.OUTPUT_ENCODER_ERROR_SUFFIX).getYoVariable()));
+   }
+
    /**
     * Checks to make sure the yovariable exists
     *
@@ -188,7 +247,11 @@ public abstract class AbstractUIHardwareStatusManager
       String namespaceEnding = separatorIndex == -1 ? null : variableName.substring(0, separatorIndex);
       String name = separatorIndex == -1 ? variableName : variableName.substring(separatorIndex + 1);
       T variable = (T) YoSearchTools.findFirstVariable(namespaceEnding, name, type::isInstance, toolkit.getYoManager().getRootRegistry());
-      return variable != null;
+      boolean doesVariableExist = variable != null;
+
+      if (!doesVariableExist)
+         LogTools.warn("Could not create Hardware Status UI Data Holder for a device. Variable " + variableName + " not found in registry");
+      return doesVariableExist;
    }
 
    public ArrayList<UIDeviceStatusHolder> getDeviceDataHolders()

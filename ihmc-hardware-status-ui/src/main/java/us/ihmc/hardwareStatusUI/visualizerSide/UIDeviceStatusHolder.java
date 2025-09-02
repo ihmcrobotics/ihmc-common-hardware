@@ -7,6 +7,8 @@ import us.ihmc.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.D
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
 import us.ihmc.yoVariables.variable.YoBoolean;
+import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 import java.util.ArrayList;
 
@@ -25,6 +27,16 @@ public class UIDeviceStatusHolder
    protected final SimpleStringProperty state = new SimpleStringProperty("");
 
    protected final SimpleStringProperty id = new SimpleStringProperty("");
+
+   protected final SimpleBooleanProperty isFaulted = new SimpleBooleanProperty(false);
+   protected final SimpleStringProperty underVoltage = new SimpleStringProperty("");
+   protected final SimpleStringProperty overVoltage = new SimpleStringProperty("");
+   protected final SimpleStringProperty stoDisabled = new SimpleStringProperty("");
+   protected final SimpleStringProperty currentShort = new SimpleStringProperty("");
+   protected final SimpleStringProperty overTemp = new SimpleStringProperty("");
+   protected final SimpleStringProperty elmoErrorCode = new SimpleStringProperty("");
+   protected final SimpleStringProperty inputEncoderError = new SimpleStringProperty("");
+   protected final SimpleStringProperty outputEncoderError = new SimpleStringProperty("");
 
    protected DeviceType deviceType;
 
@@ -57,6 +69,47 @@ public class UIDeviceStatusHolder
       this.state.set(state.getValue());
 
       state.addListener(change -> this.state.set(state.getValue()));
+   }
+
+   public UIDeviceStatusHolder(String name,
+                               String description,
+                               String childDescription,
+                               YoBoolean isResponding,
+                               YoEnumAsStringProperty<Slave.State> state,
+                               int position,
+                               int alias,
+                               DeviceType deviceType,
+                               YoBoolean isFaulted,
+                               YoBoolean underVoltage,
+                               YoBoolean overVoltage,
+                               YoBoolean stoDisabled,
+                               YoBoolean currentShort,
+                               YoBoolean overTemp,
+                               YoInteger elmoErrorCode,
+                               YoDouble inputEncoderError,
+                               YoDouble outputEncoderError)
+   {
+      this(name, description, childDescription, isResponding, state, position, alias, deviceType);
+
+      this.isFaulted.set(isFaulted.getValue());
+      this.underVoltage.set(underVoltage.getValueAsString());
+      this.overVoltage.set(overVoltage.getValueAsString());
+      this.stoDisabled.set(stoDisabled.getValueAsString());
+      this.currentShort.set(currentShort.getValueAsString());
+      this.overTemp.set(overTemp.getValueAsString());
+      this.elmoErrorCode.set(elmoErrorCode.getValueAsString());
+      this.inputEncoderError.set(inputEncoderError.getValueAsString());
+      this.outputEncoderError.set(outputEncoderError.getValueAsString());
+
+      isFaulted.addListener(change -> this.isFaulted.set(isFaulted.getValue()));
+      underVoltage.addListener(change -> this.underVoltage.set(underVoltage.getValueAsString()));
+      overVoltage.addListener(change -> this.overVoltage.set(overVoltage.getValueAsString()));
+      stoDisabled.addListener(change -> this.stoDisabled.set(stoDisabled.getValueAsString()));
+      currentShort.addListener(change -> this.currentShort.set(currentShort.getValueAsString()));
+      overTemp.addListener(change -> this.overTemp.set(overTemp.getValueAsString()));
+      elmoErrorCode.addListener(change -> this.elmoErrorCode.set(elmoErrorCode.getValueAsString()));
+      inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.getValueAsString()));
+      outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.getValueAsString()));
    }
 
    /**
@@ -115,6 +168,7 @@ public class UIDeviceStatusHolder
    public void addDataBooleanChangeListener(ChangeListener<? super Boolean> listener)
    {
       isResponding.addListener(listener);
+      isFaulted.addListener(listener);
    }
 
    /**
@@ -125,6 +179,14 @@ public class UIDeviceStatusHolder
       readStatus.addListener(listener);
       writeStatus.addListener(listener);
       state.addListener(listener);
+      underVoltage.addListener(listener);
+      overVoltage.addListener(listener);
+      stoDisabled.addListener(listener);
+      currentShort.addListener(listener);
+      overTemp.addListener(listener);
+      elmoErrorCode.addListener(listener);
+      inputEncoderError.addListener(listener);
+      outputEncoderError.addListener(listener);
    }
 
    /**
@@ -185,5 +247,50 @@ public class UIDeviceStatusHolder
    public DeviceType getDeviceType()
    {
       return deviceType;
+   }
+
+   public Boolean getIsFaulted()
+   {
+      return isFaulted.get();
+   }
+
+   public String getUnderVoltage()
+   {
+      return underVoltage.get();
+   }
+
+   public String getOverVoltage()
+   {
+      return overVoltage.get();
+   }
+
+   public String getStoDisabled()
+   {
+      return stoDisabled.get();
+   }
+
+   public String getCurrentShort()
+   {
+      return currentShort.get();
+   }
+
+   public String getOverTemp()
+   {
+      return overTemp.get();
+   }
+
+   public String getElmoErrorCode()
+   {
+      return elmoErrorCode.get();
+   }
+
+   public String getInputEncoderError()
+   {
+      return inputEncoderError.get();
+   }
+
+   public String getOutputEncoderError()
+   {
+      return outputEncoderError.get();
    }
 }
