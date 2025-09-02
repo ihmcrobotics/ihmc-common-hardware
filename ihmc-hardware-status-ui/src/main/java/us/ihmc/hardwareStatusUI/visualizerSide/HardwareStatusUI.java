@@ -107,10 +107,10 @@ public class HardwareStatusUI implements VisualizerController
     */
    private void createDeviceStatusTablePane()
    {
-      setupDataTable(allDevicesStatusTab, allDevicesStatusTable, true, true, true);
-      setupDataTable(motorsStatusTab, motorsStatusTable, false, false, true);
-      setupDataTable(boardsStatusTab, boardsStatusTable, true, false, true);
-      setupDataTable(sensorsStatusTab, sensorsStatusTable, false, false, true);
+      setupDataTable(allDevicesStatusTab, allDevicesStatusTable, true, false, true, false);
+      setupDataTable(motorsStatusTab, motorsStatusTable, false, false, true, true);
+      setupDataTable(boardsStatusTab, boardsStatusTable, true, false, true, false);
+      setupDataTable(sensorsStatusTab, sensorsStatusTable, false, false, true, false);
    }
 
    /**
@@ -201,7 +201,7 @@ public class HardwareStatusUI implements VisualizerController
     * @param showCANInfo              If true, show information for CAN communication
     * @param showEtherCATInfo         If true, show information for EtherCAT communication
     */
-   private void setupDataTable(Tab tab, TableView<UIDeviceStatusHolder> table, boolean addChildDeviceNameColumn, boolean showCANInfo, boolean showEtherCATInfo)
+   private void setupDataTable(Tab tab, TableView<UIDeviceStatusHolder> table, boolean addChildDeviceNameColumn, boolean showCANInfo, boolean showEtherCATInfo, boolean showElmoErrors)
    {
       // Set up table settings
       table.setEditable(false);
@@ -229,7 +229,7 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays the device responsiveness
       TableColumn<UIDeviceStatusHolder, Boolean> isRespondingColumn = new TableColumn<>("Is Responding");
-      isRespondingColumn.setMinWidth(100);
+      isRespondingColumn.setMinWidth(125);
       isRespondingColumn.setCellValueFactory(new PropertyValueFactory<>("isResponding"));
       isRespondingColumn.setCellFactory(column -> new TableCell<>()
       {
@@ -255,27 +255,107 @@ public class HardwareStatusUI implements VisualizerController
 
       // Create column that displays the device CAN read status
       TableColumn<UIDeviceStatusHolder, String> readStatusColumn = new TableColumn<>("CAN Read Status");
-      readStatusColumn.setMinWidth(200);
+      readStatusColumn.setMinWidth(150);
       readStatusColumn.setCellValueFactory(new PropertyValueFactory<>("readStatus"));
 
       // Create column that displays the device CAN write status
       TableColumn<UIDeviceStatusHolder, String> writeStatusColumn = new TableColumn<>("CAN Write Status");
-      writeStatusColumn.setMinWidth(200);
+      writeStatusColumn.setMinWidth(150);
       writeStatusColumn.setCellValueFactory(new PropertyValueFactory<>("writeStatus"));
 
       // Create column that displays the device EtherCat state
       TableColumn<UIDeviceStatusHolder, String> etherCATStateColumn = new TableColumn<>("EtherCAT State");
-      etherCATStateColumn.setMinWidth(150);
+      etherCATStateColumn.setMinWidth(130);
       etherCATStateColumn.setCellValueFactory(new PropertyValueFactory<>("state"));
 
       // Create column that displays the device ID/Position/Alias
       TableColumn<UIDeviceStatusHolder, String> idColumn = new TableColumn<>("ID");
-      idColumn.setMinWidth(150);
+      idColumn.setMinWidth(75);
       idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, Boolean> isFaultedColumn = new TableColumn<>("Is Faulted");
+      isFaultedColumn.setMinWidth(100);
+      isFaultedColumn.setCellValueFactory(new PropertyValueFactory<>("isFaulted"));
+      isFaultedColumn.setCellFactory(column -> new TableCell<>()
+      {
+         @Override
+         protected void updateItem(Boolean item, boolean empty)
+         {
+            super.updateItem(item, empty);
+
+            setText(empty ? "" : getItem().toString());
+            setGraphic(null);
+
+            TableRow<UIDeviceStatusHolder> currentRow = getTableRow();
+
+            if (!isEmpty())
+            {
+               if (item)
+                  currentRow.setStyle("-fx-background-color:yellow");
+               else
+                  currentRow.setStyle("");
+            }
+         }
+      });
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> underVoltageColumn = new TableColumn<>("Under Voltage");
+      underVoltageColumn.setMinWidth(120);
+      underVoltageColumn.setCellValueFactory(new PropertyValueFactory<>("underVoltage"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> overVoltageColumn = new TableColumn<>("Over Voltage");
+      overVoltageColumn.setMinWidth(120);
+      overVoltageColumn.setCellValueFactory(new PropertyValueFactory<>("overVoltage"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> stoDisabledColumn = new TableColumn<>("STO Disabled");
+      stoDisabledColumn.setMinWidth(125);
+      stoDisabledColumn.setCellValueFactory(new PropertyValueFactory<>("stoDisabled"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> currentShortColumn = new TableColumn<>("Current Short");
+      currentShortColumn.setMinWidth(125);
+      currentShortColumn.setCellValueFactory(new PropertyValueFactory<>("currentShort"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> overTempColumn = new TableColumn<>("Over Temp");
+      overTempColumn.setMinWidth(125);
+      overTempColumn.setCellValueFactory(new PropertyValueFactory<>("overTemp"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> elmoErrorCodeColumn = new TableColumn<>("Elmo Error Code");
+      elmoErrorCodeColumn.setMinWidth(150);
+      elmoErrorCodeColumn.setCellValueFactory(new PropertyValueFactory<>("elmoErrorCode"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> inputEncoderErrorColumn = new TableColumn<>("Input Encoder Error");
+      inputEncoderErrorColumn.setMinWidth(160);
+      inputEncoderErrorColumn.setCellValueFactory(new PropertyValueFactory<>("inputEncoderError"));
+
+      // Create column that displays TODO
+      TableColumn<UIDeviceStatusHolder, String> outputEncoderErrorColumn = new TableColumn<>("Output Encoder Error");
+      outputEncoderErrorColumn.setMinWidth(170);
+      outputEncoderErrorColumn.setCellValueFactory(new PropertyValueFactory<>("outputEncoderError"));
 
       // Add columns and column headers to table
       table.getColumns().clear();
-      table.getColumns().addAll(deviceNameColumn, isRespondingColumn, readStatusColumn, writeStatusColumn, etherCATStateColumn, idColumn);
+      table.getColumns().addAll(deviceNameColumn,
+                                idColumn,
+                                isRespondingColumn,
+                                etherCATStateColumn,
+                                readStatusColumn,
+                                writeStatusColumn,
+                                isFaultedColumn,
+                                underVoltageColumn,
+                                overVoltageColumn,
+                                stoDisabledColumn,
+                                currentShortColumn,
+                                overTempColumn,
+                                elmoErrorCodeColumn,
+                                inputEncoderErrorColumn,
+                                outputEncoderErrorColumn);
 
       // Remove columns that don't need to be shown
       if (!showCANInfo)
@@ -286,6 +366,18 @@ public class HardwareStatusUI implements VisualizerController
 
       if (!showEtherCATInfo)
          table.getColumns().remove(etherCATStateColumn);
+
+      if (!showElmoErrors)
+      {
+         table.getColumns().remove(underVoltageColumn);
+         table.getColumns().remove(overVoltageColumn);
+         table.getColumns().remove(stoDisabledColumn);
+         table.getColumns().remove(currentShortColumn);
+         table.getColumns().remove(overTempColumn);
+         table.getColumns().remove(elmoErrorCodeColumn);
+         table.getColumns().remove(inputEncoderErrorColumn);
+         table.getColumns().remove(outputEncoderErrorColumn);
+      }
 
       // Set up tab and table settings
       table.getColumns().forEach(column -> column.setSortable(false));
