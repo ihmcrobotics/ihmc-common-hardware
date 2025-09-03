@@ -2,8 +2,8 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidParameterLoader;
-import us.ihmc.commonHardware.xmlDescription.devices.parameters.XmlCycloidParameters;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
@@ -193,7 +193,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoInteger rawOutputPositionOffset;
    private final YoInteger rawInputPositionOffset;
    private final YoDouble encoderDifferenceAtOutput;
-   private final YoBoolean checkEncoderOffsets;
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
    private final int inputCountsPerRevolution;
@@ -285,9 +284,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       rawOutputPositionOffset.set(outputOffset);
 
       encoderDifferenceAtOutput = new YoDouble(name + "EncoderDifferenceAtOutput", registry);
-
-      checkEncoderOffsets = new YoBoolean(name + "UpdateEncoderOffsets", registry);
-      checkEncoderOffsets.set(true);
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
 
@@ -707,11 +703,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
-      if (checkEncoderOffsets.getBooleanValue())
-      {
-         checkAndUpdateEncoderOffsets();
-         checkEncoderOffsets.set(false);
-      }
+      if (!isDriveEnabled())
+         checkAndUpdateEncoderOffsets(); // While the motor is disabled, check if the encoder isn't correct
    }
 
    /**

@@ -60,7 +60,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private final YoDouble yoJointOffset;
    private final YoBoolean updateJointOffset;
-   private final YoBoolean checkAndUpdateEncoderOffsets;
 
    private static final int[] validOffsetIntervals = {-1, 0, 1};
    private final YoLong readTime;
@@ -150,14 +149,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       yoJointOffset = new YoDouble(jointName + "_jointOffset", registry);
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
-      checkAndUpdateEncoderOffsets = new YoBoolean(jointName + "_checkAndUpdateEncoderOffsets", registry);
-
-      checkAndUpdateEncoderOffsets.addListener(s ->
-                                               {
-                                                  if(checkAndUpdateEncoderOffsets.getBooleanValue())
-                                                     platinumTwitter.checkAndUpdateEncoderOffsets();
-                                                  checkAndUpdateEncoderOffsets.set(false, false);
-                                               });
 
       motorEncoderToOutputEncoderOffset = new YoDouble(jointName + "_motorEncoderToJointEncoderOffset", registry);
       calculateMotorEncoderToOutputEncoderOffset = new YoBoolean(jointName + "_calculateMotorEncoderToJointEncoderOffset", registry);
@@ -206,20 +197,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
 
-      // Using input velocity scaled to the output seems to work better for control
-      if(jointName.contains("RIGHT_KNEE")) // Right knee has a noisy output encoder
-      {
-         platinumTwitter.setUseOutputPositionFromMotor(true);
-         platinumTwitter.setUseOutputVelocityFromMotor(true);
-      }
-
       parentRegistry.addChild(registry);
    }
 
    @Override
    public void initialize()
    {
-      platinumTwitter.checkAndUpdateEncoderOffsets();
+      // Do Nothing
    }
 
    @Override

@@ -13,8 +13,9 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-sensor-processing:0.14.0-241016")
-   api("us.ihmc:ihmc-hardware-status-ui:source")
+   api("xml-apis:xml-apis:2.0.2")
+   api("com.sun.xml.bind:jaxb-impl:4.0.5")
+   api("us.ihmc:euclid-geometry:0.22.5")
 }
 
 testDependencies {
