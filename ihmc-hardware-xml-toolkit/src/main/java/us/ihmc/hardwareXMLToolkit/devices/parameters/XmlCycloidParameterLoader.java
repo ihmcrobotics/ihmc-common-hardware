@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 public class XmlCycloidParameterLoader
 {
-   private static final String DEFAULT_DIRECTORY = "parameters/actuators/";
+   private static final String DEFAULT_DIRECTORY = "xmlExamples/devices/parameters";
 
    public static XmlCycloidParameters getCycloidParametersFromActuatorPackageName(String parameterDirectory, String actuatorPackage)
    {
