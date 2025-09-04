@@ -29,6 +29,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 {
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
+   private static final int MAX_CONSECUTIVE_FAULTS = 10;
 
    // Current variables
    private static final double CURRENT_SIGNAL_RANGE = 1000.0;
@@ -196,7 +197,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
    private final int inputCountsPerRevolution;
-   private boolean firstRead = true;
+   private final YoInteger numConsecutiveFaults;
+   private final YoInteger maxConsecutiveFaults;
 
    private enum EncoderState
    {
@@ -532,17 +534,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
-      DRIVE_FAULTED.addListener(new YoVariableChangedListener()
-      {
-         @Override
-         public void changed(YoVariable source)
-         {
-            if (DRIVE_FAULTED.getBooleanValue())
-            {
-               MOTOR_FAULT.set(true);
-            }
-         }
-      });
+      numConsecutiveFaults = new YoInteger(prefix + "_numConsecutiveFaults", registry);
+      maxConsecutiveFaults = new YoInteger(prefix + "_maxConsecutiveFaults", registry);
 
       etherCATState.addListener(source ->
                                 {
@@ -600,6 +593,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       STO_DISABLED.set(platinumTwitter.isSTODisabled());
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
+
+      if(DRIVE_FAULTED.getBooleanValue())
+      {
+         numConsecutiveFaults.increment();
+         if(numConsecutiveFaults.getIntegerValue() > maxConsecutiveFaults.getIntegerValue())
+            MOTOR_FAULT.set(true);
+      }
+      else
+         numConsecutiveFaults.set(0);
 
       // Update SIL readable variables
       sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
