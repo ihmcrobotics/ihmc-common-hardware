@@ -390,13 +390,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          qd_d = 0.0;
       }
 
-      if (desiredJointData.hasMaxTorque())
-         tau_d = MathTools.clamp(tau_d, desiredJointData.getMaxTorque());
-
       if (jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
       {
          tau_d = jointLimitTorqueLimiter.limitDesiredTorques(tau_d, measuredActuatorData.getPosition());
       }
+
+      if (desiredJointData.hasMaxTorque())
+         tau_d = MathTools.clamp(tau_d, desiredJointData.getMaxTorque());
 
       this.desiredActuatorData.setLoadMode(loaded);
       this.desiredActuatorData.setPosition(q_d);
