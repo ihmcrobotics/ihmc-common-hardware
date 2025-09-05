@@ -84,6 +84,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final double jointLimitLower;
    private final double jointLimitUpper;
 
+   private final JointLimitTorqueLimiter jointLimitTorqueLimiter;
+
    /**
     * Initialize the cycloid mechanism manager
     *
@@ -196,6 +198,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
+      
+      jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
 
       parentRegistry.addChild(registry);
    }
@@ -384,6 +388,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          double alphaPositionRampDown = 0.05;
          q_d = alphaPositionRampDown * measuredActuatorData.getPosition() + (1.0 - alphaPositionRampDown) * this.desiredActuatorData.getPosition();
          qd_d = 0.0;
+      }
+
+      if (jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
+      {
+         tau_d = jointLimitTorqueLimiter.limitDesiredTorques(tau_d, measuredActuatorData.getPosition());
       }
 
       if (desiredJointData.hasMaxTorque())
@@ -586,6 +595,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public boolean getIsStatorAboveRecommendedTemperature()
    {
       return isStatorAboveRecommendedTemperature.getValue();
+   }
+
+   public JointLimitTorqueLimiter getJointLimitTorqueLimiter()
+   {
+      return jointLimitTorqueLimiter;
    }
 
    /**
