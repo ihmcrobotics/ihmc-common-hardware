@@ -40,7 +40,12 @@ public class H4EtherCATJunctionPort extends Slave implements EtherCATDeviceStatu
     */
    public H4EtherCATJunctionPort(int alias, int position, int junctionPort)
    {
-      super(VENDOR_ID, PRODUCT_CODES[junctionPort], alias, position);
+      this(VENDOR_ID, alias, position, junctionPort);
+   }
+
+   public H4EtherCATJunctionPort(int vendorID, int alias, int position, int junctionPort)
+   {
+      super(vendorID, PRODUCT_CODES[junctionPort], alias, position);
 
       registerSyncManager(new SyncManager(2, false));
       registerSyncManager(new SyncManager(3, false));
