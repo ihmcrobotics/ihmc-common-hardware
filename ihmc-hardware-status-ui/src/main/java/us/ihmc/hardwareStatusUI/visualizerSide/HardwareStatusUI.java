@@ -289,7 +289,7 @@ public class HardwareStatusUI implements VisualizerController
 
             TableRow<UIDeviceStatusHolder> currentRow = getTableRow();
 
-            if (!isEmpty())
+            if (!isEmpty() && !currentRow.getStyle().equals("-fx-background-color:red"))
             {
                if (item)
                   currentRow.setStyle("-fx-background-color:yellow");
