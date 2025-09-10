@@ -1,6 +1,8 @@
 package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+import org.jline.utils.Log;
+import us.ihmc.commons.AngleTools;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
@@ -322,13 +324,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       long startTime = System.nanoTime();
 
       double q_d, qd_d, tau_d;
-      double stiffness, damping, maxPositionFeedbackError, maxVeloctyFeedbackError;
+      double stiffness, damping, maxPositionFeedbackError, maxVelocityFeedbackError;
       JointDesiredLoadMode loaded = null;
       stiffness = desiredJointData.hasStiffness() ? desiredJointData.getStiffness() : 0.0;
       damping = desiredJointData.hasDamping() ? desiredJointData.getDamping() : 0.0;
 
       maxPositionFeedbackError = desiredJointData.hasPositionFeedbackMaxError() ? desiredJointData.getPositionFeedbackMaxError() : Double.POSITIVE_INFINITY;
-      maxVeloctyFeedbackError = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getVelocityFeedbackMaxError() : Double.POSITIVE_INFINITY;
+      maxVelocityFeedbackError = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getVelocityFeedbackMaxError() : Double.POSITIVE_INFINITY;
 
       q_d = desiredJointData.hasDesiredPosition() ? desiredJointData.getDesiredPosition() : measuredActuatorData.getPosition();
 
@@ -338,7 +340,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       loaded = desiredJointData.getLoadMode();
 
       // clamping
-      q_d = desiredJointData.hasPositionFeedbackMaxError() ? desiredJointData.getClampedDesiredPosition(measuredActuatorData.getPosition()) : q_d;
+      q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
       qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
 
       double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
@@ -364,7 +366,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       if (!doPDControlOnTwitter.getValue())
       {
-         positionError.set(q_d - measuredActuatorData.getPosition());
+         positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, measuredActuatorData.getPosition()));
          if (useFilteredVelocities.getBooleanValue())
             velocityError.set(qd_d - platinumTwitter.getFilteredOutputVelocity());
          else
@@ -432,11 +434,26 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       platinumTwitter.setDesiredMotorDamping(desiredMotorData.getDamping());
 
       platinumTwitter.setMaxPositionFeedbackError(maxPositionFeedbackError * gearRatio);
-      platinumTwitter.setMaxVelocityFeedbackError(maxVeloctyFeedbackError * gearRatio);
+      platinumTwitter.setMaxVelocityFeedbackError(maxVelocityFeedbackError * gearRatio);
 
       platinumTwitter.write();
 
       writeTime.set(System.nanoTime() - startTime);
+   }
+
+   private static double getClampedDesiredPosition(double desiredPosition, double currentPosition, double maxFeedbackError)
+   {
+      double error = AngleTools.computeAngleDifferenceMinusPiToPi(desiredPosition, currentPosition);
+
+      if (Math.abs(error) > maxFeedbackError)
+      {
+         double errorClamped = MathTools.clamp(error, maxFeedbackError);
+         return AngleTools.trimAngleMinusPiToPi(currentPosition + errorClamped);
+      }
+      else
+      {
+         return desiredPosition;
+      }
    }
 
    /**
