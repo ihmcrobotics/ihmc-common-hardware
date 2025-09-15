@@ -43,6 +43,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
    private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
 
+   // TODO ADD COMMENT
+   private static final int ANALOG_2_BIPOLAR_BIT_COUNT = 14; // TODO ADD COMMENT
+   private static final double ANALOG_2_BIPOLAR_REFERENCE_VOLTAGE = -10.0;  // TODO ADD COMMENT
+   private static final int ANALOG_2_UNIPOLAR_BIT_COUNT = 12; // TODO ADD COMMENT
+   private static final double ANALOG_2_UNIPOLAR_REFERENCE_VOLTAGE = -3.3; // TODO ADD COMMENT
+
    private final double dt;
    private final String name;
    private final YoRegistry registry;
@@ -120,8 +126,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoInteger errorCode;
    //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
-   private final YoDouble measuredAnalogInput2;
-   private final YoDouble measuredAnalogInput1;
+   private final YoDouble measuredAnalogInput2InADCCounts;
+   private final YoDouble measuredAnalogInput1InADCCounts;
+   private final YoDouble measuredAnalogInput2InVolts;
+   private final YoDouble measuredAnalogInput1InVolts;
 
    private final YoEnum<State> etherCATState;
 
@@ -491,8 +499,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
       estimatedOutputTorque = new YoDouble(prefix + "estimatedOutputTorque", registry);
 
-      measuredAnalogInput2 = new YoDouble(prefix + "measuredAnalogInput2", registry);
-      measuredAnalogInput1 = new YoDouble(prefix + "measuredAnalogInput1", registry);
+      measuredAnalogInput2InADCCounts = new YoDouble(prefix + "MeasuredAnalogInput2InADCCounts", registry);
+      measuredAnalogInput1InADCCounts = new YoDouble(prefix + "MeasuredAnalogInput1InADCCounts", registry);
+      measuredAnalogInput2InVolts = new YoDouble(prefix + "MeasuredAnalogInput2InVolts", registry);
+      measuredAnalogInput1InVolts = new YoDouble(prefix + "MeasuredAnalogInput1InVolts", registry);
+
+      // TODO: move the following conversions into a method of some sort
+      measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput2InVolts.set(
+            (measuredAnalogInput2InADCCounts.getDoubleValue() / (Math.pow(2, ANALOG_2_UNIPOLAR_BIT_COUNT) - 1)) * ANALOG_2_UNIPOLAR_REFERENCE_VOLTAGE));
+
+      measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput1InVolts.set(((measuredAnalogInput1InADCCounts.getDoubleValue()
+                                                                                              - (Math.pow(2, ANALOG_2_BIPOLAR_BIT_COUNT - 1))
+                                                                                                * ANALOG_2_BIPOLAR_REFERENCE_VOLTAGE) / Math.pow(2,
+                                                                                                                                                 ANALOG_2_BIPOLAR_BIT_COUNT
+                                                                                                                                                 - 1))));
 
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
@@ -702,8 +722,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       maxDriveCurrentMilliAmps.set(platinumTwitter.getMaxDriveCurrentMilliAmps());
 
       //read the voltage on analog input 2
-      measuredAnalogInput2.set(platinumTwitter.getAnalogInput2());
-      measuredAnalogInput1.set(platinumTwitter.getAnalogInput1());
+      measuredAnalogInput2InADCCounts.set(platinumTwitter.getAnalogInput2());
+      measuredAnalogInput1InADCCounts.set(platinumTwitter.getAnalogInput1());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
       if (!isDriveEnabled())
@@ -1223,7 +1243,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public double getStatorTemperature()
    {
-      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput2.getValue());
+      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput2InVolts.getValue());
    }
 
    public int getMaxAllowableStatorTemperature()
