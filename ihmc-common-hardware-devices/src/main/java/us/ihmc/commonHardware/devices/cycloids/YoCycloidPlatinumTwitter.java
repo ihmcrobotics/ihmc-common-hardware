@@ -111,7 +111,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    private final YoInteger rawMeasuredMotorPosition;
    private final YoDouble rawMeasuredMotorVelocity;
-   private final YoDouble rawMeasuredOuputPosition;
+   private final YoDouble rawMeasuredOutputPosition;
    private final YoDouble rawMeasuredOutputVelocity;
    private final YoInteger rawMeasuredMotorCurrent;
 
@@ -120,7 +120,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoInteger errorCode;
    //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
-   private final YoDouble measuredAnalogInput1a00;
+   private final YoDouble measuredAnalogInput2;
+   private final YoDouble measuredAnalogInput1;
 
    private final YoEnum<State> etherCATState;
 
@@ -490,12 +491,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
       estimatedOutputTorque = new YoDouble(prefix + "estimatedOutputTorque", registry);
 
-      measuredAnalogInput1a00 = new YoDouble(prefix + "measuredAnalogInput1a00", registry);
+      measuredAnalogInput2 = new YoDouble(prefix + "measuredAnalogInput2", registry);
+      measuredAnalogInput1 = new YoDouble(prefix + "measuredAnalogInput1", registry);
 
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
       rawMeasuredMotorVelocity = new YoDouble(prefix + "rawMeasuredMotorVelocity", registry);
-      rawMeasuredOuputPosition = new YoDouble(prefix + "rawMeasuredOutputPosition", registry);
+      rawMeasuredOutputPosition = new YoDouble(prefix + "rawMeasuredOutputPosition", registry);
       rawMeasuredOutputVelocity = new YoDouble(prefix + "rawMeasuredOutputVelocity", registry);
       rawMeasuredMotorCurrent = new YoInteger(prefix + "rawMeasuredMotorCurrent", registry);
 
@@ -655,11 +657,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       /** Output Space Encoders **/
 
       //raw output position and velocity in counts & counts per sec
-      rawMeasuredOuputPosition.set(platinumTwitter.getRawAuxiliaryPosition());
+      rawMeasuredOutputPosition.set(platinumTwitter.getRawAuxiliaryPosition());
       rawMeasuredOutputVelocity.set(platinumTwitter.getRawAuxiliaryVelocity());
 
       // convert the output encoder count measurement to the output position in radians. Flip the sign here if the directionality is reversed
-      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      int currentRawOutputPosition = ((int) rawMeasuredOutputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
       double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
 
       // get the output joint position on the previous tick.  This is used to finite difference the output position to get the output velocity.
@@ -700,7 +702,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       maxDriveCurrentMilliAmps.set(platinumTwitter.getMaxDriveCurrentMilliAmps());
 
       //read the voltage on analog input 2
-      measuredAnalogInput1a00.set(platinumTwitter.getAnalogInput1a00());
+      measuredAnalogInput2.set(platinumTwitter.getAnalogInput2());
+      measuredAnalogInput1.set(platinumTwitter.getAnalogInput1());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
       if (!isDriveEnabled())
@@ -873,7 +876,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     */
    private void checkAndUpdateOutputOffset()
    {
-      int difference = (int) rawMeasuredOuputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
+      int difference = (int) rawMeasuredOutputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
       int rotationInterval = Math.abs(difference) / outputCountsPerRevolution;
       if (difference >= outputCountsPerRevolution / 2)
       {
@@ -922,7 +925,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       checkAndUpdateOutputOffset();
       //Set the output position based on new offset
-      int currentRawOutputPosition = ((int) rawMeasuredOuputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
+      int currentRawOutputPosition = ((int) rawMeasuredOutputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
       double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
       measuredOutputPosition.set(currentMeasuredOutputPosition);
 
@@ -935,7 +938,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void zeroEncoders()
    {
       rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
-      rawOutputPositionOffset.set((int) rawMeasuredOuputPosition.getDoubleValue());
+      rawOutputPositionOffset.set((int) rawMeasuredOutputPosition.getDoubleValue());
    }
 
    /**
@@ -1220,7 +1223,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public double getStatorTemperature()
    {
-      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput1a00.getValue());
+      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput2.getValue());
    }
 
    public int getMaxAllowableStatorTemperature()
