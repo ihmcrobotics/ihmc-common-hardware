@@ -43,12 +43,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
    private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
 
-   // TODO ADD COMMENT
-   private static final int ANALOG_2_BIPOLAR_BIT_COUNT = 14; // TODO ADD COMMENT
-   private static final double ANALOG_2_BIPOLAR_REFERENCE_VOLTAGE = -10.0;  // TODO ADD COMMENT
-   private static final int ANALOG_2_UNIPOLAR_BIT_COUNT = 12; // TODO ADD COMMENT
-   private static final double ANALOG_2_UNIPOLAR_REFERENCE_VOLTAGE = -3.3; // TODO ADD COMMENT
-
    private final double dt;
    private final String name;
    private final YoRegistry registry;
@@ -130,6 +124,17 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredAnalogInput1InADCCounts;
    private final YoDouble measuredAnalogInput2InVolts;
    private final YoDouble measuredAnalogInput1InVolts;
+
+   // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
+   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{10.325581, 224.7863, -360.157212};
+   private static final boolean USE_ANALOG_1_FOR_STATOR_TEMP = true;
+
+   // These convert from ADC counts to volts
+   // These numbers came from the Nadia robot, which is why its in the name
+   private static final double ANALOG_INPUT_1_CONVERSION_CONSTANT_FROM_NADIA = 0.0003729982709046532;
+   private static final double ANALOG_INPUT_2_CONVERSION_CONSTANT_FROM_NADIA = -0.005940005648881197;
+
+   private final YoBoolean useAnalog1ForStatorTemp;
 
    private final YoEnum<State> etherCATState;
 
@@ -504,15 +509,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredAnalogInput2InVolts = new YoDouble(prefix + "MeasuredAnalogInput2InVolts", registry);
       measuredAnalogInput1InVolts = new YoDouble(prefix + "MeasuredAnalogInput1InVolts", registry);
 
-      // TODO: move the following conversions into a method of some sort
-      measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput2InVolts.set(
-            (measuredAnalogInput2InADCCounts.getDoubleValue() / (Math.pow(2, ANALOG_2_UNIPOLAR_BIT_COUNT) - 1)) * ANALOG_2_UNIPOLAR_REFERENCE_VOLTAGE));
+      useAnalog1ForStatorTemp = new YoBoolean(prefix + "useAnalog1ForStatorTemp", registry);
+      useAnalog1ForStatorTemp.set(USE_ANALOG_1_FOR_STATOR_TEMP);
 
-      measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput1InVolts.set(((measuredAnalogInput1InADCCounts.getDoubleValue()
-                                                                                              - (Math.pow(2, ANALOG_2_BIPOLAR_BIT_COUNT - 1))
-                                                                                                * ANALOG_2_BIPOLAR_REFERENCE_VOLTAGE) / Math.pow(2,
-                                                                                                                                                 ANALOG_2_BIPOLAR_BIT_COUNT
-                                                                                                                                                 - 1))));
+      measuredAnalogInput1InADCCounts.addListener(change -> measuredAnalogInput1InVolts.set(convertAnalogInput1FromCountsToVolts(measuredAnalogInput1InADCCounts.getDoubleValue())));
+      measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput2InVolts.set(convertAnalogInput2FromCountsToVolts(measuredAnalogInput2InADCCounts.getDoubleValue())));
 
       //actuals in raw units
       rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
@@ -953,6 +954,26 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    }
 
    /**
+    * @param voltage Voltage from the temperature sensor
+    * @return The temperature of the cycloid, converted from voltage to degrees Celsius
+    */
+   public double convertAnalogInputInVoltsToTemperatureInDegreeCelsius(double voltage)
+   {
+      return (TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[0] * voltage * voltage + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[1] * voltage
+              + TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS[2]);
+   }
+
+   public double convertAnalogInput1FromCountsToVolts(double valueInCounts)
+   {
+      return valueInCounts * ANALOG_INPUT_1_CONVERSION_CONSTANT_FROM_NADIA;
+   }
+
+   public double convertAnalogInput2FromCountsToVolts(double valueInCounts)
+   {
+      return valueInCounts * ANALOG_INPUT_2_CONVERSION_CONSTANT_FROM_NADIA;
+   }
+
+   /**
     * Sets the input and output encoder offsets to the current raw positions
     */
    public void zeroEncoders()
@@ -1243,7 +1264,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    public double getStatorTemperature()
    {
-      return convertAnalogInputToTemperatureInDegreeCelsius(this.measuredAnalogInput2InVolts.getValue());
+      if (useAnalog1ForStatorTemp.getBooleanValue())
+         return convertAnalogInputInVoltsToTemperatureInDegreeCelsius(measuredAnalogInput1InVolts.getValue());
+      else
+         return convertAnalogInputInVoltsToTemperatureInDegreeCelsius(measuredAnalogInput2InVolts.getValue());
    }
 
    public int getMaxAllowableStatorTemperature()
