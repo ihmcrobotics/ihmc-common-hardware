@@ -15,6 +15,7 @@ import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilterTools;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.GlitchFilteredYoBoolean;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -29,6 +30,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 {
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
+   private static final int MAX_CONSECUTIVE_FAULTS = 10;
 
    // Current variables
    private static final double CURRENT_SIGNAL_RANGE = 1000.0;
@@ -133,7 +135,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean CURRENT_SHORT;
    private final YoBoolean OVER_TEMPERATURE;
    private final YoBoolean MOTOR_ENABLED;
-   private final YoBoolean MOTOR_FAULT;
+   private final GlitchFilteredYoBoolean MOTOR_FAULT;
 
    // SIL Tunable Variables
    private final YoBoolean saveR2ToNVM; //Save R2 to NVM, this can only be done once per power cycle
@@ -196,7 +198,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
    private final int inputCountsPerRevolution;
-   private boolean firstRead = true;
+   private final YoInteger numConsecutiveFaults;
+   private final YoInteger maxConsecutiveFaults;
 
    private enum EncoderState
    {
@@ -516,6 +519,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
+      maxConsecutiveFaults = new YoInteger(prefix + "_maxConsecutiveFaults", registry);
       //faults
       statusRegisterProcessor = new ElmoTwitterStatusRegisterProcessor(registry);
       DRIVE_FAULTED = new YoBoolean(prefix + "_DRIVE_FAULTED", registry);
@@ -525,24 +529,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       CURRENT_SHORT = new YoBoolean(prefix + "_CURRENT_SHORT", registry);
       OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
       MOTOR_ENABLED = new YoBoolean(prefix + "_MOTOR_ENABLED", registry);
-      MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
+      MOTOR_FAULT = new GlitchFilteredYoBoolean(prefix + "_MOTOR_FAULT", registry, DRIVE_FAULTED, maxConsecutiveFaults);
 
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
 
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
-      DRIVE_FAULTED.addListener(new YoVariableChangedListener()
-      {
-         @Override
-         public void changed(YoVariable source)
-         {
-            if (DRIVE_FAULTED.getBooleanValue())
-            {
-               MOTOR_FAULT.set(true);
-            }
-         }
-      });
+      numConsecutiveFaults = new YoInteger(prefix + "_numConsecutiveFaults", registry);
 
       etherCATState.addListener(source ->
                                 {
@@ -600,6 +594,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       STO_DISABLED.set(platinumTwitter.isSTODisabled());
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
+
+      MOTOR_FAULT.update();
+
+      if(DRIVE_FAULTED.getBooleanValue())
+         numConsecutiveFaults.increment();
+      else
+         numConsecutiveFaults.set(0);
 
       // Update SIL readable variables
       sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
