@@ -126,7 +126,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredAnalogInput1InVolts;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
-   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{10.325581, 224.7863, -360.157212};
+   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{0, 334.0, -516.0};
    private static final boolean USE_ANALOG_1_FOR_STATOR_TEMP = true;
 
    // These convert from ADC counts to volts
