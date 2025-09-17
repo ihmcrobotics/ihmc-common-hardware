@@ -126,6 +126,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredAnalogInput1InVolts;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
+   // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{0, 334.0, -516.0};
    private static final boolean USE_ANALOG_1_FOR_STATOR_TEMP = true;
 
@@ -980,15 +981,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
       rawOutputPositionOffset.set((int) rawMeasuredOutputPosition.getDoubleValue());
-   }
-
-   /**
-    * @param voltage Voltage from the temperature sensor
-    * @return The temperature of the cycloid, converted from voltage to degrees Celsius
-    */
-   public double convertAnalogInputToTemperatureInDegreeCelsius(double voltage)
-   {
-      return TEMPERATURE_SENSOR_OFFSET + VOLTAGE_TEMPERATURE_GAIN * voltage;
    }
 
    public void setMotorDirection(boolean isMotorDirectionReversed)
