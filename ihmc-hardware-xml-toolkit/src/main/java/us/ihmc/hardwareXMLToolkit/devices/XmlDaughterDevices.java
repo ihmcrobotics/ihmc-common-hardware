@@ -13,7 +13,9 @@ import java.util.List;
 @XmlType(name = "XmlDaughterDevices")
 public class XmlDaughterDevices
 {
-   @XmlElements({@XmlElement(name = "XmlIMU", type = XmlIMU.class), @XmlElement(name = "XmlTemperatureSensor", type = XmlTemperatureSensor.class)})
+   @XmlElements({@XmlElement(name = "XmlIMU", type = XmlIMU.class),
+                 @XmlElement(name = "XmlTemperatureSensor", type = XmlTemperatureSensor.class),
+                 @XmlElement(name = "XmlHand", type = XmlHand.class)})
    protected List<AbstractXmlDevice> devices;
 
    public List<AbstractXmlDevice> getDevices()
