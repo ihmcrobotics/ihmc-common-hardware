@@ -23,6 +23,7 @@ import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.hardwareXMLToolkit.XmlHardwareDescription;
+import us.ihmc.hardwareXMLToolkit.XmlHardwareDescriptionLoader;
 import us.ihmc.hardwareXMLToolkit.devices.XmlDevices;
 import us.ihmc.hardwareXMLToolkit.devices.XmlEncoder;
 import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
@@ -52,6 +53,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -94,6 +96,12 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
+   // URDF stuff
+   protected static final String URDF_SUB_DIRECTORY = "urdf";
+   protected static final String MESH_SUB_DIRECTORY = "meshes";
+   private final List<String> urdfResourceDirectories = new ArrayList<>();
+   private final List<String> urdfResources = new ArrayList<>();
+
    /**
     * Construct the hardware map for the robot
     *
@@ -103,13 +111,15 @@ public abstract class AbstractHardwareMap
     * @param yoTime                  YoDouble that holds the current time of the robot
     * @param parentRegistry          Parent YoRegistry
     */
-   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+   public AbstractHardwareMap(String robotModelResourcesDirectory,
+                              List<String> urdfFiles,
+                              List<String> xmlFiles,
                               MasterInterface etherCATMaster,
                               double dt,
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(xmlHardwareDescriptions, etherCATMaster, null, dt, yoTime, parentRegistry);
+      this(robotModelResourcesDirectory, urdfFiles, xmlFiles, etherCATMaster, null, dt, yoTime, parentRegistry);
    }
 
    /**
@@ -122,7 +132,9 @@ public abstract class AbstractHardwareMap
     * @param yoTime                  YoDouble that holds the current time of the robot
     * @param parentRegistry          Parent YoRegistry
     */
-   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+   public AbstractHardwareMap(String robotModelResourcesDirectory,
+                              List<String> urdfFiles,
+                              List<String> xmlFiles,
                               MasterInterface etherCATMaster,
                               @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
                               double dt,
@@ -133,7 +145,17 @@ public abstract class AbstractHardwareMap
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
-      createSensorDefinitions(stateEstimatorSensorDefinitions);
+      // Create our XML hardware description
+      Collection<XmlHardwareDescription> xmlHardwareDescriptions = XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles);
+
+      // Create our URDF description
+      urdfResourceDirectories.add(robotModelResourcesDirectory);
+      urdfResourceDirectories.add(robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/');
+      urdfResourceDirectories.add(robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/');
+      for(String file : urdfFiles)
+         this.urdfResources.add(robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file);
+
+      createSensorDefinitions(stateEstimatorSensorDefinitions, urdfResources, urdfResourceDirectories);
 
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
@@ -200,7 +222,7 @@ public abstract class AbstractHardwareMap
     *
     * @param stateEstimatorSensorDefinitions If not null, use the definitions provided to create the sensor definitions
     */
-   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
+   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions, List<String> urdfResources, List<String> urdfResourceDirectories);
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
@@ -320,6 +342,7 @@ public abstract class AbstractHardwareMap
                                                                                       upperLimit,
                                                                                       torqueBreakFrequency); //TODO add joint limits to xml
       mechanismManagers.add(cycloidMechanismManager);
+      LogTools.info("ROLLING A JOINT: " + cycloidMechanismManager.getName());
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
    }
