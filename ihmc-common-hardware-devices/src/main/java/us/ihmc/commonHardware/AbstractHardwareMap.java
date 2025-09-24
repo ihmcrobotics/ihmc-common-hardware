@@ -112,14 +112,14 @@ public abstract class AbstractHardwareMap
     * @param parentRegistry          Parent YoRegistry
     */
    public AbstractHardwareMap(String robotModelResourcesDirectory,
-                              List<String> urdfFiles,
                               List<String> xmlFiles,
+                              List<String> urdfFiles,
                               MasterInterface etherCATMaster,
                               double dt,
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(robotModelResourcesDirectory, urdfFiles, xmlFiles, etherCATMaster, null, dt, yoTime, parentRegistry);
+      this(robotModelResourcesDirectory, xmlFiles, urdfFiles, etherCATMaster, null, dt, yoTime, parentRegistry);
    }
 
    /**
@@ -133,8 +133,8 @@ public abstract class AbstractHardwareMap
     * @param parentRegistry          Parent YoRegistry
     */
    public AbstractHardwareMap(String robotModelResourcesDirectory,
-                              List<String> urdfFiles,
                               List<String> xmlFiles,
+                              List<String> urdfFiles,
                               MasterInterface etherCATMaster,
                               @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
                               double dt,
@@ -146,7 +146,9 @@ public abstract class AbstractHardwareMap
       this.etherCATMaster = etherCATMaster;
 
       // Create our XML hardware description
-      Collection<XmlHardwareDescription> xmlHardwareDescriptions = XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles);
+      Collection<XmlHardwareDescription> xmlHardwareDescriptions = XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(
+            robotModelResourcesDirectory + "hardware/",
+            xmlFiles);
 
       // Create our URDF description
       urdfResourceDirectories.add(robotModelResourcesDirectory);
