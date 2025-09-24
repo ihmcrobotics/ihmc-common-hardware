@@ -119,7 +119,16 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(robotModelResourcesDirectory, xmlFiles, urdfFiles, etherCATMaster, null, dt, yoTime, parentRegistry);
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
+           List.of(robotModelResourcesDirectory,
+                   robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
+                   robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
+           urdfFiles.stream().map(file -> robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file).toList(),
+           etherCATMaster,
+           null,
+           dt,
+           yoTime,
+           parentRegistry);
    }
 
    /**
@@ -132,9 +141,9 @@ public abstract class AbstractHardwareMap
     * @param yoTime                  YoDouble that holds the current time of the robot
     * @param parentRegistry          Parent YoRegistry
     */
-   public AbstractHardwareMap(String robotModelResourcesDirectory,
-                              List<String> xmlFiles,
-                              List<String> urdfFiles,
+   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+                              List<String> urdfResourceDirectories,
+                              List<String> urdfResources,
                               MasterInterface etherCATMaster,
                               @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
                               double dt,
@@ -144,18 +153,6 @@ public abstract class AbstractHardwareMap
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
-
-      // Create our XML hardware description
-      Collection<XmlHardwareDescription> xmlHardwareDescriptions = XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(
-            robotModelResourcesDirectory + "hardware/",
-            xmlFiles);
-
-      // Create our URDF description
-      urdfResourceDirectories.add(robotModelResourcesDirectory);
-      urdfResourceDirectories.add(robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/');
-      urdfResourceDirectories.add(robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/');
-      for(String file : urdfFiles)
-         this.urdfResources.add(robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file);
 
       createSensorDefinitions(stateEstimatorSensorDefinitions, urdfResources, urdfResourceDirectories);
 
