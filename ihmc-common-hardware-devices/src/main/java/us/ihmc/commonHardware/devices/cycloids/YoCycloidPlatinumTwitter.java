@@ -2,17 +2,16 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
-import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -34,14 +33,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 50.0;
-   private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 50.0;
-   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 50.0;
-   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 50.0;
-
-   // temperature sensor calibrated coefficients
-   private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
-   private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 100.0;
+   private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 100.0;
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
 
    private final double dt;
    private final String name;
@@ -115,7 +110,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
-   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{0, 334.0, -516.0};
+   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {0, 334.0, -516.0};
    private static final boolean USE_ANALOG_1_FOR_STATOR_TEMP = true;
 
    // These convert from ADC counts to volts
@@ -286,7 +281,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
       checkEncoderOffsets = new YoBoolean(name + "CheckEncoderOffsets", registry);
-      checkEncoderOffsets.set(true);
+      //      checkEncoderOffsets.set(true);
 
       zeroEncoders.addListener(s ->
                                {
@@ -330,8 +325,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.kt.set(physicalParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
-      setMaxAllowableStatorTemperature(1);
+      setMaxAllowableStatorTemperature(90);
       this.maxRecommendedStatorTemperature = new YoInteger(prefix + "maxRecommendedStatorTemperature", registry);
+      setMaxRecommendedStatorTemperature(80);
 
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       gearRatio.set(physicalParameters.getGearRatio());
@@ -345,10 +341,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       outputRadiansToMotorEncoderCounts = 1.0 / (motorEncoderCountsToOutputRadians);
       outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / outputCountsPerRevolution;
 
-      motorPositionOffset = new YoDouble(name + "RawInputPositionOffset", registry);
-      motorPositionOffset.set(motorOffset * motorEncoderCountsToMotorRadians);
-      outputPositionOffset = new YoDouble(name + "RawOutputPositionOffset", registry);
-      outputPositionOffset.set(outputOffset * outputEncoderCountsToOutputRadians);
+      motorPositionOffset = new YoDouble(name + "InputPositionOffset", registry);
+      motorPositionOffset.set(motorDirection.getDoubleValue() * motorOffset * motorEncoderCountsToMotorRadians);
+      outputPositionOffset = new YoDouble(name + "OutputPositionOffset", registry);
+      outputPositionOffset.set(motorDirection.getDoubleValue() * outputOffset * outputEncoderCountsToOutputRadians);
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
@@ -721,7 +717,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //      }
 
       // Set the desired motor position in encoder counts. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * ((desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue()) * motorRadiansToMotorEncoderCounts)));
+      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * ((desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue())
+                                                                            * motorRadiansToMotorEncoderCounts)));
 
       // Set the desired motor velocity in encoder counts per second. Flip the sign if the directionality is reversed so that it matches the motor axis.
       rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * motorRadiansToMotorEncoderCounts)));
@@ -819,7 +816,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     */
    private void checkAndUpdateOutputOffset()
    {
-      double fullRotation = 2*Math.PI;
+      double fullRotation = 2 * Math.PI;
       double difference = measuredOutputPosition.getDoubleValue() - outputPositionOffset.getDoubleValue();
       int rotationInterval = (int) Math.floor(Math.abs(difference) / fullRotation);
       if (difference >= (fullRotation / 2.0))
@@ -827,14 +824,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          if (rotationInterval == 0)
             outputPositionOffset.add(fullRotation);
          else
-            outputPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.add(rotationInterval * fullRotation);
       }
       if (difference <= (fullRotation / 2.0))
       {
          if (rotationInterval == 0)
             outputPositionOffset.sub(fullRotation);
          else
-            outputPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.sub(rotationInterval * fullRotation);
       }
    }
 
@@ -844,22 +841,22 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     */
    private void checkAndUpdateMotorOffset()
    {
-      double fullRotation = 2*Math.PI;
+      double fullRotation = 2 * Math.PI;
       double maxDifference = Math.PI / gearRatio.getDoubleValue();
       int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / (maxDifference * 2));
       if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
       {
          if (rotationInterval == 0)
-            motorPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
+            motorPositionOffset.add(fullRotation);
          else
-            motorPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            motorPositionOffset.add(rotationInterval * fullRotation);
       }
       if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
       {
          if (rotationInterval == 0)
-            motorPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
+            motorPositionOffset.sub(fullRotation);
          else
-            motorPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            motorPositionOffset.sub(rotationInterval * fullRotation);
       }
    }
 

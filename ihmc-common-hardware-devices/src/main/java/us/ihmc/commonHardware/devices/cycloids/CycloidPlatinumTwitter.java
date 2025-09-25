@@ -55,11 +55,11 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
    private void configure1600()
    {
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
-      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(0x6040, 0, 16)), "failed to write to 0x1600 - 0x6040 - control word"); // control word
-      verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(0x6060, 0, 8)), "failed to write to 0x1600 - 0x6060 - mode of operation"); // mode of operation
-      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x607A, 0, 32)), "failed to write to 0x1600 - 0x607A - target position"); // target position
-      verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(0x60FF, 0, 32)), "failed to write to 0x1600 - 0x60FF - target velocity"); // target velocity
-      verifyWorkingCounter(writeSDO(0x1600, 5, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071 - torque demand"); // torque demand
+      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(0x6040, 0, 16)), "failed to write to 0x1600 - 0x6040"); // control word
+      verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(0x6060, 0, 8)), "failed to write to 0x1600 - 0x6060"); // mode of operation
+      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x607A, 0, 32)), "failed to write to 0x1600 - 0x607A"); // target position
+      verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(0x60FF, 0, 32)), "failed to write to 0x1600 - 0x60FF"); // target velocity
+      verifyWorkingCounter(writeSDO(0x1600, 5, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071"); // torque demand
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 5), "failed to write to 0x1600 - 0x5"); // num elements in 0x1600 (max 8)
    }
 
@@ -80,18 +80,17 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       Float64 coggingOutputScalar = new Float64(); // Cogging Output Scalar R2[4]
       Float64 desiredMotorPositionInRadians = new Float64(); // Controller set desired Motor position R2[5]
       Float64 desiredMotorVelocityInRadians = new Float64(); // Controller set desired Motor velocity R2[6]
-
    }
 
    private void configure1601()
    {
       verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
-      verifyWorkingCounter(writeSDO(0x1601, 1, computePdoMapValue(R2, 1, 64)), "failed to write to 0x1601 - 0x22F4 1 - Dahl friction current"); //  R2[1]
-      verifyWorkingCounter(writeSDO(0x1601, 2, computePdoMapValue(R2, 2, 64)), "failed to write to 0x1601 - 0x22F4 2 - Dahl friction slope"); // R2[2]
-      verifyWorkingCounter(writeSDO(0x1601, 3, computePdoMapValue(R2, 3, 64)), "failed to write to 0x1601 - 0x22F4 3 - linear damping compensation gain"); // R2[3]
-      verifyWorkingCounter(writeSDO(0x1601, 4, computePdoMapValue(R2, 4, 64)), "failed to write to 0x1601 - 0x22F4 4 - cogging output scalar"); // R2[4]
-      verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(R2, 5, 64)), "failed to write to 0x1601 - 0x22F4 5 - linear damping outpout scalar"); // R2[5]
-      verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(R2, 6, 64)), "failed to write to 0x1601 - 0x22F4 6 - cogging output scalar"); // R2[6]
+      verifyWorkingCounter(writeSDO(0x1601, 1, computePdoMapValue(R2, 1, 64)), "failed to write to 0x1601 - 0x22F4 1"); //  R2[1]
+      verifyWorkingCounter(writeSDO(0x1601, 2, computePdoMapValue(R2, 2, 64)), "failed to write to 0x1601 - 0x22F4 2"); // R2[2]
+      verifyWorkingCounter(writeSDO(0x1601, 3, computePdoMapValue(R2, 3, 64)), "failed to write to 0x1601 - 0x22F4 3"); // R2[3]
+      verifyWorkingCounter(writeSDO(0x1601, 4, computePdoMapValue(R2, 4, 64)), "failed to write to 0x1601 - 0x22F4 4"); // R2[4]
+      verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(R2, 5, 64)), "failed to write to 0x1601 - 0x22F4 5"); // R2[5]
+      verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(R2, 6, 64)), "failed to write to 0x1601 - 0x22F4 6"); // R2[6]
       verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 6), "failed to write to 0x1601 - 0x6"); // num elements in 0x1601 (max 8)
    }
 
@@ -101,31 +100,33 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
     */
    public class RPDO_1602 extends RxPDO
    {
-      public RPDO_1602() { super(0x1602); }
+      public RPDO_1602()
+      {
+         super(0x1602);
+      }
 
       Float64 maxPositionFeedbackError = new Float64(); // Max error to be used in position feedback R2[7]
       Float64 maxVelocityFeedbackError = new Float64(); // Max error to be used in velocity feedback R2[8]
-      Float64 desiredMotorStiffness = new Float64(); // Stiffness R2[9]
-      Float64 desiredMotorDamping = new Float64(); // Damping R2[10]
-      Float64 motorPositionBreakFrequency = new Float64(); // R2[11]
-      Float64 outputPositionBreakFrequency = new Float64(); // R2[12]
+      Float64 desiredMotorStiffness = new Float64(); // Impedance Control Stiffness R2[9]
+      Float64 desiredMotorDamping = new Float64(); // Impedance Control Damping R2[10]
+      Float64 motorPositionBreakFrequency = new Float64(); // Motor Position Alpha Filter Frequency R2[11]
+      Float64 outputPositionBreakFrequency = new Float64(); // Output Position Alpha Filter Frequency R2[12]
       Float64 motorVelocityBreakFrequency = new Float64(); // Motor Velocity Alpha Filter Frequency R2[13]
       Float64 outputVelocityBreakFrequency = new Float64(); // Output Velocity Alpha Filter Frequency R2[14]
-
    }
 
    private void configure1602()
    {
-      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 0), "failed to write to 0x1601 - 0x0"); // disable 0x1601 while we write
-      verifyWorkingCounter(writeSDO(0x1602, 1, computePdoMapValue(R2, 7, 64)), "failed to write to 0x1602 - 0x22F4 51 - desired position"); // R2[7]
-      verifyWorkingCounter(writeSDO(0x1602, 2, computePdoMapValue(R2, 8, 64)), "failed to write to 0x1602 - 0x22F4 52 - desired velocity"); // R2[8]
-      verifyWorkingCounter(writeSDO(0x1602, 3, computePdoMapValue(R2, 9, 64)), "failed to write to 0x1602 - 0x22F4 53 - max position error"); // R2[9]
-      verifyWorkingCounter(writeSDO(0x1602, 4, computePdoMapValue(R2, 10, 64)), "failed to write to 0x1602 - 0x22F4 54 - max velocity error"); // R2[10]
-      verifyWorkingCounter(writeSDO(0x1602, 5, computePdoMapValue(R2, 11, 64)), "failed to write to 0x1602 - 0x22F4 55 - stiffness"); // R2[11]
-      verifyWorkingCounter(writeSDO(0x1602, 6, computePdoMapValue(R2, 12, 64)), "failed to write to 0x1602 - 0x22F4 56 - damping"); // R2[12]
-      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(R2, 13, 64)), "failed to write to 0x1602 - 0x22F4 55 - stiffness"); // R2[13]
-      verifyWorkingCounter(writeSDO(0x1602, 8, computePdoMapValue(R2, 14, 64)), "failed to write to 0x1602 - 0x22F4 56 - damping"); // R2[14]
-      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 8), "failed to write to 0x1602 - 0x6"); // num elements in 0x1602 (max 8)
+      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 0), "failed to write to 0x1602 - 0x0"); // disable 0x1601 while we write
+      verifyWorkingCounter(writeSDO(0x1602, 1, computePdoMapValue(R2, 7, 64)), "failed to write to 0x1602 - 0x22F4 7"); // R2[7]
+      verifyWorkingCounter(writeSDO(0x1602, 2, computePdoMapValue(R2, 8, 64)), "failed to write to 0x1602 - 0x22F4 8"); // R2[8]
+      verifyWorkingCounter(writeSDO(0x1602, 3, computePdoMapValue(R2, 9, 64)), "failed to write to 0x1602 - 0x22F4 9"); // R2[9]
+      verifyWorkingCounter(writeSDO(0x1602, 4, computePdoMapValue(R2, 10, 64)), "failed to write to 0x1602 - 0x22F4 10"); // R2[10]
+      verifyWorkingCounter(writeSDO(0x1602, 5, computePdoMapValue(R2, 11, 64)), "failed to write to 0x1602 - 0x22F4 11"); // R2[11]
+      verifyWorkingCounter(writeSDO(0x1602, 6, computePdoMapValue(R2, 12, 64)), "failed to write to 0x1602 - 0x22F4 12"); // R2[12]
+      verifyWorkingCounter(writeSDO(0x1602, 7, computePdoMapValue(R2, 13, 64)), "failed to write to 0x1602 - 0x22F4 13"); // R2[13]
+      verifyWorkingCounter(writeSDO(0x1602, 8, computePdoMapValue(R2, 14, 64)), "failed to write to 0x1602 - 0x22F4 14"); // R2[14]
+      verifyWorkingCounter(writeSDO(0x1602, 0, (byte) 8), "failed to write to 0x1602 - 0x8"); // num elements in 0x1602 (max 8)
    }
 
    /**
@@ -187,10 +188,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 0), "failed to write to 0x1A01 -- 0x0"); // disable 0x1A01 while we write
       verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(R2, 31, 64)), "failed to write to 0x1A01 -- 0X22F4 31"); // R2[31]
       verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(R2, 32, 64)), "failed to write to 0x1A01 -- 0x22F4 32"); // R2[32]
-      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(R2, 33, 64)), "failed to write to 0x1A01 -- 0x22F4 33 - Dahl friction compensation output current"); // R2[33]
-      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(R2, 34, 64)), "failed to write to 0x1A01 -- 0x22F4 34 - damping compensation output current"); // R2[34]
-      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(R2, 35, 64)), "failed to write to 0x1A01 -- 0x22F4 35 - cogging compensation output current"); // R2[35]
-      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(R2, 36, 64)), "failed to write to 0x1A01 -- 0x22F4 36 - PD feedback current "); // R2[36]
+      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(R2, 33, 64)), "failed to write to 0x1A01 -- 0x22F4 33"); // R2[33]
+      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(R2, 34, 64)), "failed to write to 0x1A01 -- 0x22F4 34"); // R2[34]
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(R2, 35, 64)), "failed to write to 0x1A01 -- 0x22F4 35"); // R2[35]
+      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(R2, 36, 64)), "failed to write to 0x1A01 -- 0x22F4 36"); // R2[36]
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 6), "failed to write to 0x1A01 -- 0x8"); // num elements in 0x1A01 (max 8)
    }
 
@@ -217,12 +218,13 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
    private void configure1A02()
    {
       verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 0), "failed to write to 0x1A02 -- 0x0"); // disable 0x1A01 while we write
-      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(R1, 11, 32)), "failed to write to  0x1A02 -- 0x22F3 index 11"); // R1[11] Socket 1 Warning
-      verifyWorkingCounter(writeSDO(0x1A02, 2, computePdoMapValue(R1, 12, 32)), "failed to write to  0x1A02 -- 0x22F3 index 12"); // R1[12] Socket 1 Error
-      verifyWorkingCounter(writeSDO(0x1A02, 3, computePdoMapValue(R1, 13, 32)), "failed to write to  0x1A02 -- 0x22F3 index 13"); // R1[13] Socket 2 Warning
-      verifyWorkingCounter(writeSDO(0x1A02, 4, computePdoMapValue(R1, 14, 32)), "failed to write to  0x1A02 -- 0x22F3 index 14"); // R1[14] Socket 2 Error
-      verifyWorkingCounter(writeSDO(0x1A02, 5, computePdoMapValue(R1, 15, 32)), "failed to write to  0x1A02 -- 0x22F3 index 15"); // R1[15] Analog 1 Input TODO:
-      verifyWorkingCounter(writeSDO(0x1A02, 6, computePdoMapValue(R1, 16, 32)), "failed to write to  0x1A02 -- 0x22F3 index 16"); // R1[16] From SIL - Getting Analog Input 2 value for stator temperature
+      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(R1, 11, 32)), "failed to write to  0x1A02 -- 0x22F3 11"); // R1[11] Socket 1 Warning
+      verifyWorkingCounter(writeSDO(0x1A02, 2, computePdoMapValue(R1, 12, 32)), "failed to write to  0x1A02 -- 0x22F3 12"); // R1[12] Socket 1 Error
+      verifyWorkingCounter(writeSDO(0x1A02, 3, computePdoMapValue(R1, 13, 32)), "failed to write to  0x1A02 -- 0x22F3 13"); // R1[13] Socket 2 Warning
+      verifyWorkingCounter(writeSDO(0x1A02, 4, computePdoMapValue(R1, 14, 32)), "failed to write to  0x1A02 -- 0x22F3 14"); // R1[14] Socket 2 Error
+      verifyWorkingCounter(writeSDO(0x1A02, 5, computePdoMapValue(R1, 15, 32)), "failed to write to  0x1A02 -- 0x22F3 15"); // R1[15] Analog 1 Input TODO:
+      verifyWorkingCounter(writeSDO(0x1A02, 6, computePdoMapValue(R1, 16, 32)),
+                           "failed to write to  0x1A02 -- 0x22F3 16"); // R1[16] From SIL - Getting Analog Input 2 value for stator temperature
       verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 6), "failed to write to 0x1A02 -- 0x6"); // num elements in 0x1A02 (max 8)
    }
 
@@ -239,19 +241,17 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       Float64 measuredOutputVelocity = new Float64(); // R2[44] Filtered. R2[40] Unfiltered
       Float64 controlTime = new Float64(); // R2[45]
       Float64 silTemp = new Float64(); // R2[46]
-
-
    }
 
    private void configure1A03()
    {
-      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 0), "failed to write to 0x1A02 -- 0x0"); // disable 0x1A03 while we write
-      verifyWorkingCounter(writeSDO(0x1A03, 1, computePdoMapValue(R2, 41, 64)), "failed to write to 0x1A01 -- 0x22F4 41"); // R2[41]
-      verifyWorkingCounter(writeSDO(0x1A03, 2, computePdoMapValue(R2, 42, 64)), "failed to write to 0x1A01 -- 0x22F4 42"); // R2[42]
-      verifyWorkingCounter(writeSDO(0x1A03, 3, computePdoMapValue(R2, 43, 64)), "failed to write to 0x1A01 -- 0x22F4 43"); // R2[43]
-      verifyWorkingCounter(writeSDO(0x1A03, 4, computePdoMapValue(R2, 44, 64)), "failed to write to 0x1A01 -- 0x22F4 44"); // R2[44]
-      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 45, 64)), "failed to write to 0x1A01 -- 0x22F4 45"); // R2[45]
-      verifyWorkingCounter(writeSDO(0x1A03, 6, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A01 -- 0x22F4 46"); // R2[46]
+      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 0), "failed to write to 0x1A03 -- 0x0"); // disable 0x1A03 while we write
+      verifyWorkingCounter(writeSDO(0x1A03, 1, computePdoMapValue(R2, 41, 64)), "failed to write to 0x1A03 -- 0x22F4 41"); // R2[41]
+      verifyWorkingCounter(writeSDO(0x1A03, 2, computePdoMapValue(R2, 42, 64)), "failed to write to 0x1A03 -- 0x22F4 42"); // R2[42]
+      verifyWorkingCounter(writeSDO(0x1A03, 3, computePdoMapValue(R2, 43, 64)), "failed to write to 0x1A03 -- 0x22F4 43"); // R2[43]
+      verifyWorkingCounter(writeSDO(0x1A03, 4, computePdoMapValue(R2, 44, 64)), "failed to write to 0x1A03 -- 0x22F4 44"); // R2[44]
+      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 45, 64)), "failed to write to 0x1A03 -- 0x22F4 45"); // R2[45]
+      verifyWorkingCounter(writeSDO(0x1A03, 6, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A03 -- 0x22F4 46"); // R2[46]
       verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 6), "failed to write to 0x1A03 -- 0x6"); // num elements in 0x1A03 (max 8)
    }
 
@@ -338,7 +338,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
       verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
       verifyWorkingCounter(writeSDO(0x1C13, 4, (short) 0x1A03), "failed to write to 0x1C13 -- 0x1A03");
-      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 4), "failed to write to 0x1C13 -- 0x1");
+      verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 4), "failed to write to 0x1C13 -- 0x4");
    }
 
    @Override
@@ -584,19 +584,23 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       rpdo_1602.desiredMotorDamping.set(damping);
    }
 
-   public void setMotorPositionBreakFrequency(double motorPositionBreakFrequency) {
+   public void setMotorPositionBreakFrequency(double motorPositionBreakFrequency)
+   {
       rpdo_1602.motorPositionBreakFrequency.set(motorPositionBreakFrequency);
    }
 
-   public void setOutputPositionBreakFrequency(double outputPositionBreakFrequency) {
+   public void setOutputPositionBreakFrequency(double outputPositionBreakFrequency)
+   {
       rpdo_1602.outputPositionBreakFrequency.set(outputPositionBreakFrequency);
    }
 
-   public void setMotorVelocityBreakFrequency(double motorVelocityBreakFrequency) {
+   public void setMotorVelocityBreakFrequency(double motorVelocityBreakFrequency)
+   {
       rpdo_1602.motorVelocityBreakFrequency.set(motorVelocityBreakFrequency);
    }
 
-   public void setOutputVelocityBreakFrequency(double outputVelocityBreakFrequency) {
+   public void setOutputVelocityBreakFrequency(double outputVelocityBreakFrequency)
+   {
       rpdo_1602.outputVelocityBreakFrequency.set(outputVelocityBreakFrequency);
    }
 
@@ -687,6 +691,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
 
    public double getSILControlTime()
    {
-      return  tpdo_1a03.controlTime.get();
+      return tpdo_1a03.controlTime.get();
    }
 }
