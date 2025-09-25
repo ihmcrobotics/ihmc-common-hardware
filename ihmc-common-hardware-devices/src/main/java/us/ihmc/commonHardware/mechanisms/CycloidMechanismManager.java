@@ -33,8 +33,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
-   private static final boolean DEFAULT_PUBLISH_FILTERED_VELOCITIES = false;
-   private static final boolean DEFAULT_USE_FILTERED_VELOCITIES = false;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_VELOCITIES = true;
+   private static final boolean DEFAULT_USE_FILTERED_VELOCITIES = true;
 
    private final String jointName;
    private final YoRegistry registry;
