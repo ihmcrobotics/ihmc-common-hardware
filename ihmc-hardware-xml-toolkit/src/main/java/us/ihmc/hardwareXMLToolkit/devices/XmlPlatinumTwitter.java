@@ -16,9 +16,9 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    @XmlElement(required = true)
    protected boolean reversePositiveMotorDirection;
    @XmlElement(required = true)
-   protected int inputOffset;
+   protected double motorOffset;
    @XmlElement(required = true)
-   protected int outputOffset;
+   protected double outputOffset;
 
    public XmlPlatinumTwitter()
    {
@@ -45,12 +45,12 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       return useLatestCode;
    }
 
-   public int getInputOffset()
+   public double getMotorOffset()
    {
-      return inputOffset;
+      return motorOffset;
    }
 
-   public int getOutputOffset()
+   public double getOutputOffset()
    {
       return outputOffset;
    }
@@ -65,9 +65,9 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       this.reversePositiveMotorDirection = reversePositiveMotorDirection;
    }
 
-   public void setInputOffset(int inputOffset)
+   public void setMotorOffset(int motorOffset)
    {
-      this.inputOffset = inputOffset;
+      this.motorOffset = motorOffset;
    }
 
    public void setOutputOffset(int outputOffset)

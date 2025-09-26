@@ -12,6 +12,7 @@ import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
+import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -180,7 +181,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
+   private final SimpleMovingAverageFilteredYoVariable averageOutputPosition;
    private final YoDouble outputPositionOffset;
+   private final SimpleMovingAverageFilteredYoVariable averageMotorPosition;
    private final YoDouble motorPositionOffset;
    private final YoDouble encoderDifferenceAtOutput;
    private final YoBoolean zeroEncoders;
@@ -221,13 +224,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    String actuatorDirectory,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   int inputOffset,
-                                   int outputOffset,
+                                   double motorOffset,
+                                   double outputOffset,
                                    double dt,
                                    YoRegistry parentRegistry)
 
    {
-      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, inputOffset, outputOffset, dt, false, parentRegistry);
+      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, parentRegistry);
    }
 
    /**
@@ -251,8 +254,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    String actuatorDirectory,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   int motorOffset,
-                                   int outputOffset,
+                                   double motorOffset,
+                                   double outputOffset,
                                    double dt,
                                    boolean enableCompensationAtStart,
                                    YoRegistry parentRegistry)
@@ -286,8 +289,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       zeroEncoders.addListener(s ->
                                {
                                   if (zeroEncoders.getBooleanValue())
-                                     zeroEncoders();
-                                  zeroEncoders.set(false, false);
+                                     beginZeroing();
                                });
 
       motorDirection.addListener(new YoVariableChangedListener()
@@ -341,10 +343,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       outputRadiansToMotorEncoderCounts = 1.0 / (motorEncoderCountsToOutputRadians);
       outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / outputCountsPerRevolution;
 
-      motorPositionOffset = new YoDouble(name + "InputPositionOffset", registry);
-      motorPositionOffset.set(motorDirection.getDoubleValue() * motorOffset * motorEncoderCountsToMotorRadians);
+      motorPositionOffset = new YoDouble(name + "MotorPositionOffset", registry);
+      motorPositionOffset.set(motorOffset);
       outputPositionOffset = new YoDouble(name + "OutputPositionOffset", registry);
-      outputPositionOffset.set(motorDirection.getDoubleValue() * outputOffset * outputEncoderCountsToOutputRadians);
+      outputPositionOffset.set(outputOffset);
+
+      averageMotorPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageMotorPosition", 100, registry);
+      averageOutputPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageOutputPosition", 100, registry);
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
@@ -646,8 +651,23 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
-      if (!isDriveEnabled() && checkEncoderOffsets.getBooleanValue())
+      if(zeroEncoders.getBooleanValue())
+      {
+         if(averageMotorPosition.getHasBufferWindowFilled())
+         {
+            motorPositionOffset.set(averageMotorPosition.getDoubleValue());
+            outputPositionOffset.set(averageOutputPosition.getDoubleValue());
+            zeroEncoders.set(false, false);
+         }
+         else
+         {
+            averageMotorPosition.update(platinumTwitter.getMeasuredMotorPosition());
+            averageOutputPosition.update(platinumTwitter.getMeasuredOutputPosition());
+         }
+      }
+      else if (!isDriveEnabled() && checkEncoderOffsets.getBooleanValue())
          checkAndUpdateEncoderOffsets(); // While the motor is disabled, check if the encoder isn't correct
+
    }
 
    /**
@@ -891,13 +911,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return valueInCounts * ANALOG_INPUT_2_CONVERSION_CONSTANT_FROM_NADIA;
    }
 
-   /**
-    * Sets the input and output encoder offsets to the current raw positions
-    */
-   public void zeroEncoders()
+   private void beginZeroing()
    {
-      motorPositionOffset.set(platinumTwitter.getMeasuredMotorPosition());
-      outputPositionOffset.set(platinumTwitter.getMeasuredOutputPosition());
+      averageMotorPosition.reset();
+      averageOutputPosition.reset();
    }
 
    public void setMotorDirection(boolean isMotorDirectionReversed)
@@ -934,7 +951,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setDesiredMotorPosition(double motorPosition)
    {
-      desiredMotorPosition.set(motorPosition + motorPositionOffset.getDoubleValue());
+      desiredMotorPosition.set(motorPosition);
    }
 
    @Override
