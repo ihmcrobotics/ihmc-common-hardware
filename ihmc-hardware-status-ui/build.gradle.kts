@@ -16,6 +16,7 @@ mainDependencies {
    api("us.ihmc:ihmc-ethercat-master:0.16.0")
    api("us.ihmc:scs2-simulation-construction-set:17-0.30.0")
    api("us.ihmc:ihmc-java-toolkit:0.14.0-241016")
+   api("us.ihmc:ihmc-robotics-toolkit:source")
    api("us.ihmc:ihmc-hardware-xml-toolkit:source")
 }
 

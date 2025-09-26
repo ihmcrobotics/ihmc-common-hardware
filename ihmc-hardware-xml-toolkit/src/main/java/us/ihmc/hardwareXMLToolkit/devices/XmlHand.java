@@ -10,6 +10,9 @@ public class XmlHand extends AbstractXmlDevice
    @XmlElement(required = true)
    protected String handType;
 
+   @XmlElement(required = true)
+   protected int parentBoardAlias;
+
    public String getHandSide()
    {
       return handSide;
@@ -18,5 +21,10 @@ public class XmlHand extends AbstractXmlDevice
    public String getHandType()
    {
       return handType;
+   }
+
+   public int getParentBoardAlias()
+   {
+      return parentBoardAlias;
    }
 }
