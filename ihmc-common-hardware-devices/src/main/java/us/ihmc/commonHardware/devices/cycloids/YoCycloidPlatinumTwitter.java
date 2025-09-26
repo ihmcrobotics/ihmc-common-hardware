@@ -281,7 +281,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
       checkEncoderOffsets = new YoBoolean(name + "CheckEncoderOffsets", registry);
-      //      checkEncoderOffsets.set(true);
+      checkEncoderOffsets.set(true);
 
       zeroEncoders.addListener(s ->
                                {
@@ -817,21 +817,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private void checkAndUpdateOutputOffset()
    {
       double fullRotation = 2 * Math.PI;
-      double difference = measuredOutputPosition.getDoubleValue() - outputPositionOffset.getDoubleValue();
+      double difference = measuredOutputPosition.getDoubleValue();
       int rotationInterval = (int) Math.floor(Math.abs(difference) / fullRotation);
       if (difference >= (fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.add(fullRotation);
+            outputPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
          else
-            outputPositionOffset.add(rotationInterval * fullRotation);
+            outputPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
-      if (difference <= (fullRotation / 2.0))
+      if (difference <= -(fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.sub(fullRotation);
+            outputPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
          else
-            outputPositionOffset.sub(rotationInterval * fullRotation);
+            outputPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
    }
 
@@ -847,16 +847,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
       {
          if (rotationInterval == 0)
-            motorPositionOffset.add(fullRotation);
+            motorPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
          else
-            motorPositionOffset.add(rotationInterval * fullRotation);
+            motorPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
       if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
       {
          if (rotationInterval == 0)
-            motorPositionOffset.sub(fullRotation);
+            motorPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
          else
-            motorPositionOffset.sub(rotationInterval * fullRotation);
+            motorPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
    }
 
