@@ -13,7 +13,8 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-sensor-processing:0.14.0-241016")
+   api("us.ihmc:ihmc-sensor-processing:0.14.0-250815")
+   api("us.ihmc:ihmc-robotics-toolkit:0.14.0-250815")
    api("us.ihmc:ihmc-hardware-status-ui:source")
 }
 
