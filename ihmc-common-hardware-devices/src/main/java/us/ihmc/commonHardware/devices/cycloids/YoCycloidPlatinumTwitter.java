@@ -34,16 +34,18 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 100.0;
-   private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 100.0;
-   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
-   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
    private final double dt;
    private final String name;
    private final YoRegistry registry;
 
    private final DoubleProvider time;
+   private final YoDouble silTime;
+   private final YoDouble silDT;
    private final YoDouble previousTime;
    private final YoDouble estimatedDt;
 
@@ -323,6 +325,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       previousTime.setToNaN();
       estimatedDt.setToNaN();
 
+      silTime = new YoDouble(prefix + "SILTime", registry);
+      silDT = new YoDouble(prefix + "SILDT", registry);
+
       this.kt = new YoDouble(prefix + "kt", registry);
       this.kt.set(physicalParameters.getKt());
 
@@ -560,6 +565,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          estimatedDt.set(time.getValue() - previousTime.getDoubleValue());
          previousTime.set(time.getValue());
       }
+      double prevSILTime = silTime.getDoubleValue();
+      silTime.set(platinumTwitter.getSILControlTime());
+      silDT.set(silTime.getDoubleValue() - prevSILTime);
 
       /*
        * Get drive status
