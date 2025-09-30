@@ -2,19 +2,17 @@ package us.ihmc.commonHardware.devices.cycloids;
 
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.commons.MathTools;
 import us.ihmc.etherCAT.master.Slave.State;
 import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
-import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
-import us.ihmc.yoVariables.filters.AlphaFilterTools;
-import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -36,18 +34,18 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
-   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 100.0;
-
-   // temperature sensor calibrated coefficients
-   private static final double TEMPERATURE_SENSOR_OFFSET = -515.743565;
-   private static final double VOLTAGE_TEMPERATURE_GAIN = 333.5130871;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
    private final double dt;
    private final String name;
    private final YoRegistry registry;
 
    private final DoubleProvider time;
+   private final YoDouble silTime;
+   private final YoDouble silDT;
    private final YoDouble previousTime;
    private final YoDouble estimatedDt;
 
@@ -59,6 +57,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    // conversion variables
    private final double motorEncoderCountsToMotorRadians;
    private final double motorEncoderCountsToOutputRadians;
+   private final double motorRadiansToMotorEncoderCounts;
 
    private final double outputEncoderCountsToOutputRadians;
    private final double outputRadiansToMotorEncoderCounts;
@@ -84,35 +83,28 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    // measured variables
    private final YoDouble measuredMotorPosition;
    private final YoDouble measuredMotorVelocity;
+   private final YoDouble filteredMotorPosition;
+   private final YoDouble filteredMotorVelocity;
    private final YoDouble measuredMotorVelocityFD;
    private final YoBoolean useFDforMotorVelocity;
 
-   private final YoDouble filteredVelocityBreakFrequency;
-   private final DoubleProvider filteredVelocityAlphaValue;
-   private final AlphaFilteredYoVariable preFilteredMotorVelocity, filteredMotorVelocity;
-
    private final YoDouble measuredOutputPositionFromMotor;
    private final YoDouble measuredOutputVelocityFromMotor;
+   private final YoDouble filteredOutputPositionFromMotor;
+   private final YoDouble filteredOutputVelocityFromMotor;
 
    private final YoDouble measuredOutputPosition;
    private final YoDouble measuredOutputVelocity;
+   private final YoDouble filteredOutputPosition;
+   private final YoDouble filteredOutputVelocity;
    private final YoDouble measuredOutputVelocityFD;
    private final YoBoolean useFDforOutputVelocity;
-
-   private final YoDouble filteredOutputVelocityBreakFrequency;
-   private final DoubleProvider filteredOutputVelocityAlphaValue;
-   private final AlphaFilteredYoVariable preFilteredOutputVelocity, filteredOutputVelocity;
-   private final AlphaFilteredYoVariable preFilteredOutputVelocityFromMotor, filteredOutputVelocityFromMotor;
 
    private final YoLong maxDriveCurrentMilliAmps;
    private final YoDouble measuredMotorCurrent;
    private final YoDouble estimatedMotorTorque;
    private final YoDouble estimatedOutputTorque;
 
-   private final YoInteger rawMeasuredMotorPosition;
-   private final YoDouble rawMeasuredMotorVelocity;
-   private final YoDouble rawMeasuredOutputPosition;
-   private final YoDouble rawMeasuredOutputVelocity;
    private final YoInteger rawMeasuredMotorCurrent;
 
    private final YoEnum<DSP402Slave.StatusWord> statusWord;
@@ -127,7 +119,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
-   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[]{0, 334.0, -516.0};
+   private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {0, 334.0, -516.0};
    private static final boolean USE_ANALOG_1_FOR_STATOR_TEMP = true;
 
    // These convert from ADC counts to volts
@@ -150,24 +142,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoBoolean MOTOR_ENABLED;
    private final YoBoolean MOTOR_FAULT;
 
-   // SIL Tunable Variables
-   private final YoBoolean saveR2ToNVM; //Save R2 to NVM, this can only be done once per power cycle
-
    private final YoDouble dahlFrictionForce; // Dahl Friction Force
    private final YoDouble dahlSlope; // Dahl Slope (offset by + 1.0)
-   private final YoDouble linearDampingCompensation; // Linear Damping Compensation
-   private final YoDouble dahlOutputScalar; // Dahl Output Scalar
-   private final YoDouble linearDampingOutputScalar; // Linear Damping Output Scalar
+   private final YoDouble linearDampingCompensationGain; // Linear Damping Compensation
    private final YoDouble coggingOutputScalar; // Cogging Output Scalar
 
    // SIL Acceleration Integration Variables
-   private final YoDouble accelerationIntegrationDesiredMotorPosition;
-   private final YoDouble accelerationIntegrationDesiredMotorVelocity;
-   private YoDouble accelerationIntegrationStiffness;
-   private YoDouble accelerationIntegrationDamping;
-   private YoDouble accelerationIntegrationScalar;
-   private YoDouble accelerationIntegrationMaxPositionError;
-   private YoDouble accelerationIntegrationMaxVelocityError;
+   private final YoDouble impedanceControlStiffness;
+   private final YoDouble impedanceControlDamping;
+   private final YoDouble impedanceControlMaxPositionError;
+   private final YoDouble impedanceControlMaxVelocityError;
 
    // Control variables
    private final YoBoolean enableDrive;
@@ -189,9 +173,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble sil_linearDampingCompensationCurrent;
    private final YoDouble sil_coggingCompensationMotorCurrent;
    private final YoDouble sil_dahlFrictionCompensationCurrent;
-   private final YoDouble sil_acceleratiojnIntegrationMotorFeedbackCurrent;
-   private final YoDouble sil_accelerationIntegrationMeasuredMotorPosition;
-   private final YoDouble sil_accelerationIntegrationMeasuredMotorVelocity;
+   private final YoDouble sil_impedanceControlMotorFeedbackCurrent;
+   private final YoDouble sil_feedForwardCurrent;
+   private final YoDouble sil_totalDesiredCurrent;
 
    // SIL Socket warning and error status variables
    private final YoDouble inputEncoderWarningValue;
@@ -205,13 +189,24 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
-   private final YoInteger rawOutputPositionOffset;
-   private final YoInteger rawInputPositionOffset;
+   private final SimpleMovingAverageFilteredYoVariable averageOutputPosition;
+   private final YoDouble outputPositionOffset;
+   private final SimpleMovingAverageFilteredYoVariable averageMotorPosition;
+   private final YoDouble motorPositionOffset;
    private final YoDouble encoderDifferenceAtOutput;
    private final YoBoolean zeroEncoders;
    private final int outputCountsPerRevolution;
    private final int inputCountsPerRevolution;
    private boolean firstRead = true;
+
+   private final YoDouble driveTemperature;
+
+   private final YoDouble motorPositionBreakFrequency;
+   private final YoDouble outputPositionBreakFrequency;
+   private final YoDouble motorVelocityBreakFrequency;
+   private final YoDouble outputVelocityBreakFrequency;
+
+   private final YoBoolean checkEncoderOffsets;
 
    private enum EncoderState
    {
@@ -237,13 +232,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    String actuatorDirectory,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   int inputOffset,
-                                   int outputOffset,
+                                   double motorOffset,
+                                   double outputOffset,
                                    double dt,
                                    YoRegistry parentRegistry)
 
    {
-      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, inputOffset, outputOffset, dt, false, parentRegistry);
+      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, parentRegistry);
    }
 
    /**
@@ -255,7 +250,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     * @param actuatorDirectory         Directory where the xml for the cycloid parameters lives
     * @param actuatorPackage           Name of the actuator package
     * @param isMotorDirectionReversed  Decides if the signals from the motor are inverted or not relative to robot orientation
-    * @param inputOffset               Offset of the input encoder in bits
+    * @param motorOffset               Offset of the input encoder in bits
     * @param outputOffset              Offset of the output encoder in bits
     * @param dt                        Controller timestep
     * @param enableCompensationAtStart Decide if SIL compensation currents are initially enabled or not
@@ -267,8 +262,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    String actuatorDirectory,
                                    String actuatorPackage,
                                    boolean isMotorDirectionReversed,
-                                   int inputOffset,
-                                   int outputOffset,
+                                   double motorOffset,
+                                   double outputOffset,
                                    double dt,
                                    boolean enableCompensationAtStart,
                                    YoRegistry parentRegistry)
@@ -293,20 +288,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       motorDirection = new YoDouble(prefix + "motorDirection", registry);
       setMotorDirection(isMotorDirectionReversed);
 
-      rawInputPositionOffset = new YoInteger(name + "RawInputPositionOffset", registry);
-      rawInputPositionOffset.set(inputOffset);
-      rawOutputPositionOffset = new YoInteger(name + "RawOutputPositionOffset", registry);
-      rawOutputPositionOffset.set(outputOffset);
-
       encoderDifferenceAtOutput = new YoDouble(name + "EncoderDifferenceAtOutput", registry);
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
+      checkEncoderOffsets = new YoBoolean(name + "CheckEncoderOffsets", registry);
+      checkEncoderOffsets.set(true);
 
       zeroEncoders.addListener(s ->
                                {
                                   if (zeroEncoders.getBooleanValue())
-                                     zeroEncoders();
-                                  zeroEncoders.set(false, false);
+                                     beginZeroing();
                                });
 
       motorDirection.addListener(new YoVariableChangedListener()
@@ -340,23 +331,36 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       previousTime.setToNaN();
       estimatedDt.setToNaN();
 
+      silTime = new YoDouble(prefix + "SILTime", registry);
+      silDT = new YoDouble(prefix + "SILDT", registry);
+
       this.kt = new YoDouble(prefix + "kt", registry);
       this.kt.set(physicalParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
-      setMaxAllowableStatorTemperature(1);
+      setMaxAllowableStatorTemperature(90);
       this.maxRecommendedStatorTemperature = new YoInteger(prefix + "maxRecommendedStatorTemperature", registry);
+      setMaxRecommendedStatorTemperature(80);
 
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       gearRatio.set(physicalParameters.getGearRatio());
 
       inputCountsPerRevolution = physicalParameters.getCountsPerMotorRevolution();
       motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / inputCountsPerRevolution;
+      motorRadiansToMotorEncoderCounts = 1.0 / motorEncoderCountsToMotorRadians;
       motorEncoderCountsToOutputRadians = motorEncoderCountsToMotorRadians * physicalParameters.getGearRatio();
 
       outputCountsPerRevolution = physicalParameters.getCountsPerOutputRevolution();
       outputRadiansToMotorEncoderCounts = 1.0 / (motorEncoderCountsToOutputRadians);
       outputEncoderCountsToOutputRadians = (2.0 * Math.PI) / outputCountsPerRevolution;
+
+      motorPositionOffset = new YoDouble(name + "MotorPositionOffset", registry);
+      motorPositionOffset.set(motorOffset);
+      outputPositionOffset = new YoDouble(name + "OutputPositionOffset", registry);
+      outputPositionOffset.set(outputOffset);
+
+      averageMotorPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageMotorPosition", 100, registry);
+      averageOutputPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageOutputPosition", 100, registry);
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
@@ -379,36 +383,26 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          digitalOutputs[i] = new YoBoolean(prefix + "digitalOutput_" + i, registry);
       }
 
-      // SIL Tunable Variables
-      saveR2ToNVM = new YoBoolean(prefix + "saveR2ToNVM", registry);
       enableCompensation = new YoBoolean(prefix + "enableCompensationCurrents", registry);
       dahlFrictionForce = new YoDouble(prefix + "dahlFrictionForce", registry); // Dahl Friction Force
       dahlSlope = new YoDouble(prefix + "dahlSlope", registry); // Dahl Slope (offset by + 1.0)                         
-      linearDampingCompensation = new YoDouble(prefix + "linearDampingCompensation", registry); // Linear Damping Compensation
+      linearDampingCompensationGain = new YoDouble(prefix + "linearDampingCompensationGain", registry); // Linear Damping Compensation
       // Do not allow compensation values below 0
       applyValueLimits(dahlFrictionForce, 0.0, Double.POSITIVE_INFINITY);
       applyValueLimits(dahlSlope, 0.0, Double.POSITIVE_INFINITY);
-      applyValueLimits(linearDampingCompensation, 0.0, Double.POSITIVE_INFINITY);
+      applyValueLimits(linearDampingCompensationGain, 0.0, Double.POSITIVE_INFINITY);
 
-      dahlOutputScalar = new YoDouble(prefix + "dahlOutputScalar", registry); // Dahl Output Scalar                            
-      linearDampingOutputScalar = new YoDouble(prefix + "linearDampingOutputScalar", registry); // Linear Damping Output Scalar         
       coggingOutputScalar = new YoDouble(prefix + "coggingOutputScalar", registry); // Cogging Output Scalar
-      accelerationIntegrationScalar = new YoDouble(prefix + "AccelerationIntegration_Scalar", registry);
       //Compensation Scalars should only be between 0 and 1
-      applyValueLimits(dahlOutputScalar, 0.0, 1.0);
-      applyValueLimits(linearDampingOutputScalar, 0.0, 1.0);
       applyValueLimits(coggingOutputScalar, 0.0, 1.0);
 
-      dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
-      dahlSlope.set(silParameters.getDahlFrictionSlope());
-      linearDampingCompensation.set(silParameters.getLinearDampingCompensationGain());
       if (enableCompensationAtStart)
       {
          enableCompensation.set(true);
          coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
-         dahlOutputScalar.set(silParameters.getDahlOutputScalar());
-         linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
-         accelerationIntegrationScalar.set(silParameters.getAccelerationIntegrationScalar());
+         dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
+         dahlSlope.set(silParameters.getDahlFrictionSlope());
+         linearDampingCompensationGain.set(silParameters.getLinearDampingCompensationGain());
       }
 
       enableCompensation.addListener(new YoVariableChangedListener()
@@ -419,35 +413,33 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             if (enableCompensation.getBooleanValue())
             {
                coggingOutputScalar.set(silParameters.getCoggingOutputScalar());
-               dahlOutputScalar.set(silParameters.getDahlOutputScalar());
-               linearDampingOutputScalar.set(silParameters.getLinearDampingOutputScalar());
-               accelerationIntegrationScalar.set(silParameters.getAccelerationIntegrationScalar());
+               dahlFrictionForce.set(silParameters.getDahlFrictionForceGain());
+               dahlSlope.set(silParameters.getDahlFrictionSlope());
+               linearDampingCompensationGain.set(silParameters.getLinearDampingCompensationGain());
             }
             else
             {
                coggingOutputScalar.set(0.0);
-               dahlOutputScalar.set(0.0);
-               linearDampingOutputScalar.set(0.0);
-               accelerationIntegrationScalar.set(0.0);
+               dahlFrictionForce.set(0.0);
+               dahlSlope.set(0.0);
+               linearDampingCompensationGain.set(0.0);
             }
          }
       });
 
       // SIL Acceleration Integration Variables
-      accelerationIntegrationDesiredMotorPosition = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorPosition", registry);
-      accelerationIntegrationDesiredMotorVelocity = new YoDouble(prefix + "AccelerationIntegration_DesiredMotorVelocity", registry);
-      accelerationIntegrationStiffness = new YoDouble(prefix + "AccelerationIntegration_Stiffness", registry);
-      accelerationIntegrationDamping = new YoDouble(prefix + "AccelerationIntegration_Damping", registry);
-      accelerationIntegrationMaxPositionError = new YoDouble(prefix + "AccelerationIntegration_MaxPositionError", registry);
-      accelerationIntegrationMaxVelocityError = new YoDouble(prefix + "AccelerationIntegration_MaxVelocityError", registry);
+      impedanceControlStiffness = new YoDouble(prefix + "ImpedanceControl_Stiffness", registry);
+      impedanceControlDamping = new YoDouble(prefix + "ImpedanceControl_Damping", registry);
+      impedanceControlMaxPositionError = new YoDouble(prefix + "ImpedanceControl_MaxPositionError", registry);
+      impedanceControlMaxVelocityError = new YoDouble(prefix + "ImpedanceControl_MaxVelocityError", registry);
 
       // SIL debugging variables
       sil_linearDampingCompensationCurrent = new YoDouble(prefix + "sil_linearDampingCompensationCurrent", registry);
       sil_coggingCompensationMotorCurrent = new YoDouble(prefix + "sil_coggingCompensationMotorCurrent", registry);
       sil_dahlFrictionCompensationCurrent = new YoDouble(prefix + "sil_dahlFrictionCompensationCurrent", registry);
-      sil_acceleratiojnIntegrationMotorFeedbackCurrent = new YoDouble(prefix + "sil_accelerationIntegrationMotorFeedbackCurrent", registry);
-      sil_accelerationIntegrationMeasuredMotorPosition = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorPosition", registry);
-      sil_accelerationIntegrationMeasuredMotorVelocity = new YoDouble(prefix + "sil_accelerationIntegrationMeasuredMotorVelocity", registry);
+      sil_impedanceControlMotorFeedbackCurrent = new YoDouble(prefix + "sil_impedanceControlMotorFeedbackCurrent", registry);
+      sil_feedForwardCurrent = new YoDouble(prefix + "sil_feedForwardCurrent", registry);
+      sil_totalDesiredCurrent = new YoDouble(prefix + "sil_totalDesiredCurrent", registry);
 
       // SIL Socket error and warning status signals
       inputEncoderWarningValue = new YoDouble(prefix + "sil_inputEncoderWarningValue", registry);
@@ -461,45 +453,24 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //actuals
       measuredMotorPosition = new YoDouble(prefix + "measuredMotorPosition", registry);
       measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", registry);
+      filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", registry);
+      filteredMotorVelocity = new YoDouble(prefix + "filteredMotorVelocity", registry);
       measuredMotorVelocityFD = new YoDouble(prefix + "measuredMotorVelocityFD", registry);
       useFDforMotorVelocity = new YoBoolean(prefix + "useFDforMotorVelocity", registry);
       useFDforMotorVelocity.set(false);
 
-      filteredVelocityBreakFrequency = new YoDouble(prefix + "filteredVelocityBreakFrequency", registry);
-      filteredVelocityBreakFrequency.set(DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY);
-      filteredVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredVelocityBreakFrequency, dt);
-      preFilteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredMotorVelocity", registry, filteredVelocityAlphaValue, measuredMotorVelocity);
-      filteredMotorVelocity = new AlphaFilteredYoVariable(prefix + "filteredMotorVelocity", registry, filteredVelocityAlphaValue, preFilteredMotorVelocity);
-
       measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
       measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
+      filteredOutputPositionFromMotor = new YoDouble(prefix + "filteredOutputPositionFromMotor", registry);
+      filteredOutputVelocityFromMotor = new YoDouble(prefix + "filteredOutputVelocityFromMotor", registry);
 
       measuredOutputPosition = new YoDouble(prefix + "measuredOutputPosition", registry);
       measuredOutputVelocity = new YoDouble(prefix + "measuredOutputVelocity", registry);
+      filteredOutputPosition = new YoDouble(prefix + "filteredOutputPosition", registry);
+      filteredOutputVelocity = new YoDouble(prefix + "filteredOutputVelocity", registry);
       measuredOutputVelocityFD = new YoDouble(prefix + "measuredOutputVelocityFD", registry);
       useFDforOutputVelocity = new YoBoolean(prefix + "useFDforOutputVelocity", registry);
       useFDforOutputVelocity.set(false);
-
-      filteredOutputVelocityBreakFrequency = new YoDouble(prefix + "filteredOutputVelocityBreakFrequency", registry);
-      filteredOutputVelocityBreakFrequency.set(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
-      filteredOutputVelocityAlphaValue = new AlphaBasedOnBreakFrequencyProvider(filteredOutputVelocityBreakFrequency, dt);
-      preFilteredOutputVelocity = new AlphaFilteredYoVariable(prefix + "preFilteredOutputVelocity",
-                                                              registry,
-                                                              filteredOutputVelocityAlphaValue,
-                                                              measuredOutputVelocity);
-      filteredOutputVelocity = new AlphaFilteredYoVariable(prefix + "filteredOutputVelocity",
-                                                           registry,
-                                                           filteredOutputVelocityAlphaValue,
-                                                           preFilteredOutputVelocity);
-
-      preFilteredOutputVelocityFromMotor = new AlphaFilteredYoVariable(prefix + "preFilteredOutputVelocityFromMotor",
-                                                                       registry,
-                                                                       filteredOutputVelocityAlphaValue,
-                                                                       measuredOutputVelocityFromMotor);
-      filteredOutputVelocityFromMotor = new AlphaFilteredYoVariable(prefix + "filteredOutputVelocityFromMotor",
-                                                                    registry,
-                                                                    filteredOutputVelocityAlphaValue,
-                                                                    preFilteredOutputVelocityFromMotor);
 
       measuredMotorCurrent = new YoDouble(prefix + "measuredMotorCurrent", registry);
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
@@ -517,10 +488,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredAnalogInput2InADCCounts.addListener(change -> measuredAnalogInput2InVolts.set(convertAnalogInput2FromCountsToVolts(measuredAnalogInput2InADCCounts.getDoubleValue())));
 
       //actuals in raw units
-      rawMeasuredMotorPosition = new YoInteger(prefix + "rawMeasuredMotorPosition", registry);
-      rawMeasuredMotorVelocity = new YoDouble(prefix + "rawMeasuredMotorVelocity", registry);
-      rawMeasuredOutputPosition = new YoDouble(prefix + "rawMeasuredOutputPosition", registry);
-      rawMeasuredOutputVelocity = new YoDouble(prefix + "rawMeasuredOutputVelocity", registry);
       rawMeasuredMotorCurrent = new YoInteger(prefix + "rawMeasuredMotorCurrent", registry);
 
       //settings and op stuff
@@ -576,6 +543,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
 
+      driveTemperature = new YoDouble(prefix + "silTemp", registry);
+
+      motorPositionBreakFrequency = new YoDouble(prefix + "motorPositionBreakFrequency", registry);
+      outputPositionBreakFrequency = new YoDouble(prefix + "outputPositionBreakFrequency", registry);
+      motorVelocityBreakFrequency = new YoDouble(prefix + "motorVelocityBreakFrequency", registry);
+      outputVelocityBreakFrequency = new YoDouble(prefix + "outputVelocityBreakFrequency", registry);
+      motorPositionBreakFrequency.set(DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY);
+      outputPositionBreakFrequency.set(DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY);
+      motorVelocityBreakFrequency.set(DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY);
+      outputVelocityBreakFrequency.set(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
+      platinumTwitter.setMotorPositionBreakFrequency(DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY);
+      platinumTwitter.setOutputPositionBreakFrequency(DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY);
+      platinumTwitter.setMotorVelocityBreakFrequency(DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY);
+      platinumTwitter.setOutputVelocityBreakFrequency(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
+
       parentRegistry.addChild(registry);
    }
 
@@ -595,6 +577,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          estimatedDt.set(time.getValue() - previousTime.getDoubleValue());
          previousTime.set(time.getValue());
       }
+      double prevSILTime = silTime.getDoubleValue();
+      silTime.set(platinumTwitter.getSILControlTime());
+      silDT.set(silTime.getDoubleValue() - prevSILTime);
 
       /*
        * Get drive status
@@ -629,10 +614,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
       sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
       sil_coggingCompensationMotorCurrent.set(platinumTwitter.getSILDesiredCoggingCompensationCurrent());
-      sil_acceleratiojnIntegrationMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
+      sil_impedanceControlMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
 
-      sil_accelerationIntegrationMeasuredMotorPosition.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
-      sil_accelerationIntegrationMeasuredMotorVelocity.set(platinumTwitter.getSILDesiredTotalCurrent());
+      sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
+      sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
+
+      driveTemperature.set(platinumTwitter.getSILTemperature());
 
       inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
       inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
@@ -644,68 +631,30 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredBusVoltage.set(platinumTwitter.getDCLinkVoltageMilliVolts() / 1000.0);
 
       /** Motor Space Encoders **/
-
-      //raw motor position and velocity in counts & counts per sec
-      rawMeasuredMotorPosition.set(platinumTwitter.getRawMotorEncoderPosition());
-      rawMeasuredMotorVelocity.set(platinumTwitter.getRawMotorVelocity());
-
-      // convert the motor encoder count measurement to the motor position in radians. Flip the sign here if the directionality is reversed
-      int currentRawMotorPosition = rawMeasuredMotorPosition.getIntegerValue() - rawInputPositionOffset.getIntegerValue();
-      double currentMeasuredMotorPosition = motorDirection.getDoubleValue() * currentRawMotorPosition * motorEncoderCountsToMotorRadians;
-
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
       double previousMeasuredMotorPosition = measuredMotorPosition.getDoubleValue();
 
-      // update the actual measured position of the motor
-      measuredMotorPosition.set(currentMeasuredMotorPosition);
-
-      // finite difference the measured motor velocity, looking at the previous encoder measurement.
-      measuredMotorVelocityFD.set((currentMeasuredMotorPosition - previousMeasuredMotorPosition) / estimatedDt.getDoubleValue());
-
-      // convert the motor velocity from counts per second in encoder space to output encoder radians per second.
-      measuredMotorVelocity.set(
-            motorDirection.getDoubleValue() * rawMeasuredMotorVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * motorEncoderCountsToMotorRadians);
-
-      // perform low-pass filtering on the measured motor velocity signal.
-      preFilteredMotorVelocity.update();
-
-      // perform a second round of low-pass filtering on the filtered motor velocity signal.
-      filteredMotorVelocity.update();
+      measuredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredMotorPosition() - motorPositionOffset.getValue()));
+      filteredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredMotorPosition() - motorPositionOffset.getValue()));
+      measuredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredMotorVelocity());
+      filteredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredMotorVelocity());
 
       //project motor measureds in output space
       measuredOutputPositionFromMotor.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
       measuredOutputVelocityFromMotor.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
+      filteredOutputPositionFromMotor.set(filteredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
+      filteredOutputVelocityFromMotor.set(filteredMotorVelocity.getDoubleValue() / gearRatio.getDoubleValue());
 
       /** Output Space Encoders **/
-
-      //raw output position and velocity in counts & counts per sec
-      rawMeasuredOutputPosition.set(platinumTwitter.getRawAuxiliaryPosition());
-      rawMeasuredOutputVelocity.set(platinumTwitter.getRawAuxiliaryVelocity());
-
-      // convert the output encoder count measurement to the output position in radians. Flip the sign here if the directionality is reversed
-      int currentRawOutputPosition = ((int) rawMeasuredOutputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
-      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
-
-      // get the output joint position on the previous tick.  This is used to finite difference the output position to get the output velocity.
       double previousMeasuredOutputPosition = measuredOutputPosition.getDoubleValue();
 
-      // update the actual measured position of the output
-      measuredOutputPosition.set(currentMeasuredOutputPosition);
+      measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getValue()));
+      filteredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredOutputPosition() - outputPositionOffset.getValue()));
+      measuredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredOutputVelocity());
+      filteredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredOutputVelocity());
 
       // finite difference the measured velocity, looking at the previous encoder measurement.
-      measuredOutputVelocityFD.set((currentMeasuredOutputPosition - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
-
-      measuredOutputVelocity.set(
-            motorDirection.getDoubleValue() * rawMeasuredOutputVelocity.getDoubleValue() * RAW_VELOCITY_TO_COUNTS_PER_SEC * outputEncoderCountsToOutputRadians);
-
-      // perform low-pass filtering on the measured output velocity signal.
-      preFilteredOutputVelocity.update();
-      // perform a second round of low-pass filtering on the filtered motor velocity signal.
-      filteredOutputVelocity.update();
-
-      //
-      preFilteredOutputVelocityFromMotor.update();
-      filteredOutputVelocityFromMotor.update();
+      measuredOutputVelocityFD.set((measuredOutputPosition.getDoubleValue() - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
 
       /** Current and Torque **/
 
@@ -724,12 +673,27 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       maxDriveCurrentMilliAmps.set(platinumTwitter.getMaxDriveCurrentMilliAmps());
 
       //read the voltage on analog input 2
-      measuredAnalogInput2InADCCounts.set(platinumTwitter.getAnalogInput2());
-      measuredAnalogInput1InADCCounts.set(platinumTwitter.getAnalogInput1());
+      measuredAnalogInput2InADCCounts.set(platinumTwitter.getMeasuredAnalogInput2());
+      measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
-      if (!isDriveEnabled())
+      if(zeroEncoders.getBooleanValue())
+      {
+         if(averageMotorPosition.getHasBufferWindowFilled())
+         {
+            motorPositionOffset.set(averageMotorPosition.getDoubleValue());
+            outputPositionOffset.set(averageOutputPosition.getDoubleValue());
+            zeroEncoders.set(false, false);
+         }
+         else
+         {
+            averageMotorPosition.update(platinumTwitter.getMeasuredMotorPosition());
+            averageOutputPosition.update(platinumTwitter.getMeasuredOutputPosition());
+         }
+      }
+      else if (!isDriveEnabled() && checkEncoderOffsets.getBooleanValue())
          checkAndUpdateEncoderOffsets(); // While the motor is disabled, check if the encoder isn't correct
+
    }
 
    /**
@@ -799,11 +763,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //      }
 
       // Set the desired motor position in encoder counts. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * (desiredMotorPosition.getDoubleValue() * outputRadiansToMotorEncoderCounts))
-                                  + rawInputPositionOffset.getIntegerValue());
+      rawDesiredMotorPosition.set((int) (motorDirection.getDoubleValue() * ((desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue())
+                                                                            * motorRadiansToMotorEncoderCounts)));
 
       // Set the desired motor velocity in encoder counts per second. Flip the sign if the directionality is reversed so that it matches the motor axis.
-      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * outputRadiansToMotorEncoderCounts)));
+      rawDesiredMotorVelocity.set((int) (motorDirection.getDoubleValue() * (desiredMotorVelocity.getDoubleValue() * motorRadiansToMotorEncoderCounts)));
 
       // Compute the total desired current for the drive. This is the summation of the feedforward motor current, the desired motor current, which is the main
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
@@ -826,27 +790,27 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
       platinumTwitter.setPercentageMaxEffort(rawDesiredMotorEffortPercentage.getIntegerValue());
 
-      platinumTwitter.setR2NVMSaveFlag(saveR2ToNVM.getBooleanValue());
-
       // Set the desired SIL controller parameters to the amplifier.
       platinumTwitter.setDahlFrictionForce(dahlFrictionForce.getDoubleValue());
       platinumTwitter.setDahlSlope(dahlSlope.getDoubleValue());
-      platinumTwitter.setLinearDampingCompensation(linearDampingCompensation.getDoubleValue());
+      platinumTwitter.setLinearDampingCompensation(linearDampingCompensationGain.getDoubleValue());
 
       platinumTwitter.setCoggingOutputScalar(coggingOutputScalar.getDoubleValue());
-      platinumTwitter.setDahlOutputScalar(dahlOutputScalar.getDoubleValue());
-      platinumTwitter.setLinearDampingOutputScalar(linearDampingOutputScalar.getDoubleValue());
 
       // Set acceleration Integration Parameters
-      platinumTwitter.setAccelerationIntegrationStiffness(accelerationIntegrationStiffness.getDoubleValue());
-      platinumTwitter.setAccelerationIntegrationDamping(accelerationIntegrationDamping.getDoubleValue());
-      platinumTwitter.setAccelerationIntegrationScalar(accelerationIntegrationScalar.getDoubleValue());
+      platinumTwitter.setMotorStiffnessForImpedanceControl(impedanceControlStiffness.getDoubleValue());
+      platinumTwitter.setMotorDampingForImpedanceControl(impedanceControlDamping.getDoubleValue());
 
-      platinumTwitter.setMotorDesiredPosition(motorDirection.getDoubleValue() * accelerationIntegrationDesiredMotorPosition.getDoubleValue());
-      platinumTwitter.setMotorDesiredVelocity(motorDirection.getDoubleValue() * accelerationIntegrationDesiredMotorVelocity.getDoubleValue());
+      platinumTwitter.setDesiredMotorPositionForImpedanceControl(motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue());
+      platinumTwitter.setDesiredMotorVelocityForImpedanceControl(motorDirection.getDoubleValue() * desiredMotorVelocity.getDoubleValue());
 
-      platinumTwitter.setMaxMotorPositionError(accelerationIntegrationMaxPositionError.getDoubleValue());
-      platinumTwitter.setMaxMotorVelocityError(accelerationIntegrationMaxVelocityError.getDoubleValue());
+      platinumTwitter.setMaxMotorPositionError(impedanceControlMaxPositionError.getDoubleValue());
+      platinumTwitter.setMaxMotorVelocityError(impedanceControlMaxVelocityError.getDoubleValue());
+
+      platinumTwitter.setMotorPositionBreakFrequency(motorPositionBreakFrequency.getDoubleValue());
+      platinumTwitter.setOutputPositionBreakFrequency(outputPositionBreakFrequency.getDoubleValue());
+      platinumTwitter.setMotorVelocityBreakFrequency(motorVelocityBreakFrequency.getDoubleValue());
+      platinumTwitter.setOutputVelocityBreakFrequency(outputVelocityBreakFrequency.getDoubleValue());
 
       platinumTwitter.doStateControl();
    }
@@ -898,21 +862,22 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     */
    private void checkAndUpdateOutputOffset()
    {
-      int difference = (int) rawMeasuredOutputPosition.getValue() - rawOutputPositionOffset.getIntegerValue();
-      int rotationInterval = Math.abs(difference) / outputCountsPerRevolution;
-      if (difference >= outputCountsPerRevolution / 2)
+      double fullRotation = 2 * Math.PI;
+      double difference = measuredOutputPosition.getDoubleValue();
+      int rotationInterval = (int) Math.floor(Math.abs(difference) / fullRotation);
+      if (difference >= (fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            rawOutputPositionOffset.add(outputCountsPerRevolution);
+            outputPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
          else
-            rawOutputPositionOffset.add(rotationInterval * outputCountsPerRevolution);
+            outputPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
-      if (difference <= -outputCountsPerRevolution / 2)
+      if (difference <= -(fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            rawOutputPositionOffset.sub(outputCountsPerRevolution);
+            outputPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
          else
-            rawOutputPositionOffset.sub(rotationInterval * outputCountsPerRevolution);
+            outputPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
    }
 
@@ -920,23 +885,24 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
     * Check if the output position estimated from the input encoder is within pi/gearRatio of the output position.
     * If not, updates the input encoder offset to be within range.
     */
-   private void checkAndUpdateInputOffset()
+   private void checkAndUpdateMotorOffset()
    {
+      double fullRotation = 2 * Math.PI;
       double maxDifference = Math.PI / gearRatio.getDoubleValue();
       int rotationInterval = (int) Math.abs(encoderDifferenceAtOutput.getDoubleValue() / (maxDifference * 2));
       if (encoderDifferenceAtOutput.getDoubleValue() >= maxDifference)
       {
          if (rotationInterval == 0)
-            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+            motorPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
          else
-            rawInputPositionOffset.add(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+            motorPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
       if (encoderDifferenceAtOutput.getDoubleValue() <= -maxDifference)
       {
          if (rotationInterval == 0)
-            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * inputCountsPerRevolution);
+            motorPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
          else
-            rawInputPositionOffset.sub(((int) motorDirection.getDoubleValue()) * rotationInterval * inputCountsPerRevolution);
+            motorPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
       }
    }
 
@@ -947,11 +913,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    {
       checkAndUpdateOutputOffset();
       //Set the output position based on new offset
-      int currentRawOutputPosition = ((int) rawMeasuredOutputPosition.getValue()) - rawOutputPositionOffset.getIntegerValue();
-      double currentMeasuredOutputPosition = motorDirection.getDoubleValue() * currentRawOutputPosition * outputEncoderCountsToOutputRadians;
-      measuredOutputPosition.set(currentMeasuredOutputPosition);
-
-      checkAndUpdateInputOffset();
+      measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getDoubleValue()));
+      checkAndUpdateMotorOffset();
    }
 
    /**
@@ -974,13 +937,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return valueInCounts * ANALOG_INPUT_2_CONVERSION_CONSTANT_FROM_NADIA;
    }
 
-   /**
-    * Sets the input and output encoder offsets to the current raw positions
-    */
-   public void zeroEncoders()
+   private void beginZeroing()
    {
-      rawInputPositionOffset.set(rawMeasuredMotorPosition.getIntegerValue());
-      rawOutputPositionOffset.set((int) rawMeasuredOutputPosition.getDoubleValue());
+      averageMotorPosition.reset();
+      averageOutputPosition.reset();
    }
 
    public void setMotorDirection(boolean isMotorDirectionReversed)
@@ -1017,30 +977,18 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public void setDesiredMotorPosition(double motorPosition)
    {
-      accelerationIntegrationDesiredMotorPosition.set(motorPosition);
+      desiredMotorPosition.set(motorPosition);
    }
 
    @Override
    public void setDesiredMotorVelocity(double motorVelocity)
    {
-      accelerationIntegrationDesiredMotorVelocity.set(motorVelocity);
+      desiredMotorVelocity.set(motorVelocity);
    }
 
    public void setKt(double kt)
    {
       this.kt.set(kt);
-   }
-
-   public void setVelocityFilterBreakFrequency(double breakFrequency)
-   {
-      filteredVelocityBreakFrequency.set(breakFrequency);
-      filteredOutputVelocityBreakFrequency.set(breakFrequency);
-   }
-
-   public void setVelocityFilterAlpha(double velocityFilterAlpha)
-   {
-      filteredVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
-      filteredOutputVelocityBreakFrequency.set(AlphaFilterTools.computeBreakFrequencyGivenAlpha(velocityFilterAlpha, dt));
    }
 
    public void enableCyclicSynchronousPosition()
@@ -1058,31 +1006,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
    }
 
-   public void setAccelerationIntegrationDesiredInputPosition(double desiredPosition)
-   {
-      if (Double.isFinite(desiredPosition))
-         accelerationIntegrationDesiredMotorPosition.set(desiredPosition);
-      else
-         LogTools.warn("Tried to set desired impedance position to " + desiredPosition + ", which is not a valid input");
-   }
-
-   public void setAccelerationIntegrationDesiredInputVelocity(double desiredVelocity)
-   {
-      if (Double.isFinite(desiredVelocity))
-         accelerationIntegrationDesiredMotorVelocity.set(desiredVelocity);
-      else
-         LogTools.warn("Tried to set desired impedance velocity to " + desiredVelocity + ", which is not a valid input");
-   }
-
    @Override
    public void setDesiredMotorStiffness(double desiredMotorStiffness)
    {
       if (Double.isFinite(desiredMotorStiffness) && desiredMotorStiffness >= 0)
-         accelerationIntegrationStiffness.set(desiredMotorStiffness);
+         impedanceControlStiffness.set(desiredMotorStiffness);
       else if (desiredMotorStiffness < 0)
       {
          LogTools.warn("Tried to set negative stiffness to " + getName() + ", setting stiffness to 0");
-         accelerationIntegrationStiffness.set(0.0);
+         impedanceControlStiffness.set(0.0);
       }
       else
          LogTools.warn("Tried to set stiffness at " + getName() + " to a non-finite value of " + desiredMotorStiffness);
@@ -1092,11 +1024,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setDesiredMotorDamping(double desiredMotorDamping)
    {
       if (Double.isFinite(desiredMotorDamping) && desiredMotorDamping >= 0)
-         accelerationIntegrationDamping.set(desiredMotorDamping);
+         impedanceControlDamping.set(desiredMotorDamping);
       else if (desiredMotorDamping < 0)
       {
          LogTools.error("Tried to set negative damping to " + getName() + ", setting damping to 0");
-         accelerationIntegrationDamping.set(0.0);
+         impedanceControlDamping.set(0.0);
       }
    }
 
@@ -1104,7 +1036,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setMaxPositionFeedbackError(double maxPositionFeedbackError)
    {
       if (Double.isFinite(maxPositionFeedbackError))
-         accelerationIntegrationMaxPositionError.set(Math.abs(maxPositionFeedbackError));
+         impedanceControlMaxPositionError.set(Math.abs(maxPositionFeedbackError));
       else
          LogTools.warn("Tried to set max position feedback error to " + maxPositionFeedbackError + ", which is not a valid input");
    }
@@ -1113,7 +1045,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setMaxVelocityFeedbackError(double maxVelocityFeedbackError)
    {
       if (Double.isFinite(maxVelocityFeedbackError))
-         accelerationIntegrationMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
+         impedanceControlMaxVelocityError.set(Math.abs(maxVelocityFeedbackError));
       else
          LogTools.warn("Tried to set max velocity feedback error to " + maxVelocityFeedbackError + ", which is not a valid input");
    }
@@ -1126,20 +1058,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setUseOutputVelocityFromMotor(boolean useOutputVelocityFromMotor)
    {
       this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
-   }
-
-   public void setDesiredControlMode(JointDesiredControlMode controlMode)
-   {
-      if (controlMode != null)
-      {
-         switch (controlMode)
-         {
-            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
-            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
-            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
-            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
-         }
-      }
    }
 
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
@@ -1164,25 +1082,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return MOTOR_FAULT.getBooleanValue();
    }
 
-   public double getJointPosition()
-   {
-      return getMeasuredOutputPosition();
-   }
-
-   public double getJointVelocity()
-   {
-      return getMeasuredOutputVelocity();
-   }
-
    public boolean getDriveFaulted()
    {
       return DRIVE_FAULTED.getBooleanValue();
-   }
-
-   @Override
-   public double getMeasuredOutputVelocity()
-   {
-      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
@@ -1215,9 +1117,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    }
 
    @Override
+   public double getFilteredMotorPosition()
+   {
+      return  filteredMotorPosition.getDoubleValue();
+   }
+
+   @Override
    public double getMeasuredOutputPosition()
    {
       return useOutputPositionFromMotor.getBooleanValue() ? measuredOutputPositionFromMotor.getDoubleValue() : measuredOutputPosition.getDoubleValue();
+   }
+
+   @Override
+   public double getFilteredOutputPosition()
+   {
+      return useOutputPositionFromMotor.getBooleanValue() ? filteredOutputPositionFromMotor.getDoubleValue() : filteredOutputPosition.getDoubleValue();
    }
 
    @Override
@@ -1230,6 +1144,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double getFilteredMotorVelocity()
    {
       return filteredMotorVelocity.getDoubleValue();
+   }
+
+   @Override
+   public double getMeasuredOutputVelocity()
+   {
+      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
@@ -1310,5 +1230,25 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public CycloidPlatinumTwitter getPlatinumTwitter()
    {
       return platinumTwitter;
+   }
+
+   public void setMotorPositionBreakFrequency(double breakFrequency)
+   {
+      motorPositionBreakFrequency.set(breakFrequency);
+   }
+
+   public void setOutputPositionBreakFrequency(double breakFrequency)
+   {
+      outputPositionBreakFrequency.set(breakFrequency);
+   }
+
+   public void setMotorVelocityBreakFrequency(double breakFrequency)
+   {
+      motorVelocityBreakFrequency.set(breakFrequency);
+   }
+
+   public void setOutputVelocityBreakFrequency(double breakFrequency)
+   {
+      outputVelocityBreakFrequency.set(breakFrequency);
    }
 }
