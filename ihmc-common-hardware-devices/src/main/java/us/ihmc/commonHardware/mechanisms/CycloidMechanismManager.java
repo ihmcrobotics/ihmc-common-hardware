@@ -1,7 +1,6 @@
 package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import org.jline.utils.Log;
 import us.ihmc.commons.AngleTools;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
@@ -33,8 +32,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
-   private static final boolean DEFAULT_PUBLISH_FILTERED_VELOCITIES = true;
-   private static final boolean DEFAULT_USE_FILTERED_VELOCITIES = true;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
+   private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
 
    private final String jointName;
    private final YoRegistry registry;
@@ -42,8 +41,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private YoCycloidPlatinumTwitter platinumTwitter;
 
-   private final YoBoolean publishFilteredVelocities;
-   private final YoBoolean useFilteredVelocities;
+   private final YoBoolean publishFilteredJointStates;
+   private final YoBoolean useFilteredJointStates;
    private final YoJointData measuredMotorData;
    private final YoJointData desiredMotorData;
 
@@ -91,15 +90,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    /**
     * Initialize the cycloid mechanism manager
     *
-    * @param jointOffset Initial joint offset between actuator 0 and joint 0 in radians
-    * @param jointLimitLower Lower joint limit in radians
-    * @param jointLimitUpper Upper joint limit in radians
-    * @param jointName Name of the joint the cycloid is controlling
-    * @param platinumTwitter The {@code YoCycloidPlatinumTwitter} for the cycloid
-    * @param yoTime The controller time
-    * @param estimatorDT The controller timestep
+    * @param jointOffset          Initial joint offset between actuator 0 and joint 0 in radians
+    * @param jointLimitLower      Lower joint limit in radians
+    * @param jointLimitUpper      Upper joint limit in radians
+    * @param jointName            Name of the joint the cycloid is controlling
+    * @param platinumTwitter      The {@code YoCycloidPlatinumTwitter} for the cycloid
+    * @param yoTime               The controller time
+    * @param estimatorDT          The controller timestep
     * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
-    * @param parentRegistry Parent {@code YoRegistry}
+    * @param parentRegistry       Parent {@code YoRegistry}
     */
    public CycloidMechanismManager(double jointOffset,
                                   double jointLimitLower,
@@ -111,22 +110,31 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                   BooleanProvider doPDControlOnTwitter,
                                   YoRegistry parentRegistry)
    {
-      this(jointOffset, jointLimitLower, jointLimitUpper, jointName, platinumTwitter, yoTime, estimatorDT, doPDControlOnTwitter, DEFAULT_TORQUE_BREAK_FREQUENCY, parentRegistry);
+      this(jointOffset,
+           jointLimitLower,
+           jointLimitUpper,
+           jointName,
+           platinumTwitter,
+           yoTime,
+           estimatorDT,
+           doPDControlOnTwitter,
+           DEFAULT_TORQUE_BREAK_FREQUENCY,
+           parentRegistry);
    }
 
    /**
     * Initialize the cycloid mechanism manager
     *
-    * @param jointOffset Initial joint offset between actuator 0 and joint 0 in radians
-    * @param jointLimitLower Lower joint limit in radians
-    * @param jointLimitUpper Upper joint limit in radians
-    * @param jointName Name of the joint the cycloid is controlling
-    * @param platinumTwitter The {@code YoCycloidPlatinumTwitter} for the cycloid
-    * @param yoTime The controller time
-    * @param estimatorDT The controller timestep
+    * @param jointOffset          Initial joint offset between actuator 0 and joint 0 in radians
+    * @param jointLimitLower      Lower joint limit in radians
+    * @param jointLimitUpper      Upper joint limit in radians
+    * @param jointName            Name of the joint the cycloid is controlling
+    * @param platinumTwitter      The {@code YoCycloidPlatinumTwitter} for the cycloid
+    * @param yoTime               The controller time
+    * @param estimatorDT          The controller timestep
     * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
     * @param torqueBreakFrequency Initial break frequency for desired torque filtering
-    * @param parentRegistry Parent {@code YoRegistry}
+    * @param parentRegistry       Parent {@code YoRegistry}
     */
    public CycloidMechanismManager(double jointOffset,
                                   double jointLimitLower,
@@ -158,16 +166,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       calculateMotorEncoderToOutputEncoderOffset = new YoBoolean(jointName + "_calculateMotorEncoderToJointEncoderOffset", registry);
       calculateMotorEncoderToOutputEncoderOffset.set(true);
 
-
       measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
       desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
 
-      useFilteredVelocities = new YoBoolean(jointName + "_UseFilteredVelocities", registry);
-      publishFilteredVelocities = new YoBoolean(jointName + "_PublishFilteredVelocities", registry);
+      useFilteredJointStates = new YoBoolean(jointName + "_UseFilteredJointStates", registry);
+      publishFilteredJointStates = new YoBoolean(jointName + "_PublishFilteredJointStates", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
       desiredActuatorData = new YoJointData(jointName + "_DesiredActuator", true, registry);
-      useFilteredVelocities.set(DEFAULT_USE_FILTERED_VELOCITIES);
-      publishFilteredVelocities.set(DEFAULT_PUBLISH_FILTERED_VELOCITIES);
+      useFilteredJointStates.set(DEFAULT_USE_FILTERED_JOINT_STATES);
+      publishFilteredJointStates.set(DEFAULT_PUBLISH_FILTERED_JOINT_STATES);
 
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);
@@ -189,10 +196,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       wakeUpDuration = new YoDouble(jointName + "_WakeUpDuration", registry);
       wakeUpDuration.set(5.0);
       wakeUpPosition = new YoDouble(jointName + "_WakeUpPosition", registry);
-      
+
       isRampingDown = new YoBoolean(jointName + "_IsRampingDown", registry);
-      
-      statorTemperature =  new YoDouble(jointName + "_statorTemperature", registry);
+
+      statorTemperature = new YoDouble(jointName + "_statorTemperature", registry);
       isStatorAboveShutDownTemperature = new YoBoolean(jointName + "_isStatorAboveShutDownTemperature", registry);
       isStatorAboveRecommendedTemperature = new YoBoolean(jointName + "_isStatorAboveRecommendedTemperature", registry);
 
@@ -200,7 +207,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
-      
+
       jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
 
       parentRegistry.addChild(registry);
@@ -230,6 +237,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Helper class to read the current state of the cycloid and place the information into the correct {@code LowLevelState}
+    *
     * @param measuredJointDataToPack Holder for the measured data from the cycloid
     */
    public void read(LowLevelState measuredJointDataToPack)
@@ -260,29 +268,30 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          calculateMotorEncoderToOutputEncoderOffset.set(false);
       }
 
-      measuredMotorData.setPosition(platinumTwitter.getMeasuredMotorPosition());
-
-      if (publishFilteredVelocities.getBooleanValue())
-         measuredMotorData.setVelocity(platinumTwitter.getFilteredMotorVelocity());
-      else
-         measuredMotorData.setVelocity(platinumTwitter.getMeasuredMotorVelocity());
+      measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
+                                          platinumTwitter.getFilteredMotorPosition() :
+                                          platinumTwitter.getMeasuredMotorPosition());
+      measuredMotorData.setVelocity(publishFilteredJointStates.getBooleanValue() ?
+                                          platinumTwitter.getFilteredMotorVelocity() :
+                                          platinumTwitter.getMeasuredMotorVelocity());
       measuredMotorData.setTorque(platinumTwitter.getMeasuredMotorTorque());
-      
+
       statorTemperature.set(temperatureProvider.getValue());
-      if(statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature())
+      if (statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature())
       {
-         if(!isStatorAboveShutDownTemperature.getValue())
+         if (!isStatorAboveShutDownTemperature.getValue())
          {
-            LogTools.info("OVERHEAT ALERT: " + this.jointName + " stator temperature is " + statorTemperature.getValue() + " deg C. " + "Max allowed stator temperature: " + platinumTwitter.getMaxAllowableStatorTemperature() + " deg C.");
+            LogTools.info("OVERHEAT ALERT: " + this.jointName + " stator temperature is " + statorTemperature.getValue() + " deg C. "
+                          + "Max allowed stator temperature: " + platinumTwitter.getMaxAllowableStatorTemperature() + " deg C.");
          }
          isStatorAboveShutDownTemperature.set(true);
-         
       }
-      if(statorTemperature.getValue() > platinumTwitter.getMaxRecommendedStatorTemperature())
+      if (statorTemperature.getValue() > platinumTwitter.getMaxRecommendedStatorTemperature())
       {
-         if(!isStatorAboveRecommendedTemperature.getValue())
+         if (!isStatorAboveRecommendedTemperature.getValue())
          {
-            LogTools.info("OVERHEAT WARNING: " + this.jointName + " stator temperature is " + statorTemperature.getValue() + " deg C. " + "Max recommended stator temperature: " + platinumTwitter.getMaxRecommendedStatorTemperature() + " deg C.");
+            LogTools.info("OVERHEAT WARNING: " + this.jointName + " stator temperature is " + statorTemperature.getValue() + " deg C. "
+                          + "Max recommended stator temperature: " + platinumTwitter.getMaxRecommendedStatorTemperature() + " deg C.");
          }
          isStatorAboveRecommendedTemperature.set(true);
       }
@@ -290,14 +299,14 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       {
          isStatorAboveRecommendedTemperature.set(false);
       }
-      
-      double jointPosition = computeJointPosition(platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
 
+      double jointPosition = computeJointPosition(publishFilteredJointStates.getBooleanValue() ?
+                                                        platinumTwitter.getFilteredOutputPosition() :
+                                                        platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
       this.measuredActuatorData.setPosition(jointPosition);
-      if (publishFilteredVelocities.getBooleanValue())
-         this.measuredActuatorData.setVelocity(platinumTwitter.getFilteredOutputVelocity());
-      else
-         this.measuredActuatorData.setVelocity(platinumTwitter.getMeasuredOutputVelocity());
+      this.measuredActuatorData.setVelocity(publishFilteredJointStates.getBooleanValue() ?
+                                                  platinumTwitter.getFilteredOutputVelocity() :
+                                                  platinumTwitter.getMeasuredOutputVelocity());
       this.measuredActuatorData.setTorque(platinumTwitter.getMeasuredOutputTorque());
 
       measuredJointDataToPack.setPosition(this.measuredActuatorData.getPosition());
@@ -317,6 +326,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Helper class to write to specific {@code JointDesiredOutputReadOnly} data to the cycloid
+    *
     * @param desiredJointData Holds desired data to be written to cycloid
     */
    public void write(JointDesiredOutputReadOnly desiredJointData)
@@ -357,7 +367,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          q_d = EuclidCoreTools.interpolate(wakeUpPosition.getValue(), q_d, alpha);
       }
 
-
       q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
@@ -366,11 +375,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       if (!doPDControlOnTwitter.getValue())
       {
-         positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, measuredActuatorData.getPosition()));
-         if (useFilteredVelocities.getBooleanValue())
-            velocityError.set(qd_d - platinumTwitter.getFilteredOutputVelocity());
-         else
-            velocityError.set(qd_d - platinumTwitter.getMeasuredOutputVelocity());
+         double jointPosition = computeJointPosition(useFilteredJointStates.getBooleanValue() ?
+                                                           platinumTwitter.getFilteredOutputPosition() :
+                                                           platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
+         double jointVelocity = useFilteredJointStates.getBooleanValue() ? platinumTwitter.getFilteredOutputVelocity() : platinumTwitter.getMeasuredOutputVelocity();
+
+         positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, jointPosition));
+         velocityError.set(qd_d - jointVelocity);
          feedback.set(stiffness * positionError.getDoubleValue() + damping * velocityError.getDoubleValue());
 
          tau_d += feedback.getValue();
@@ -483,6 +494,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Set the joint offset
+    *
     * @param jointOffset new joint offset in radians
     */
    public void setJointOffset(double jointOffset)
@@ -540,8 +552,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Compute the current joint position based on the cycloid output
+    *
     * @param outputPosition Output position of the cycloid in radians
-    * @param jointOffset Offset between cycloid and joint in radians
+    * @param jointOffset    Offset between cycloid and joint in radians
     * @return Estimated joint position in radians
     */
    private static double computeJointPosition(double outputPosition, double jointOffset)
@@ -551,8 +564,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Compute the current cycloid output position based on the joint
+    *
     * @param jointPosition Joint position in radians
-    * @param jointOffset Offset between cycloid and joint in radians
+    * @param jointOffset   Offset between cycloid and joint in radians
     * @return Estimated cycloid output position in radians
     */
    private static double computeOutputPosition(double jointPosition, double jointOffset)
@@ -562,8 +576,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Compute the motor position based on the output position of the cycloid
-    * @param outputPosition Cycloid output poisition in radians
-    * @param gearRatio Gear ratio of the cycloid
+    *
+    * @param outputPosition                    Cycloid output poisition in radians
+    * @param gearRatio                         Gear ratio of the cycloid
     * @param motorEncoderToOutputEncoderOffset Offset between output encoder and motor encoder in radians
     * @return Estimated motor position
     */
@@ -582,6 +597,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Set a {@code DoubleProvider} to record temperature
+    *
     * @param temperatureProvider
     */
    public void setTemperatureProvider(DoubleProvider temperatureProvider)
@@ -599,6 +615,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Set if the stator is above the shutdown temperature
+    *
     * @param isStatorAboveShutDownTemperature boolean dictating if the stator is above the shutdown temperature
     */
    public void setIsStatorAboveShutDownTemperature(boolean isStatorAboveShutDownTemperature)
@@ -621,10 +638,25 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    /**
     * Set if the stator is above the recommended temperature
+    *
     * @param isStatorAboveRecommendedTemperature boolean dictating if the stator is above the recommended temperature
     */
    public void setIsStatorAboveRecommendedTemperature(boolean isStatorAboveRecommendedTemperature)
    {
       this.isStatorAboveRecommendedTemperature.set(isStatorAboveRecommendedTemperature);
+   }
+
+   @Override
+   public void setPositionBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorPositionBreakFrequency(breakFrequency);
+      platinumTwitter.setOutputPositionBreakFrequency(breakFrequency);
+   }
+
+   @Override
+   public void setVelocityBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
+      platinumTwitter.setOutputVelocityBreakFrequency(breakFrequency);
    }
 }

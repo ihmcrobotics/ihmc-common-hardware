@@ -83,14 +83,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    // measured variables
    private final YoDouble measuredMotorPosition;
    private final YoDouble measuredMotorVelocity;
+   private final YoDouble filteredMotorPosition;
+   private final YoDouble filteredMotorVelocity;
    private final YoDouble measuredMotorVelocityFD;
    private final YoBoolean useFDforMotorVelocity;
 
    private final YoDouble measuredOutputPositionFromMotor;
    private final YoDouble measuredOutputVelocityFromMotor;
+   private final YoDouble filteredOutputPositionFromMotor;
+   private final YoDouble filteredOutputVelocityFromMotor;
 
    private final YoDouble measuredOutputPosition;
    private final YoDouble measuredOutputVelocity;
+   private final YoDouble filteredOutputPosition;
+   private final YoDouble filteredOutputVelocity;
    private final YoDouble measuredOutputVelocityFD;
    private final YoBoolean useFDforOutputVelocity;
 
@@ -447,15 +453,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       //actuals
       measuredMotorPosition = new YoDouble(prefix + "measuredMotorPosition", registry);
       measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", registry);
+      filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", registry);
+      filteredMotorVelocity = new YoDouble(prefix + "filteredMotorVelocity", registry);
       measuredMotorVelocityFD = new YoDouble(prefix + "measuredMotorVelocityFD", registry);
       useFDforMotorVelocity = new YoBoolean(prefix + "useFDforMotorVelocity", registry);
       useFDforMotorVelocity.set(false);
 
       measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
       measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
+      filteredOutputPositionFromMotor = new YoDouble(prefix + "filteredOutputPositionFromMotor", registry);
+      filteredOutputVelocityFromMotor = new YoDouble(prefix + "filteredOutputVelocityFromMotor", registry);
 
       measuredOutputPosition = new YoDouble(prefix + "measuredOutputPosition", registry);
       measuredOutputVelocity = new YoDouble(prefix + "measuredOutputVelocity", registry);
+      filteredOutputPosition = new YoDouble(prefix + "filteredOutputPosition", registry);
+      filteredOutputVelocity = new YoDouble(prefix + "filteredOutputVelocity", registry);
       measuredOutputVelocityFD = new YoDouble(prefix + "measuredOutputVelocityFD", registry);
       useFDforOutputVelocity = new YoBoolean(prefix + "useFDforOutputVelocity", registry);
       useFDforOutputVelocity.set(false);
@@ -623,17 +635,23 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       double previousMeasuredMotorPosition = measuredMotorPosition.getDoubleValue();
 
       measuredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredMotorPosition() - motorPositionOffset.getValue()));
+      filteredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredMotorPosition() - motorPositionOffset.getValue()));
       measuredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredMotorVelocity());
+      filteredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredMotorVelocity());
 
       //project motor measureds in output space
       measuredOutputPositionFromMotor.set(measuredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
       measuredOutputVelocityFromMotor.set(measuredMotorVelocity.getValue() / gearRatio.getDoubleValue());
+      filteredOutputPositionFromMotor.set(filteredMotorPosition.getDoubleValue() / gearRatio.getDoubleValue());
+      filteredOutputVelocityFromMotor.set(filteredMotorVelocity.getDoubleValue() / gearRatio.getDoubleValue());
 
       /** Output Space Encoders **/
       double previousMeasuredOutputPosition = measuredOutputPosition.getDoubleValue();
 
       measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getValue()));
+      filteredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredOutputPosition() - outputPositionOffset.getValue()));
       measuredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredOutputVelocity());
+      filteredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredOutputVelocity());
 
       // finite difference the measured velocity, looking at the previous encoder measurement.
       measuredOutputVelocityFD.set((measuredOutputPosition.getDoubleValue() - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
@@ -1042,20 +1060,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.useOutputVelocityFromMotor.set(useOutputVelocityFromMotor);
    }
 
-   public void setDesiredControlMode(JointDesiredControlMode controlMode)
-   {
-      if (controlMode != null)
-      {
-         switch (controlMode)
-         {
-            case POSITION -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_POSITION);
-            case VELOCITY -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_VELOCITY);
-            case EFFORT -> requestedModeOfOperation.set(ElmoModeOfOperation.CYCLIC_SYNCHRONOUS_TORQUE);
-            case DISABLED -> requestedModeOfOperation.set(ElmoModeOfOperation.NO_MODE);
-         }
-      }
-   }
-
    public void setMaxAllowableStatorTemperature(int maxAllowableStatorTemperature)
    {
       if (maxAllowableStatorTemperature > 0)
@@ -1078,25 +1082,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return MOTOR_FAULT.getBooleanValue();
    }
 
-   public double getJointPosition()
-   {
-      return getMeasuredOutputPosition();
-   }
-
-   public double getJointVelocity()
-   {
-      return getMeasuredOutputVelocity();
-   }
-
    public boolean getDriveFaulted()
    {
       return DRIVE_FAULTED.getBooleanValue();
-   }
-
-   @Override
-   public double getMeasuredOutputVelocity()
-   {
-      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
@@ -1129,9 +1117,21 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    }
 
    @Override
+   public double getFilteredMotorPosition()
+   {
+      return  filteredMotorPosition.getDoubleValue();
+   }
+
+   @Override
    public double getMeasuredOutputPosition()
    {
       return useOutputPositionFromMotor.getBooleanValue() ? measuredOutputPositionFromMotor.getDoubleValue() : measuredOutputPosition.getDoubleValue();
+   }
+
+   @Override
+   public double getFilteredOutputPosition()
+   {
+      return useOutputPositionFromMotor.getBooleanValue() ? filteredOutputPositionFromMotor.getDoubleValue() : filteredOutputPosition.getDoubleValue();
    }
 
    @Override
@@ -1143,13 +1143,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getFilteredMotorVelocity()
    {
-      return getMeasuredMotorVelocity(); //TODO remove redundancy or add new filtering on top of SIL filtering
+      return filteredMotorVelocity.getDoubleValue();
+   }
+
+   @Override
+   public double getMeasuredOutputVelocity()
+   {
+      return useOutputVelocityFromMotor.getBooleanValue() ? measuredOutputVelocityFromMotor.getDoubleValue() : measuredOutputVelocity.getValue();
    }
 
    @Override
    public double getFilteredOutputVelocity()
    {
-      return getMeasuredOutputVelocity(); //TODO remove redundancy or add new filtering on top of SIL filtering
+      return useOutputVelocityFromMotor.getBooleanValue() ? filteredOutputVelocityFromMotor.getDoubleValue() : filteredOutputVelocity.getDoubleValue();
    }
 
    public double getMeasuredMotorCurrent()
@@ -1224,5 +1230,25 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public CycloidPlatinumTwitter getPlatinumTwitter()
    {
       return platinumTwitter;
+   }
+
+   public void setMotorPositionBreakFrequency(double breakFrequency)
+   {
+      motorPositionBreakFrequency.set(breakFrequency);
+   }
+
+   public void setOutputPositionBreakFrequency(double breakFrequency)
+   {
+      outputPositionBreakFrequency.set(breakFrequency);
+   }
+
+   public void setMotorVelocityBreakFrequency(double breakFrequency)
+   {
+      motorVelocityBreakFrequency.set(breakFrequency);
+   }
+
+   public void setOutputVelocityBreakFrequency(double breakFrequency)
+   {
+      outputVelocityBreakFrequency.set(breakFrequency);
    }
 }

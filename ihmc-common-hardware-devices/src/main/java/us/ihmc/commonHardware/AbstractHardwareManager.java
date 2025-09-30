@@ -13,11 +13,13 @@ import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoLong;
+import us.ihmc.yoVariables.variable.YoVariable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,6 +68,10 @@ public abstract class AbstractHardwareManager
    protected final YoBoolean hasMotorOverHeated;
    protected final YoDouble totalMeasuredMotorCurrent;
 
+   protected final YoDouble mainPositionBreakFrequency;
+   protected final YoDouble mainVelocityBreakFrequency;
+   protected final YoBoolean useMainBreakFrequencies;
+
    protected RobotOverHeatedListener robotOverHeatedListener;
 
    /**
@@ -105,6 +111,10 @@ public abstract class AbstractHardwareManager
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
       masterGain = new YoDouble("lowLevelMasterGain", registry);
+
+      mainPositionBreakFrequency = new YoDouble("mainPositionBreakFrequency", registry);
+      mainVelocityBreakFrequency = new YoDouble("mainVelocityBreakFrequency", registry);
+      useMainBreakFrequencies = new YoBoolean("useMainBreakFrequencies", registry);
 
       areMotorsFaulted = new YoBoolean("AreMotorsFaulted", registry);
 
@@ -204,6 +214,11 @@ public abstract class AbstractHardwareManager
       long mechanismWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
+         if(useMainBreakFrequencies.getBooleanValue())
+         {
+            mechanismManager.setPositionBreakFrequency(mainPositionBreakFrequency.getDoubleValue());
+            mechanismManager.setVelocityBreakFrequency(mainVelocityBreakFrequency.getDoubleValue());
+         }
          mechanismManager.setMasterGain(masterGain.getValue());
          mechanismManager.write(desiredJointData); // this also ticks the low level controllers
       }
