@@ -47,8 +47,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
 
       Unsigned16 controlWord = new Unsigned16(); //0x6040
       Unsigned8 modeOfOperation = new Unsigned8(); //0x6060
-      Signed32 targetPosition = new Signed32(); //0x607A
-      Signed32 targetVelocity = new Signed32(); //0x60FF
+//      Signed32 targetPosition = new Signed32(); //0x607A
+//      Signed32 targetVelocity = new Signed32(); //0x60FF
       Signed16 targetTorquePercentage = new Signed16(); //0x6071
    }
 
@@ -57,10 +57,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
       verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(0x6040, 0, 16)), "failed to write to 0x1600 - 0x6040"); // control word
       verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(0x6060, 0, 8)), "failed to write to 0x1600 - 0x6060"); // mode of operation
-      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x607A, 0, 32)), "failed to write to 0x1600 - 0x607A"); // target position
-      verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(0x60FF, 0, 32)), "failed to write to 0x1600 - 0x60FF"); // target velocity
-      verifyWorkingCounter(writeSDO(0x1600, 5, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071"); // torque demand
-      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 5), "failed to write to 0x1600 - 0x5"); // num elements in 0x1600 (max 8)
+//      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x607A, 0, 32)), "failed to write to 0x1600 - 0x607A"); // target position
+//      verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(0x60FF, 0, 32)), "failed to write to 0x1600 - 0x60FF"); // target velocity
+      verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(0x6071, 0, 16)), "failed to write to 0x1600 - 0x6071"); // torque demand
+      verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 3), "failed to write to 0x1600 - 0x3"); // num elements in 0x1600 (max 8)
    }
 
    /**
@@ -247,8 +247,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       Float64 filteredOutputPosition = new Float64(); // R2[42] Filtered. R2[38] Unfiltered
       Float64 filteredMotorVelocity = new Float64(); // R2[43] Filtered. R2[39] Unfiltered
       Float64 filteredOutputVelocity = new Float64(); // R2[44] Filtered. R2[40] Unfiltered
-      Float64 controlTime = new Float64(); // R2[45]
-      Float64 silTemp = new Float64(); // R2[46]
+//      Float64 controlTime = new Float64(); // R2[45]
+//      Float64 silTemp = new Float64(); // R2[46]
    }
 
    private void configure1A03()
@@ -258,9 +258,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1A03, 2, computePdoMapValue(R2, 42, 64)), "failed to write to 0x1A03 -- 0x22F4 42"); // R2[42]
       verifyWorkingCounter(writeSDO(0x1A03, 3, computePdoMapValue(R2, 43, 64)), "failed to write to 0x1A03 -- 0x22F4 43"); // R2[43]
       verifyWorkingCounter(writeSDO(0x1A03, 4, computePdoMapValue(R2, 44, 64)), "failed to write to 0x1A03 -- 0x22F4 44"); // R2[44]
-      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 45, 64)), "failed to write to 0x1A03 -- 0x22F4 45"); // R2[45]
-      verifyWorkingCounter(writeSDO(0x1A03, 6, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A03 -- 0x22F4 46"); // R2[46]
-      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 6), "failed to write to 0x1A03 -- 0x6"); // num elements in 0x1A03 (max 8)
+//      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 45, 64)), "failed to write to 0x1A03 -- 0x22F4 45"); // R2[45]
+//      verifyWorkingCounter(writeSDO(0x1A03, 6, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A03 -- 0x22F4 46"); // R2[46]
+      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 4), "failed to write to 0x1A03 -- 0x4"); // num elements in 0x1A03 (max 8)
    }
 
    public CycloidPlatinumTwitter(int alias, int ringPosition)
@@ -522,15 +522,15 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       return tpdo_1a00.measuredCurrent.get();
    }
 
-   public void setRawTargetPosition(int position)
-   {
-      rpdo_1600.targetPosition.set(position);
-   }
-
-   public void setRawTargetVelocity(int velocity)
-   {
-      rpdo_1600.targetVelocity.set(velocity);
-   }
+//   public void setRawTargetPosition(int position)
+//   {
+//      rpdo_1600.targetPosition.set(position);
+//   }
+//
+//   public void setRawTargetVelocity(int velocity)
+//   {
+//      rpdo_1600.targetVelocity.set(velocity);
+//   }
 
    /**
     * This value represents a percentage of maximum effort (torque/current). For example if this value
@@ -712,13 +712,13 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       return tpdo_1a02.sil_AnalogInput2.get();
    }
 
-   public double getSILTemperature()
-   {
-      return tpdo_1a03.silTemp.get();
-   }
-
-   public double getSILControlTime()
-   {
-      return tpdo_1a03.controlTime.get();
-   }
+//   public double getSILTemperature()
+//   {
+//      return tpdo_1a03.silTemp.get();
+//   }
+//
+//   public double getSILControlTime()
+//   {
+//      return tpdo_1a03.controlTime.get();
+//   }
 }
