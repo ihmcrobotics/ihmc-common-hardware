@@ -578,7 +578,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          previousTime.set(time.getValue());
       }
       double prevSILTime = silTime.getDoubleValue();
-      silTime.set(platinumTwitter.getSILControlTime());
+//      silTime.set(platinumTwitter.getSILControlTime());
       silDT.set(silTime.getDoubleValue() - prevSILTime);
 
       /*
@@ -619,7 +619,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
       sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
 
-      driveTemperature.set(platinumTwitter.getSILTemperature());
+//      driveTemperature.set(platinumTwitter.getSILTemperature());
 
       inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
       inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
@@ -786,8 +786,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       // Set the actual objectives for the drive. This includes the desired motor encoder counts, the desired motor encoder counts per second, and the
       // desired percentage of max effort, -1000 to 1000.
-      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
-      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
+//      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
+//      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
       platinumTwitter.setPercentageMaxEffort(rawDesiredMotorEffortPercentage.getIntegerValue());
 
       // Set the desired SIL controller parameters to the amplifier.
