@@ -344,7 +344,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       this.kt.set(physicalParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
-      setMaxAllowableStatorTemperature(1);
+      setMaxAllowableStatorTemperature(10000);
       this.maxRecommendedStatorTemperature = new YoInteger(prefix + "maxRecommendedStatorTemperature", registry);
 
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
