@@ -67,14 +67,17 @@ public abstract class AbstractHardwareMap
    protected final double dt;
    protected final YoDouble yoTime;
 
+   protected final Collection<XmlHardwareDescription> xmlHardwareDescriptions;
+   protected final StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions;
+
    protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
 
-   protected final String[] imuNames;
+   protected String[] imuNames;
    protected final ArrayList<IMUManagerInterface> imuManagers = new ArrayList<>();
    protected final Map<String, ImuData> measuredIMUData = new HashMap<>();
    protected final Map<String, IMUDefinition> imuDefinitions = new HashMap<>();
 
-   protected final String[] forceSensorNames;
+   protected String[] forceSensorNames;
    protected final ArrayList<ForceSensorManagerInterface> forceSensorManagers = new ArrayList<>();
    protected final Map<String, DMatrixRMaj> forceSensorData = new HashMap<>();
 
@@ -83,7 +86,7 @@ public abstract class AbstractHardwareMap
    protected final ArrayList<MechanismManagerInterface> mechanismManagers = new ArrayList<>();
    protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("doCycloidPDControlOnTwitters", registry);
 
-   protected final String[] jointNames;
+   protected String[] jointNames;
    protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
 
@@ -129,23 +132,32 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
+      this.xmlHardwareDescriptions = xmlHardwareDescriptions;
+      this.stateEstimatorSensorDefinitions = stateEstimatorSensorDefinitions;
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
+      parentRegistry.addChild(registry);
+   }
+
+   protected void create()
+   {
       createSensorDefinitions(stateEstimatorSensorDefinitions);
 
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
-         // Hardware maps will be skipped if they don't contain both devices and transmissions
-         if (xmlHardwareDescription.getDevices() == null || xmlHardwareDescription.getTransmissions() == null)
-            continue;
+         if (xmlHardwareDescription.getDevices() != null)
+         {
+            XmlDevices devices = xmlHardwareDescription.getDevices();
+            createDevices(devices);
+         }
 
-         XmlDevices devices = xmlHardwareDescription.getDevices();
-         createDevices(devices);
-
-         XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
-         createTransmissions(transmissions); // consider passing in devices here
+         if (xmlHardwareDescription.getTransmissions() != null)
+         {
+            XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
+            createTransmissions(transmissions); // consider passing in devices here
+         }
 
          XmlJoints joints = xmlHardwareDescription.getJoints();
          if (joints != null)
@@ -155,8 +167,6 @@ public abstract class AbstractHardwareMap
       jointNames = measuredJointData.keySet().toArray(new String[0]);
       imuNames = measuredIMUData.keySet().toArray(new String[0]);
       forceSensorNames = forceSensorData.keySet().toArray(new String[0]);
-
-      parentRegistry.addChild(registry);
    }
 
    /**
