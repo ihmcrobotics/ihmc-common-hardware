@@ -360,7 +360,6 @@ public abstract class AbstractHardwareMap
                                                                                       upperLimit,
                                                                                       torqueBreakFrequency); //TODO add joint limits to xml
       mechanismManagers.add(cycloidMechanismManager);
-      LogTools.info("ROLLING A JOINT: " + cycloidMechanismManager.getName());
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
    }
