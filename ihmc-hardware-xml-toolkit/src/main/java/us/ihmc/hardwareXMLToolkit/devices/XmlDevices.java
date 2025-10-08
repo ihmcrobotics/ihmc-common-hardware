@@ -17,8 +17,7 @@ public class XmlDevices
                  @XmlElement(name = "XmlEtherSnacksBoard", type = XmlEtherSnacksBoard.class),
                  @XmlElement(name = "XmlIMU", type = XmlIMU.class),
                  @XmlElement(name = "XmlPlatinumTwitter", type = XmlPlatinumTwitter.class),
-                 @XmlElement(name = "XmlAtiForceTorqueSensor", type = XmlAtiForceTorqueSensor.class),
-                 @XmlElement(name = "XmlHand", type = XmlHand.class)})
+                 @XmlElement(name = "XmlAtiForceTorqueSensor", type = XmlAtiForceTorqueSensor.class)})
    protected List<AbstractXmlDevice> devices;
 
    public List<AbstractXmlDevice> getDevices()

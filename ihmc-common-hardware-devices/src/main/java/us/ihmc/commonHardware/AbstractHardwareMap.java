@@ -69,14 +69,17 @@ public abstract class AbstractHardwareMap
    protected final double dt;
    protected final YoDouble yoTime;
 
+   protected final Collection<XmlHardwareDescription> xmlHardwareDescriptions;
+   protected final StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions;
+
    protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
 
-   protected final String[] imuNames;
+   protected final ArrayList<String> imuNames = new ArrayList<>();
    protected final ArrayList<IMUManagerInterface> imuManagers = new ArrayList<>();
    protected final Map<String, ImuData> measuredIMUData = new HashMap<>();
    protected final Map<String, IMUDefinition> imuDefinitions = new HashMap<>();
 
-   protected final String[] forceSensorNames;
+   protected final ArrayList<String> forceSensorNames = new ArrayList<>();
    protected final ArrayList<ForceSensorManagerInterface> forceSensorManagers = new ArrayList<>();
    protected final Map<String, DMatrixRMaj> forceSensorData = new HashMap<>();
 
@@ -85,7 +88,7 @@ public abstract class AbstractHardwareMap
    protected final ArrayList<MechanismManagerInterface> mechanismManagers = new ArrayList<>();
    protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("doCycloidPDControlOnTwitters", registry);
 
-   protected final String[] jointNames;
+   protected final ArrayList<String> jointNames = new ArrayList<>();
    protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
 
@@ -105,11 +108,13 @@ public abstract class AbstractHardwareMap
    /**
     * Construct the hardware map for the robot
     *
-    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
-    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
-    * @param dt                      desired control timesteo
-    * @param yoTime                  YoDouble that holds the current time of the robot
-    * @param parentRegistry          Parent YoRegistry
+    * @param robotModelResourcesDirectory Directory containing robot model urdf and xml resources
+    * @param xmlFiles                     xml files that make up xml description of the robot
+    * @param urdfFiles                    urdf files that make up urdf description of the robot
+    * @param etherCATMaster               Main ethercat device used to register all EtherCAT devices in the robot
+    * @param dt                           desired control timesteo
+    * @param yoTime                       YoDouble that holds the current time of the robot
+    * @param parentRegistry               Parent YoRegistry
     */
    public AbstractHardwareMap(String robotModelResourcesDirectory,
                               List<String> xmlFiles,
@@ -134,12 +139,12 @@ public abstract class AbstractHardwareMap
    /**
     * Construct the hardware map for the robot
     *
-    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
-    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param xmlHardwareDescriptions         Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster                  Main ethercat device used to register all EtherCAT devices in the robot
     * @param stateEstimatorSensorDefinitions Sensor definitions for the state estimator. If there is no state estimator, then leave as null
-    * @param dt                      desired control timesteo
-    * @param yoTime                  YoDouble that holds the current time of the robot
-    * @param parentRegistry          Parent YoRegistry
+    * @param dt                              desired control timesteo
+    * @param yoTime                          YoDouble that holds the current time of the robot
+    * @param parentRegistry                  Parent YoRegistry
     */
    public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
                               List<String> urdfResourceDirectories,
@@ -150,34 +155,48 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
+      this.xmlHardwareDescriptions = xmlHardwareDescriptions;
+      this.stateEstimatorSensorDefinitions = stateEstimatorSensorDefinitions;
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
       createSensorDefinitions(stateEstimatorSensorDefinitions, urdfResources, urdfResourceDirectories);
 
+      parentRegistry.addChild(registry);
+   }
+
+   protected void createXmlDefinitions()
+   {
       for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
       {
-         // Hardware maps will be skipped if they don't contain both devices and transmissions
-         if (xmlHardwareDescription.getDevices() == null || xmlHardwareDescription.getTransmissions() == null)
-            continue;
+         if (xmlHardwareDescription.getDevices() != null)
+         {
+            XmlDevices devices = xmlHardwareDescription.getDevices();
+            createDevices(devices);
+         }
 
-         XmlDevices devices = xmlHardwareDescription.getDevices();
-         createDevices(devices);
+         if (xmlHardwareDescription.getTransmissions() != null)
+         {
+            XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
+            createTransmissions(transmissions);
+         }
 
-         XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
-         createTransmissions(transmissions); // consider passing in devices here
-
-         XmlJoints joints = xmlHardwareDescription.getJoints();
-         if (joints != null)
+         if (xmlHardwareDescription.getJoints() != null)
+         {
+            XmlJoints joints = xmlHardwareDescription.getJoints();
             createJoints(joints);
+         }
       }
 
-      jointNames = measuredJointData.keySet().toArray(new String[0]);
-      imuNames = measuredIMUData.keySet().toArray(new String[0]);
-      forceSensorNames = forceSensorData.keySet().toArray(new String[0]);
+      jointNames.clear();
+      jointNames.addAll(measuredJointData.keySet());
 
-      parentRegistry.addChild(registry);
+      imuNames.clear();
+      imuNames.addAll(measuredIMUData.keySet());
+
+      forceSensorNames.clear();
+      forceSensorNames.addAll(forceSensorData.keySet());
    }
 
    /**
@@ -517,7 +536,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getJointNames()
    {
-      return jointNames;
+      return jointNames.toArray(new String[0]);
    }
 
    /**
@@ -525,7 +544,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getIMUNames()
    {
-      return imuNames;
+      return imuNames.toArray(new String[0]);
    }
 
    /**
@@ -533,7 +552,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getForceSensorNames()
    {
-      return forceSensorNames;
+      return forceSensorNames.toArray(new String[0]);
    }
 
    /**
