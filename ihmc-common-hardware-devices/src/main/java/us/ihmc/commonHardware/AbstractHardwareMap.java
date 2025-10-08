@@ -128,7 +128,13 @@ public abstract class AbstractHardwareMap
            List.of(robotModelResourcesDirectory,
                    robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
                    robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
-           urdfFiles.stream().map(file -> robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file).toList(),
+           urdfFiles.stream().map(file ->
+                                  {
+                                     if (file.contains("ezGripper/") || file.contains("abilityHand/"))
+                                        return file;
+                                     else
+                                        return robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file;
+                                  }).toList(),
            etherCATMaster,
            null,
            dt,
