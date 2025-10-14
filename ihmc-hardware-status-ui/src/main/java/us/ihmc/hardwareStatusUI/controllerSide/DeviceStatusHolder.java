@@ -100,6 +100,16 @@ public class DeviceStatusHolder
       }
    }
 
+   public String getName()
+   {
+      return name;
+   }
+
+   public DeviceStatusProvider getDeviceStatusProvider()
+   {
+      return deviceStatusProvider;
+   }
+
    public void setIsResponding(boolean isResponding)
    {
       this.isResponding.set(isResponding);

@@ -52,4 +52,14 @@ public class HardwareStatusManager
       for (int i = 0; i < deviceStatusHolders.size(); i++)
          deviceStatusHolders.get(i).update();
    }
+
+   public DeviceStatusHolder getDeviceStatusHolder(int index)
+   {
+      return deviceStatusHolders.get(index);
+   }
+
+   public ArrayList<DeviceStatusHolder> getDeviceStatusHolders()
+   {
+      return deviceStatusHolders;
+   }
 }
