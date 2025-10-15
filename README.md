@@ -4,18 +4,38 @@ Project containing drivers/classes for boards, sensors, motor controllers, mecha
 
 ## ihmc-common-hardware-devices
 
-Main subproject containing code for etherCAT device communication and control, as well as abstract classes for creating a hardware device map and manager.
+This subproject contains code for etherCAT device communication and control, as well as abstract classes for creating a hardware device map and manager
 
 ### Structure
 
-- commonHardware: Main directory of the project, contains abstract classes for creating a hardware map and manager
+- commonHardware: Main directory, contains abstract classes for creating a hardware map and manager
     - devices: Contains code for commonly used devices (IMU, encoder, load cell) and interfaces for easy integration of new devices into the system
-    - hardwareStatusUI: Contains all code relevant to creating a UI for easier debugging of device statuses
     - mechanisms: Contains code for managing actuation mechanisms and interfaces for integration of new types into the system. Currently, only cycloids have a
       full implementation
-    - xmlDescription: Contains code for XML-formatted descriptions of all devices and mechanisms in the project, as well as methods for loading XML descriptions
 
-### How to Implement for your own robot
+## ihmc-hardware-status-ui
+
+This subproject contains code for monitoring and displaying the current status of the devices on the robot in a tabular form.
+
+### Structure
+- hardwareStatusUI: Main directory
+    - controllerSide: Holding the current status of a device and providing it for the visualizer
+    - visualizerSide: Creating the table visualization and implementing it within SCS2
+
+## ihmc-hardware-xml-toolkit
+
+This subproject contains code to translate xml-formatted robot descriptions into device/mechanism settings and parameters
+
+### Structure
+- hardwareXmlToolkit: Main directory, contains classes for a general hardware description and the loader used to translate descriptions
+    - devices: Translating device descriptions from xml formatting
+    - joints: Translating joint descriptions from xml formatting
+    - priority: Translating thread priority settings from xml formatting
+    - settings: Translating communication (EtherCAT, ROS2) settings from xml formatting
+    - transmissions: Translating transmission settings from xml formatting
+
+
+## How to Implement for your own robot
 
 There are four steps to follow for basic implementation for your own robot using devices already implemented:
 
