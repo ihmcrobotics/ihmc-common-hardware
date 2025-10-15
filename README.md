@@ -20,15 +20,15 @@ Main subproject containing code for etherCAT device communication and control, a
 There are four steps to follow for basic implementation for your own robot using devices already implemented:
 
 1. Format the xml files describing the robot to match [
-   `XmlHardwareDescription`](https://github.com/ihmcrobotics/ihmc-common-hardware/blob/develop/ihmc-common-hardware-devices/src/main/java/us/ihmc/commonHardware/xmlDescription/XmlHardwareDescription.java),
+   `XmlHardwareDescription`](https://github.com/ihmcrobotics/ihmc-common-hardware/tree/develop/ihmc-hardware-xml-toolkit/src/main/java/us/ihmc/hardwareXMLToolkit/XmlHardwareDescription.java),
    and make sure the description of each device and mechanism is formatted so that
    they can be properly loaded by [
-   `XmlHardwareDescriptionLoader`](https://github.com/ihmcrobotics/ihmc-common-hardware/blob/develop/ihmc-common-hardware-devices/src/main/java/us/ihmc/commonHardware/xmlDescription/XmlHardwareDescriptionLoader.java).
-   An example can be found `here (make a link)`
+   `XmlHardwareDescriptionLoader`](https://github.com/ihmcrobotics/ihmc-common-hardware/tree/develop/ihmc-hardware-xml-toolkit/src/main/java/us/ihmc/hardwareXMLToolkit/XmlHardwareDescriptionLoader.java).
+   An example can be found [here](https://github.com/ihmcrobotics/ihmc-common-hardware/tree/develop/ihmc-hardware-xml-toolkit/src/main/resources/xmlExamples)
 2. Create a class that extends [
    `AbstractHardwareMap`](https://github.com/ihmcrobotics/ihmc-common-hardware/blob/develop/ihmc-common-hardware-devices/src/main/java/us/ihmc/commonHardware/AbstractHardwareMap.java)
    to properly create and register all devices and mechanisms
-3. Create a class that extends `AbstractHardwareManager (make a link)` to properly manage reading and writing to each device and mechanism
+3. Create a class that extends [`AbstractHardwareManager`](https://github.com/ihmcrobotics/ihmc-common-hardware/blob/develop/ihmc-common-hardware-devices/src/main/java/us/ihmc/commonHardware/AbstractHardwareManager.java) to properly manage reading and writing to each device and mechanism
 4. Create a controller that can communicate using EtherCAT. You can either extend the pre-made [
    `EtherCATRealtimeThread`](https://github.com/ihmcrobotics/ihmc-ethercat-master/blob/develop/src/main/java/us/ihmc/etherCAT/master/EtherCATRealtimeThread.java)
    for simplicity or implement your own
