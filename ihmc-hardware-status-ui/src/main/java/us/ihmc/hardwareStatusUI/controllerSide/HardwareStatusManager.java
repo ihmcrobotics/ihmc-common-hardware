@@ -27,9 +27,11 @@ public class HardwareStatusManager
     * @param xmlDevice            Generic device description taken from an xml
     * @param deviceStatusProvider Status provider for the specific device
     */
-   public void registerDevice(AbstractXmlDevice xmlDevice, DeviceStatusProvider deviceStatusProvider)
+   public DeviceStatusHolder registerDevice(AbstractXmlDevice xmlDevice, DeviceStatusProvider deviceStatusProvider)
    {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry));
+      DeviceStatusHolder deviceStatusHolder = new DeviceStatusHolder(xmlDevice.getName(), deviceStatusProvider, registry);
+      deviceStatusHolders.add(deviceStatusHolder);
+      return deviceStatusHolder;
    }
 
    /**
@@ -39,9 +41,11 @@ public class HardwareStatusManager
     * @param xmlParentDevice      Parent EtherSnacks board
     * @param deviceStatusProvider Status provider for the EtherSnacks device
     */
-   public void registerDevice(AbstractXmlDevice xmlDaughterDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
+   public DeviceStatusHolder registerDevice(AbstractXmlDevice xmlDaughterDevice, AbstractXmlDevice xmlParentDevice, EtherCATDeviceStatusProvider deviceStatusProvider)
    {
-      deviceStatusHolders.add(new DeviceStatusHolder(xmlDaughterDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry));
+      DeviceStatusHolder deviceStatusHolder = new DeviceStatusHolder(xmlDaughterDevice.getName() + "_" + xmlParentDevice.getName(), deviceStatusProvider, registry);
+      deviceStatusHolders.add(deviceStatusHolder);
+      return deviceStatusHolder;
    }
 
    /**
