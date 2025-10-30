@@ -48,6 +48,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private final YoDouble positionError;
    private final YoDouble velocityError;
+   private final YoDouble positionFeedback;
+   private final YoDouble velocityFeedback;
    private final YoDouble feedback;
    private final YoDouble velocityFeedbackAlphaVariable;
    private final YoDouble torqueBreakFrequency;
@@ -178,6 +180,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);
+      positionFeedback = new YoDouble(jointName + "_ActuatorPositionFeedback", registry);
+      velocityFeedback = new YoDouble(jointName + "_ActuatorVelocityFeedback", registry);
       feedback = new YoDouble(jointName + "_ActuatorFeedback", registry);
 
       velocityFeedbackAlphaVariable = new YoDouble(jointName + "_VelocityFeedbackAlphaVariable", registry);
@@ -382,7 +386,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
          positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, jointPosition));
          velocityError.set(qd_d - jointVelocity);
-         feedback.set(stiffness * positionError.getDoubleValue() + damping * velocityError.getDoubleValue());
+         positionFeedback.set(stiffness * positionError.getDoubleValue());
+         velocityFeedback.set(damping * velocityError.getDoubleValue());
+         feedback.set(positionFeedback.getDoubleValue() + velocityFeedback.getDoubleValue());
 
          tau_d += feedback.getValue();
          q_d = measuredActuatorData.getPosition();
@@ -394,6 +400,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       {
          positionError.setToNaN();
          velocityError.setToNaN();
+         positionFeedback.setToNaN();
+         velocityFeedback.setToNaN();
          feedback.setToNaN();
       }
       if (isRampingDown.getValue()) //TODO(sfasano 20250601) this needs to be fixed (if we even want to keep it)
