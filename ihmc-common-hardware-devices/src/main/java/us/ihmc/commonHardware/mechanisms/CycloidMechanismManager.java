@@ -655,6 +655,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       this.isStatorAboveRecommendedTemperature.set(isStatorAboveRecommendedTemperature);
    }
 
+   public void doPDControlOnTwitter(boolean doPDControlOnTwitter)
+   {
+      this.doPDControlOnTwitter.set(doPDControlOnTwitter);
+   }
+
    @Override
    public void setPositionBreakFrequency(double breakFrequency)
    {
