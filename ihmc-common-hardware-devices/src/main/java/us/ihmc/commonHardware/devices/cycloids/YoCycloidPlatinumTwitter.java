@@ -11,7 +11,6 @@ import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
-import us.ihmc.sensorProcessing.outputData.JointDesiredControlMode;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -34,9 +33,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 50.0;
    private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
-   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 10000.0;
+   private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
    private final double dt;
@@ -63,6 +62,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final double outputRadiansToMotorEncoderCounts;
 
    // command variables
+   protected final YoDouble desiredMotorPositionForImpedanceControl;
+   protected final YoDouble desiredMotorVelocityForImpedanceControl;
    protected final YoDouble desiredMotorPosition;
    protected final YoDouble desiredMotorVelocity;
    protected final YoDouble desiredFeedForwardMotorCurrent;
@@ -81,6 +82,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    protected final YoEnum<ElmoModeOfOperation> previousModeOfOperation;
 
    // measured variables
+   private final YoDouble rawMotorPositionFromTwitters;
+   private final YoDouble rawMotorVelocityFromTwitters;
    private final YoDouble measuredMotorPosition;
    private final YoDouble measuredMotorVelocity;
    private final YoDouble filteredMotorPosition;
@@ -365,6 +368,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
       //desireds
+      desiredMotorPositionForImpedanceControl = new YoDouble(prefix + "desiredMotorPositionForImpedanceControl", registry);
+      desiredMotorVelocityForImpedanceControl = new YoDouble(prefix + "desiredMotorVelocityForImpedanceControl", registry);
       desiredMotorPosition = new YoDouble(prefix + "desiredMotorPosition", registry);
       desiredMotorVelocity = new YoDouble(prefix + "desiredMotorVelocity", registry);
       desiredFeedForwardMotorCurrent = new YoDouble(prefix + "desiredFeedForwardMotorCurrent", registry);
@@ -451,6 +456,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       outputEncoderState = new YoEnum<>(prefix + "OutputEncoderState", registry, EncoderState.class);
 
       //actuals
+      rawMotorPositionFromTwitters = new YoDouble(prefix + "rawMotorPositionFromTwitters", registry);
+      rawMotorVelocityFromTwitters = new YoDouble(prefix + "rawMotorVelocityFromTwitters", registry);
       measuredMotorPosition = new YoDouble(prefix + "measuredMotorPosition", registry);
       measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", registry);
       filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", registry);
@@ -634,9 +641,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
       double previousMeasuredMotorPosition = measuredMotorPosition.getDoubleValue();
 
-      measuredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredMotorPosition() - motorPositionOffset.getValue()));
+      rawMotorPositionFromTwitters.set(platinumTwitter.getMeasuredMotorPosition());
+      rawMotorVelocityFromTwitters.set(platinumTwitter.getMeasuredMotorVelocity());
+      measuredMotorPosition.set(motorDirection.getDoubleValue() * (rawMotorPositionFromTwitters.getDoubleValue() - motorPositionOffset.getValue()));
       filteredMotorPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredMotorPosition() - motorPositionOffset.getValue()));
-      measuredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredMotorVelocity());
+      measuredMotorVelocity.set(motorDirection.getDoubleValue() * rawMotorVelocityFromTwitters.getDoubleValue());
       filteredMotorVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredMotorVelocity());
 
       //project motor measureds in output space
@@ -801,8 +810,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       platinumTwitter.setMotorStiffnessForImpedanceControl(impedanceControlStiffness.getDoubleValue());
       platinumTwitter.setMotorDampingForImpedanceControl(impedanceControlDamping.getDoubleValue());
 
-      platinumTwitter.setDesiredMotorPositionForImpedanceControl(motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue());
-      platinumTwitter.setDesiredMotorVelocityForImpedanceControl(motorDirection.getDoubleValue() * desiredMotorVelocity.getDoubleValue());
+      desiredMotorPositionForImpedanceControl.set(motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue());
+      desiredMotorVelocityForImpedanceControl.set(motorDirection.getDoubleValue() * desiredMotorVelocity.getDoubleValue());
+      platinumTwitter.setDesiredMotorPositionForImpedanceControl(desiredMotorPositionForImpedanceControl.getDoubleValue());
+      platinumTwitter.setDesiredMotorVelocityForImpedanceControl(desiredMotorVelocityForImpedanceControl.getDoubleValue());
 
       platinumTwitter.setMaxMotorPositionError(impedanceControlMaxPositionError.getDoubleValue());
       platinumTwitter.setMaxMotorVelocityError(impedanceControlMaxVelocityError.getDoubleValue());
