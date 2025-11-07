@@ -86,7 +86,7 @@ public abstract class AbstractHardwareMap
    protected final ArrayList<YoCycloidPlatinumTwitter> cycloidTwitters = new ArrayList<>();
    protected final Map<String, YoCycloidPlatinumTwitter> cycloidPlatinumTwitterMap = new HashMap<>();
    protected final ArrayList<MechanismManagerInterface> mechanismManagers = new ArrayList<>();
-   protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("doCycloidPDControlOnTwitters", registry);
+   protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("masterDoCycloidPDControlOnTwitters", registry);
 
    protected final ArrayList<String> jointNames = new ArrayList<>();
    protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
