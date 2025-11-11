@@ -360,6 +360,7 @@ public abstract class AbstractHardwareMap
       double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
       boolean useFilteredStates = mechanism.useFilteredStates();
       boolean publishFilteredStates = mechanism.publishFilteredStates();
+      boolean doPDControlOnTwitter = mechanism.doPDControlOnTwitter();
 
       CycloidMechanismManager cycloidMechanismManager = createCycloidMechanismManager(jointName,
                                                                                       motorName,
@@ -369,6 +370,7 @@ public abstract class AbstractHardwareMap
                                                                                       torqueBreakFrequency,
                                                                                       useFilteredStates,
                                                                                       publishFilteredStates);
+      cycloidMechanismManager.doPDControlOnTwitter(doPDControlOnTwitter);
       mechanismManagers.add(cycloidMechanismManager);
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());

@@ -47,6 +47,9 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement(defaultValue = "false")
    protected boolean publishFilteredStates;
 
+   @XmlElement(defaultValue = "false")
+   protected boolean doDampingControlOnTwitters;
+
    public double getRollJointLowerLimit()
    {
       return rollJointLowerLimit;
@@ -145,5 +148,10 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    public boolean publishFilteredStates()
    {
       return publishFilteredStates;
+   }
+
+   public boolean doDampingControlOnTwitters()
+   {
+      return doDampingControlOnTwitters;
    }
 }

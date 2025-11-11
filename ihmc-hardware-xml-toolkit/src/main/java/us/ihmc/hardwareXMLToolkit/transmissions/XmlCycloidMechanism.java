@@ -34,6 +34,9 @@ public class XmlCycloidMechanism extends AbstractXmlObject
    @XmlElement(defaultValue = "false")
    protected boolean publishFilteredStates;
 
+   @XmlElement(defaultValue = "false")
+   protected boolean doPDControlOnTwitter;
+
    public String getJointName()
    {
       return jointName;
@@ -82,6 +85,11 @@ public class XmlCycloidMechanism extends AbstractXmlObject
    public boolean publishFilteredStates()
    {
       return publishFilteredStates;
+   }
+
+   public boolean doPDControlOnTwitter()
+   {
+      return doPDControlOnTwitter;
    }
 
    @Override
