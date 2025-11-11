@@ -61,15 +61,20 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
       }
    }
 
+   public H4IMU(int aliasAddress, int position)
+   {
+      this(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
+   }
+
    /**
     * Construct the H4 IMU
     *
     * @param aliasAddress EtherCAT alias
     * @param position EtherCAT position
     */
-   public H4IMU(int aliasAddress, int position)
+   public H4IMU(int vendorID, int productCode, int aliasAddress, int position)
    {
-      super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
+      super(vendorID, productCode, aliasAddress, position);
 
       registerSyncManager(new SyncManager(2, false));
       registerSyncManager(new SyncManager(3, false));

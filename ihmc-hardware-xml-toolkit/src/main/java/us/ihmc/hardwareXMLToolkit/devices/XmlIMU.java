@@ -15,6 +15,12 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
    @XmlElement(defaultValue = "9.81")
    protected double gravity;
 
+   @XmlElement(defaultValue = "0x1011")
+   protected int vendorID;
+
+   @XmlElement(defaultValue = "0x00000200")
+   protected int productCode;
+
    @XmlElement(defaultValue = "0.0")
    protected double linearAccelerationBiasX;
    @XmlElement(defaultValue = "0.0")
@@ -47,6 +53,26 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
    public void setGravity(double gravity)
    {
       this.gravity = gravity;
+   }
+
+   public int getVendorID()
+   {
+      return vendorID;
+   }
+
+   public void setVendorID(int vendorID)
+   {
+      this.vendorID = vendorID;
+   }
+
+   public int getProductCode()
+   {
+      return productCode;
+   }
+
+   public void setProductCode(int productCode)
+   {
+    this.productCode = productCode;
    }
 
    public double getLinearAccelerationBiasX()
