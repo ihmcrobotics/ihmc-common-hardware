@@ -28,6 +28,12 @@ public class XmlCycloidMechanism extends AbstractXmlObject
    @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
    protected double torqueBreakFrequency = Double.POSITIVE_INFINITY;
 
+   @XmlElement(defaultValue = "false")
+   protected boolean useFilteredStates;
+
+   @XmlElement(defaultValue = "false")
+   protected boolean publishFilteredStates;
+
    public String getJointName()
    {
       return jointName;
@@ -66,6 +72,16 @@ public class XmlCycloidMechanism extends AbstractXmlObject
    public double getTorqueBreakFrequency()
    {
       return torqueBreakFrequency;
+   }
+
+   public boolean useFilteredStates()
+   {
+      return useFilteredStates;
+   }
+
+   public boolean publishFilteredStates()
+   {
+      return publishFilteredStates;
    }
 
    @Override

@@ -32,7 +32,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
-   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = false;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
 
    private final String jointName;
@@ -89,6 +89,21 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final double jointLimitUpper;
 
    private final JointLimitTorqueLimiter jointLimitTorqueLimiter;
+
+   public CycloidMechanismManager(double jointOffset,
+                                  double jointLimitLower,
+                                  double jointLimitUpper,
+                                  String jointName,
+                                  YoCycloidPlatinumTwitter platinumTwitter,
+                                  YoDouble yoTime,
+                                  double estimatorDT,
+                                  BooleanProvider masterDoPDControlOnTwitter,
+                                  double torqueBreakFrequency,
+                                  YoRegistry parentRegistry)
+   {
+      this(jointOffset, jointLimitLower, jointLimitUpper, jointName, platinumTwitter, yoTime, estimatorDT, masterDoPDControlOnTwitter, torqueBreakFrequency,
+           DEFAULT_USE_FILTERED_JOINT_STATES, DEFAULT_PUBLISH_FILTERED_JOINT_STATES, parentRegistry);
+   }
 
    /**
     * Initialize the cycloid mechanism manager
@@ -147,6 +162,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                   double estimatorDT,
                                   BooleanProvider masterDoPDControlOnTwitter,
                                   double torqueBreakFrequency,
+                                  boolean useFilteredStates,
+                                  boolean publishFilteredStates,
                                   YoRegistry parentRegistry)
    {
       this.time = yoTime;
@@ -175,8 +192,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       publishFilteredJointStates = new YoBoolean(jointName + "_PublishFilteredJointStates", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
       desiredActuatorData = new YoJointData(jointName + "_DesiredActuator", true, registry);
-      useFilteredJointStates.set(DEFAULT_USE_FILTERED_JOINT_STATES);
-      publishFilteredJointStates.set(DEFAULT_PUBLISH_FILTERED_JOINT_STATES);
+      useFilteredJointStates.set(useFilteredStates);
+      publishFilteredJointStates.set(publishFilteredStates);
 
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);

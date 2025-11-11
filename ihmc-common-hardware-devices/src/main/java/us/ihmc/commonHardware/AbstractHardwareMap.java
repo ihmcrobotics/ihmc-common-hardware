@@ -358,13 +358,17 @@ public abstract class AbstractHardwareMap
       double upperLimit = mechanism.getUpperJointLimit();
       double lowerLimit = mechanism.getLowerJointLimit();
       double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
+      boolean useFilteredStates = mechanism.useFilteredStates();
+      boolean publishFilteredStates = mechanism.publishFilteredStates();
 
       CycloidMechanismManager cycloidMechanismManager = createCycloidMechanismManager(jointName,
                                                                                       motorName,
                                                                                       jointOffset,
                                                                                       lowerLimit,
                                                                                       upperLimit,
-                                                                                      torqueBreakFrequency); //TODO add joint limits to xml
+                                                                                      torqueBreakFrequency,
+                                                                                      useFilteredStates,
+                                                                                      publishFilteredStates);
       mechanismManagers.add(cycloidMechanismManager);
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
@@ -375,7 +379,9 @@ public abstract class AbstractHardwareMap
                                                                    double jointOffset,
                                                                    double jointLimitLower,
                                                                    double jointLimitUpper,
-                                                                   double torqueBreakFrequency)
+                                                                   double torqueBreakFrequency,
+                                                                   boolean useFilteredStates,
+                                                                   boolean publishFilteredStates)
    {
       YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
       nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
@@ -389,6 +395,8 @@ public abstract class AbstractHardwareMap
                                          this.dt,
                                          doCycloidPDControlOnTwitters,
                                          torqueBreakFrequency,
+                                         useFilteredStates,
+                                         publishFilteredStates,
                                          registry);
    }
 
