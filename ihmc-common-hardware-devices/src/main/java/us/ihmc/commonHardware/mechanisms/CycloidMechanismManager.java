@@ -59,9 +59,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final YoJointData measuredActuatorData;
    private final YoJointData desiredActuatorData;
 
-   private final YoDouble motorEncoderToOutputEncoderOffset;
-   private final YoBoolean calculateMotorEncoderToOutputEncoderOffset;
-
    private final YoDouble yoJointOffset;
    private final YoBoolean updateJointOffset;
 
@@ -181,10 +178,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
 
-      motorEncoderToOutputEncoderOffset = new YoDouble(jointName + "_motorEncoderToJointEncoderOffset", registry);
-      calculateMotorEncoderToOutputEncoderOffset = new YoBoolean(jointName + "_calculateMotorEncoderToJointEncoderOffset", registry);
-      calculateMotorEncoderToOutputEncoderOffset.set(true);
-
       measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
       desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
 
@@ -281,13 +274,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          updateJointOffset.set(false);
          zeroAgainstUpperLimit.set(false);
          zeroAgainstLowerLimit.set(false);
-      }
-
-      if (calculateMotorEncoderToOutputEncoderOffset.getBooleanValue())
-      {
-         double gearRatio = platinumTwitter.getGearRatio();
-         motorEncoderToOutputEncoderOffset.set(platinumTwitter.getMeasuredOutputPosition() * gearRatio - platinumTwitter.getMeasuredMotorPosition());
-         calculateMotorEncoderToOutputEncoderOffset.set(false);
       }
 
       measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
@@ -451,7 +437,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       double gearRatio = platinumTwitter.getGearRatio();
       double desiredOutputPosition = computeOutputPosition(this.desiredActuatorData.getPosition(), yoJointOffset.getValue());
-      double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, motorEncoderToOutputEncoderOffset.getValue());
+      double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, platinumTwitter.getEncoderDifferenceAtOutput());
       double kt = platinumTwitter.getKt();
 
       desiredMotorData.setPosition(desiredMotorPosition);
@@ -605,12 +591,12 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     *
     * @param outputPosition                    Cycloid output poisition in radians
     * @param gearRatio                         Gear ratio of the cycloid
-    * @param motorEncoderToOutputEncoderOffset Offset between output encoder and motor encoder in radians
+    * @param encoderDifferenceAtOutput Difference between motor encoder and output encoder in output space
     * @return Estimated motor position
     */
-   private static double computeMotorPosition(double outputPosition, double gearRatio, double motorEncoderToOutputEncoderOffset)
+   private static double computeMotorPosition(double outputPosition, double gearRatio, double encoderDifferenceAtOutput)
    {
-      return outputPosition * gearRatio; // - motorEncoderToOutputEncoderOffset;
+      return (outputPosition + encoderDifferenceAtOutput) * gearRatio;
    }
 
    /**
