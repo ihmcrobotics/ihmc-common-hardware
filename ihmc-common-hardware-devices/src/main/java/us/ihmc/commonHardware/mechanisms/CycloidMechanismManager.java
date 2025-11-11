@@ -32,12 +32,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
-   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = false;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
 
    private final String jointName;
    private final YoRegistry registry;
-   private final BooleanProvider doPDControlOnTwitter;
+   private final BooleanProvider masterDoPDControlOnTwitter;
+   private final YoBoolean doPDControlOnTwitter;
 
    private YoCycloidPlatinumTwitter platinumTwitter;
 
@@ -99,7 +100,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     * @param platinumTwitter      The {@code YoCycloidPlatinumTwitter} for the cycloid
     * @param yoTime               The controller time
     * @param estimatorDT          The controller timestep
-    * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
+    * @param masterDoPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
     * @param parentRegistry       Parent {@code YoRegistry}
     */
    public CycloidMechanismManager(double jointOffset,
@@ -109,7 +110,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                   YoCycloidPlatinumTwitter platinumTwitter,
                                   YoDouble yoTime,
                                   double estimatorDT,
-                                  BooleanProvider doPDControlOnTwitter,
+                                  BooleanProvider masterDoPDControlOnTwitter,
                                   YoRegistry parentRegistry)
    {
       this(jointOffset,
@@ -118,8 +119,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
            jointName,
            platinumTwitter,
            yoTime,
-           estimatorDT,
-           doPDControlOnTwitter,
+           estimatorDT, masterDoPDControlOnTwitter,
            DEFAULT_TORQUE_BREAK_FREQUENCY,
            parentRegistry);
    }
@@ -134,7 +134,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     * @param platinumTwitter      The {@code YoCycloidPlatinumTwitter} for the cycloid
     * @param yoTime               The controller time
     * @param estimatorDT          The controller timestep
-    * @param doPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
+    * @param masterDoPDControlOnTwitter If true, PD control for position and velocity is done on twitter, else, PD control done in class
     * @param torqueBreakFrequency Initial break frequency for desired torque filtering
     * @param parentRegistry       Parent {@code YoRegistry}
     */
@@ -145,7 +145,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                   YoCycloidPlatinumTwitter platinumTwitter,
                                   YoDouble yoTime,
                                   double estimatorDT,
-                                  BooleanProvider doPDControlOnTwitter,
+                                  BooleanProvider masterDoPDControlOnTwitter,
                                   double torqueBreakFrequency,
                                   YoRegistry parentRegistry)
    {
@@ -153,7 +153,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       this.jointName = jointName;
       this.platinumTwitter = platinumTwitter;
       registry = new YoRegistry(jointName + "_" + getClass().getSimpleName());
-      this.doPDControlOnTwitter = doPDControlOnTwitter;
+      this.masterDoPDControlOnTwitter = masterDoPDControlOnTwitter;
 
       //joint limits
       this.jointLimitLower = jointLimitLower;
@@ -183,6 +183,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       positionFeedback = new YoDouble(jointName + "_ActuatorPositionFeedback", registry);
       velocityFeedback = new YoDouble(jointName + "_ActuatorVelocityFeedback", registry);
       feedback = new YoDouble(jointName + "_ActuatorFeedback", registry);
+      doPDControlOnTwitter = new YoBoolean(jointName + "_doPDControlOnTwitter", registry);
 
       velocityFeedbackAlphaVariable = new YoDouble(jointName + "_VelocityFeedbackAlphaVariable", registry);
       velocityFeedbackAlphaVariable.set(1.0);
@@ -377,7 +378,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
       qd_d = InterpolationTools.linearInterpolate(0.0, qd_d, velocityFeedbackAlpha);
 
-      if (!doPDControlOnTwitter.getValue())
+      if (!(masterDoPDControlOnTwitter.getValue() || doPDControlOnTwitter.getBooleanValue()))
       {
          double jointPosition = computeJointPosition(useFilteredJointStates.getBooleanValue() ?
                                                            platinumTwitter.getFilteredOutputPosition() :
@@ -592,7 +593,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     */
    private static double computeMotorPosition(double outputPosition, double gearRatio, double motorEncoderToOutputEncoderOffset)
    {
-      return outputPosition * gearRatio - motorEncoderToOutputEncoderOffset;
+      return outputPosition * gearRatio; // - motorEncoderToOutputEncoderOffset;
    }
 
    /**
@@ -652,6 +653,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void setIsStatorAboveRecommendedTemperature(boolean isStatorAboveRecommendedTemperature)
    {
       this.isStatorAboveRecommendedTemperature.set(isStatorAboveRecommendedTemperature);
+   }
+
+   public void doPDControlOnTwitter(boolean doPDControlOnTwitter)
+   {
+      this.doPDControlOnTwitter.set(doPDControlOnTwitter);
    }
 
    @Override
