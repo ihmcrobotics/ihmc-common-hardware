@@ -146,8 +146,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       Signed16 measuredCurrent = new Signed16(); // 0x6078
       Unsigned32 statusRegister = new Unsigned32(); // 0x3607 1
       Unsigned16 errorRegister = new Unsigned16(); // 0x603F
-      Float64 measuredMotorPosition = new Float64(); // R2[37] Unfiltered
-      Float64 measuredOutputPosition = new Float64(); // R2[38] Unfiltered
+//      Float64 measuredMotorPosition = new Float64(); // R2[37] Unfiltered
+//      Float64 measuredOutputPosition = new Float64(); // R2[38] Unfiltered
    }
 
    private void configure1A00()
@@ -159,9 +159,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(0x6078, 0, 16)), "failed to write to 0x1A00 -- 0x6078"); // current actual
       verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(0x3607, 1, 32)), "failed to write to 0x1A00 -- 0x3607"); // status register
       verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(0x603F, 0, 16)), "failed to write to 0x1A02 -- 0x603F"); // error register
-      verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(R2, 37, 64)), "failed to write to 0x1A03 -- 0x22F4 37"); // R2[37]
-      verifyWorkingCounter(writeSDO(0x1A00, 8, computePdoMapValue(R2, 38, 64)), "failed to write to 0x1A03 -- 0x22F4 38"); // R2[38]
-      verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 8), "failed to write to 0x1A00 -- 0x9"); // num elements in 0x1A00 (max 8)
+//      verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(R2, 37, 64)), "failed to write to 0x1A03 -- 0x22F4 37"); // R2[37]
+//      verifyWorkingCounter(writeSDO(0x1A00, 8, computePdoMapValue(R2, 38, 64)), "failed to write to 0x1A03 -- 0x22F4 38"); // R2[38]
+      verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 6), "failed to write to 0x1A00 -- 0x6"); // num elements in 0x1A00 (max 8)
    }
 
    /**
@@ -217,8 +217,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       Signed32 sil_Socket2Error = new Signed32(); // R1[14]
       Signed32 sil_AnalogInput1 = new Signed32(); // R1[15] TODO: Temp sensor??
       Signed32 sil_AnalogInput2 = new Signed32(); // R1[16]
-      Float64 measuredMotorVelocity = new Float64(); // R2[39] Unfiltered
-      Float64 measuredOutputVelocity = new Float64(); // R2[40] Unfiltered
+//      Float64 measuredMotorVelocity = new Float64(); // R2[39] Unfiltered
+//      Float64 measuredOutputVelocity = new Float64(); // R2[40] Unfiltered
    }
 
    private void configure1A02()
@@ -231,9 +231,9 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1A02, 5, computePdoMapValue(R1, 15, 32)), "failed to write to  0x1A02 -- 0x22F3 15"); // R1[15] Analog 1 Input TODO:
       verifyWorkingCounter(writeSDO(0x1A02, 6, computePdoMapValue(R1, 16, 32)),
                            "failed to write to  0x1A02 -- 0x22F3 16"); // R1[16] From SIL - Getting Analog Input 2 value for stator temperature
-      verifyWorkingCounter(writeSDO(0x1A02, 7, computePdoMapValue(R2, 39, 64)), "failed to write to 0x1A02 -- 0x22F4 39"); // R2[39]
-      verifyWorkingCounter(writeSDO(0x1A02, 8, computePdoMapValue(R2, 40, 64)), "failed to write to 0x1A02 -- 0x22F4 40"); // R2[40]
-      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 8), "failed to write to 0x1A02 -- 0x6"); // num elements in 0x1A02 (max 8)
+//      verifyWorkingCounter(writeSDO(0x1A02, 7, computePdoMapValue(R2, 39, 64)), "failed to write to 0x1A02 -- 0x22F4 39"); // R2[39]
+//      verifyWorkingCounter(writeSDO(0x1A02, 8, computePdoMapValue(R2, 40, 64)), "failed to write to 0x1A02 -- 0x22F4 40"); // R2[40]
+      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 6), "failed to write to 0x1A02 -- 0x6"); // num elements in 0x1A02 (max 8)
    }
 
    public class TPDO_1a03 extends TxPDO
@@ -614,22 +614,22 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
 
    public double getMeasuredMotorPosition()
    {
-      return tpdo_1a00.measuredMotorPosition.get();
+      return getFilteredMotorPosition(); // tpdo_1a00.measuredMotorPosition.get();
    }
 
    public double getMeasuredOutputPosition()
    {
-      return tpdo_1a00.measuredOutputPosition.get();
+      return getFilteredOutputPosition(); // tpdo_1a00.measuredOutputPosition.get();
    }
 
    public double getMeasuredMotorVelocity()
    {
-      return tpdo_1a02.measuredMotorVelocity.get();
+      return getFilteredMotorVelocity(); // tpdo_1a02.measuredMotorVelocity.get();
    }
 
    public double getMeasuredOutputVelocity()
    {
-      return tpdo_1a02.measuredOutputVelocity.get();
+      return getFilteredOutputVelocity(); // tpdo_1a02.measuredOutputVelocity.get();
    }
 
    public double getFilteredMotorPosition()
