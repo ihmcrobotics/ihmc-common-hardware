@@ -66,6 +66,8 @@ public interface YoGenericTwitter
 
    double getKt();
 
+   double getEncoderDifferenceAtOutput();
+
    boolean isMotorFaulted();
 
    void setDesiredMotorStiffness(double desiredMotorStiffness);
