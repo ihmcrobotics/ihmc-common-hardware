@@ -33,7 +33,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 50.0;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
