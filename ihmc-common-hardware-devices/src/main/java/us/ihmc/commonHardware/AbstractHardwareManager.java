@@ -2,6 +2,7 @@ package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
 import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.CycloidMechanismManager;
 import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
@@ -13,13 +14,11 @@ import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
-import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoLong;
-import us.ihmc.yoVariables.variable.YoVariable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,9 +67,13 @@ public abstract class AbstractHardwareManager
    protected final YoBoolean hasMotorOverHeated;
    protected final YoDouble totalMeasuredMotorCurrent;
 
-   protected final YoDouble mainPositionBreakFrequency;
-   protected final YoDouble mainVelocityBreakFrequency;
-   protected final YoBoolean useMainBreakFrequencies;
+   protected final YoDouble mainActuatorPositionBreakFrequency;
+   protected final YoDouble mainActuatorVelocityBreakFrequency;
+   protected final YoBoolean useMainActuatorBreakFrequencies;
+
+   protected final YoDouble mainMotorPositionBreakFrequency;
+   protected final YoDouble mainMotorVelocityBreakFrequency;
+   protected final YoBoolean useMainMotorBreakFrequencies;
 
    protected RobotOverHeatedListener robotOverHeatedListener;
 
@@ -112,9 +115,13 @@ public abstract class AbstractHardwareManager
 
       masterGain = new YoDouble("lowLevelMasterGain", registry);
 
-      mainPositionBreakFrequency = new YoDouble("mainPositionBreakFrequency", registry);
-      mainVelocityBreakFrequency = new YoDouble("mainVelocityBreakFrequency", registry);
-      useMainBreakFrequencies = new YoBoolean("useMainBreakFrequencies", registry);
+      mainActuatorPositionBreakFrequency = new YoDouble("mainActuatorPositionBreakFrequency", registry);
+      mainActuatorVelocityBreakFrequency = new YoDouble("mainActuatorVelocityBreakFrequency", registry);
+      useMainActuatorBreakFrequencies = new YoBoolean("useMainBreakFrequencies", registry);
+
+      mainMotorPositionBreakFrequency = new YoDouble("mainMotorPositionBreakFrequency", registry);
+      mainMotorVelocityBreakFrequency = new YoDouble("mainMotorVelocityBreakFrequency", registry);
+      useMainMotorBreakFrequencies = new YoBoolean("useMainMotorBreakFrequencies", registry);
 
       areMotorsFaulted = new YoBoolean("AreMotorsFaulted", registry);
 
@@ -214,10 +221,10 @@ public abstract class AbstractHardwareManager
       long mechanismWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
-         if(useMainBreakFrequencies.getBooleanValue())
+         if(useMainActuatorBreakFrequencies.getBooleanValue())
          {
-            mechanismManager.setPositionBreakFrequency(mainPositionBreakFrequency.getDoubleValue());
-            mechanismManager.setVelocityBreakFrequency(mainVelocityBreakFrequency.getDoubleValue());
+            mechanismManager.setPositionBreakFrequency(mainActuatorPositionBreakFrequency.getDoubleValue());
+            mechanismManager.setVelocityBreakFrequency(mainActuatorVelocityBreakFrequency.getDoubleValue());
          }
          mechanismManager.setMasterGain(masterGain.getValue());
          mechanismManager.write(desiredJointData); // this also ticks the low level controllers

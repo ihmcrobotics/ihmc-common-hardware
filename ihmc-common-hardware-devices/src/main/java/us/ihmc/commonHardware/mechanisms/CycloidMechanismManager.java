@@ -666,14 +666,22 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    @Override
    public void setPositionBreakFrequency(double breakFrequency)
    {
-      platinumTwitter.setMotorPositionBreakFrequency(breakFrequency);
       platinumTwitter.setOutputPositionBreakFrequency(breakFrequency);
    }
 
    @Override
    public void setVelocityBreakFrequency(double breakFrequency)
    {
-      platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
       platinumTwitter.setOutputVelocityBreakFrequency(breakFrequency);
+   }
+
+   public void setMotorPositionBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorPositionBreakFrequency(breakFrequency);
+   }
+
+   public void setMotorVelocityBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
    }
 }
