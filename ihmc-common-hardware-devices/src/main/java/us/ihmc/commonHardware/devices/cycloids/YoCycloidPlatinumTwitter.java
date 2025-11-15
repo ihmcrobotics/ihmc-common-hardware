@@ -1090,7 +1090,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    @Override
    public double getEncoderDifferenceAtOutput()
    {
-      return encoderDifferenceAtOutput.getDoubleValue();
+      return useOutputPositionFromMotor.getBooleanValue() ? 0.0 : encoderDifferenceAtOutput.getDoubleValue();
    }
 
    @Override
