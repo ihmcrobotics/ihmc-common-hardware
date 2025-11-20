@@ -295,7 +295,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
       checkEncoderOffsets = new YoBoolean(name + "CheckEncoderOffsets", registry);
-      checkEncoderOffsets.set(true);
+      if(!this.name.contains("LeftJ3"))
+         checkEncoderOffsets.set(true);
 
       zeroEncoders.addListener(s ->
                                {
