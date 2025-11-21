@@ -337,6 +337,7 @@ public abstract class AbstractHardwareMap
                                                                                        dt,
                                                                                        registry);
 
+      yoCycloidPlatinumTwitter.setOutputEncoderInverted(xmlPlatinumTwitter.isOutputEncoderInverted());
       System.out.println("Registering " + name + " on " + alias + ":" + position);
       etherCATMaster.registerSlave(cycloidPlatinumTwitter);
       etherCATDevices.add(cycloidPlatinumTwitter);
