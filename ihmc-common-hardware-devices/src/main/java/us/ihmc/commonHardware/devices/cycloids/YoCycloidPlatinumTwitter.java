@@ -296,7 +296,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       zeroEncoders = new YoBoolean(name + "ZeroEncoders", registry);
       checkEncoderOffsets = new YoBoolean(name + "CheckEncoderOffsets", registry);
-         checkEncoderOffsets.set(true);
+      checkEncoderOffsets.set(true);
 
       zeroEncoders.addListener(s ->
                                {
@@ -881,20 +881,22 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       double fullRotation = 2 * Math.PI;
       double difference = measuredOutputPosition.getDoubleValue();
       int rotationInterval = (int) Math.floor(Math.abs(difference) / fullRotation);
+      double outputDirection = getOutputDirection();
       if (difference >= (fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
+            outputPositionOffset.add(outputDirection * fullRotation);
          else
-            outputPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.add(outputDirection * rotationInterval * fullRotation);
       }
       if (difference <= -(fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
+            outputPositionOffset.sub(outputDirection * fullRotation);
          else
-            outputPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.sub(outputDirection * rotationInterval * fullRotation);
       }
+      measuredOutputPosition.set(outputDirection * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getDoubleValue()));
    }
 
    /**
@@ -928,8 +930,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
-      //Set the output position based on new offset
-      measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getDoubleValue()));
       checkAndUpdateMotorOffset();
    }
 
@@ -1130,6 +1130,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double getKt()
    {
       return kt.getDoubleValue();
+   }
+
+   private double getOutputDirection()
+   {
+      return outputEncoderInverted.getBooleanValue() ? -motorDirection.getDoubleValue() : motorDirection.getDoubleValue();
    }
 
    @Override
