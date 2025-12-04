@@ -32,7 +32,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 {
    private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
-   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = false;
+   private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
 
    private final String jointName;
@@ -58,9 +58,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private final YoJointData measuredActuatorData;
    private final YoJointData desiredActuatorData;
-
-   private final YoDouble motorEncoderToOutputEncoderOffset;
-   private final YoBoolean calculateMotorEncoderToOutputEncoderOffset;
 
    private final YoDouble yoJointOffset;
    private final YoBoolean updateJointOffset;
@@ -89,6 +86,21 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final double jointLimitUpper;
 
    private final JointLimitTorqueLimiter jointLimitTorqueLimiter;
+
+   public CycloidMechanismManager(double jointOffset,
+                                  double jointLimitLower,
+                                  double jointLimitUpper,
+                                  String jointName,
+                                  YoCycloidPlatinumTwitter platinumTwitter,
+                                  YoDouble yoTime,
+                                  double estimatorDT,
+                                  BooleanProvider masterDoPDControlOnTwitter,
+                                  double torqueBreakFrequency,
+                                  YoRegistry parentRegistry)
+   {
+      this(jointOffset, jointLimitLower, jointLimitUpper, jointName, platinumTwitter, yoTime, estimatorDT, masterDoPDControlOnTwitter, torqueBreakFrequency,
+           DEFAULT_USE_FILTERED_JOINT_STATES, DEFAULT_PUBLISH_FILTERED_JOINT_STATES, parentRegistry);
+   }
 
    /**
     * Initialize the cycloid mechanism manager
@@ -147,6 +159,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                   double estimatorDT,
                                   BooleanProvider masterDoPDControlOnTwitter,
                                   double torqueBreakFrequency,
+                                  boolean useFilteredStates,
+                                  boolean publishFilteredStates,
                                   YoRegistry parentRegistry)
    {
       this.time = yoTime;
@@ -164,10 +178,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
 
-      motorEncoderToOutputEncoderOffset = new YoDouble(jointName + "_motorEncoderToJointEncoderOffset", registry);
-      calculateMotorEncoderToOutputEncoderOffset = new YoBoolean(jointName + "_calculateMotorEncoderToJointEncoderOffset", registry);
-      calculateMotorEncoderToOutputEncoderOffset.set(true);
-
       measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
       desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
 
@@ -175,8 +185,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       publishFilteredJointStates = new YoBoolean(jointName + "_PublishFilteredJointStates", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
       desiredActuatorData = new YoJointData(jointName + "_DesiredActuator", true, registry);
-      useFilteredJointStates.set(DEFAULT_USE_FILTERED_JOINT_STATES);
-      publishFilteredJointStates.set(DEFAULT_PUBLISH_FILTERED_JOINT_STATES);
+      useFilteredJointStates.set(useFilteredStates);
+      publishFilteredJointStates.set(publishFilteredStates);
 
       positionError = new YoDouble(jointName + "_ActuatorPositionError", registry);
       velocityError = new YoDouble(jointName + "_ActuatorVelocityError", registry);
@@ -264,13 +274,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          updateJointOffset.set(false);
          zeroAgainstUpperLimit.set(false);
          zeroAgainstLowerLimit.set(false);
-      }
-
-      if (calculateMotorEncoderToOutputEncoderOffset.getBooleanValue())
-      {
-         double gearRatio = platinumTwitter.getGearRatio();
-         motorEncoderToOutputEncoderOffset.set(platinumTwitter.getMeasuredOutputPosition() * gearRatio - platinumTwitter.getMeasuredMotorPosition());
-         calculateMotorEncoderToOutputEncoderOffset.set(false);
       }
 
       measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
@@ -434,7 +437,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       double gearRatio = platinumTwitter.getGearRatio();
       double desiredOutputPosition = computeOutputPosition(this.desiredActuatorData.getPosition(), yoJointOffset.getValue());
-      double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, motorEncoderToOutputEncoderOffset.getValue());
+      double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, platinumTwitter.getEncoderDifferenceAtOutput());
       double kt = platinumTwitter.getKt();
 
       desiredMotorData.setPosition(desiredMotorPosition);
@@ -588,12 +591,12 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     *
     * @param outputPosition                    Cycloid output poisition in radians
     * @param gearRatio                         Gear ratio of the cycloid
-    * @param motorEncoderToOutputEncoderOffset Offset between output encoder and motor encoder in radians
+    * @param encoderDifferenceAtOutput Difference between motor encoder and output encoder in output space
     * @return Estimated motor position
     */
-   private static double computeMotorPosition(double outputPosition, double gearRatio, double motorEncoderToOutputEncoderOffset)
+   private static double computeMotorPosition(double outputPosition, double gearRatio, double encoderDifferenceAtOutput)
    {
-      return outputPosition * gearRatio; // - motorEncoderToOutputEncoderOffset;
+      return (outputPosition + encoderDifferenceAtOutput) * gearRatio;
    }
 
    /**
@@ -663,14 +666,22 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    @Override
    public void setPositionBreakFrequency(double breakFrequency)
    {
-      platinumTwitter.setMotorPositionBreakFrequency(breakFrequency);
       platinumTwitter.setOutputPositionBreakFrequency(breakFrequency);
    }
 
    @Override
    public void setVelocityBreakFrequency(double breakFrequency)
    {
-      platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
       platinumTwitter.setOutputVelocityBreakFrequency(breakFrequency);
+   }
+
+   public void setMotorPositionBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorPositionBreakFrequency(breakFrequency);
+   }
+
+   public void setMotorVelocityBreakFrequency(double breakFrequency)
+   {
+      platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
    }
 }

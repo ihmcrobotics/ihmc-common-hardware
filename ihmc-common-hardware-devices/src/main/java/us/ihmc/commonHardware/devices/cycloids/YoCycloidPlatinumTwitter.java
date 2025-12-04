@@ -33,7 +33,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    //Raw Velocity to Rad/s
    private static final double RAW_VELOCITY_TO_COUNTS_PER_SEC = 10000.0;
 
-   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 50.0;
+   private static final double DEFAULT_MOTOR_POSITION_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
@@ -119,6 +119,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredAnalogInput1InADCCounts;
    private final YoDouble measuredAnalogInput2InVolts;
    private final YoDouble measuredAnalogInput1InVolts;
+   private final YoBoolean outputEncoderInverted;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
@@ -530,6 +531,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useOutputVelocityFromMotor = new YoBoolean(prefix + "UseOutputVelocityFromInput", registry);
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
+      outputEncoderInverted = new YoBoolean(prefix + "outputEncoderIsInverted", registry);
+
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
          @Override
@@ -657,10 +660,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       /** Output Space Encoders **/
       double previousMeasuredOutputPosition = measuredOutputPosition.getDoubleValue();
 
-      measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getValue()));
-      filteredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getFilteredOutputPosition() - outputPositionOffset.getValue()));
-      measuredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getMeasuredOutputVelocity());
-      filteredOutputVelocity.set(motorDirection.getDoubleValue() * platinumTwitter.getFilteredOutputVelocity());
+      double outputDirection = outputEncoderInverted.getBooleanValue() ? -motorDirection.getDoubleValue() : motorDirection.getDoubleValue();
+
+      measuredOutputPosition.set(outputDirection * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getValue()));
+      filteredOutputPosition.set(outputDirection * (platinumTwitter.getFilteredOutputPosition() - outputPositionOffset.getValue()));
+      measuredOutputVelocity.set(outputDirection * platinumTwitter.getMeasuredOutputVelocity());
+      filteredOutputVelocity.set(outputDirection * platinumTwitter.getFilteredOutputVelocity());
 
       // finite difference the measured velocity, looking at the previous encoder measurement.
       measuredOutputVelocityFD.set((measuredOutputPosition.getDoubleValue() - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
@@ -876,20 +881,22 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       double fullRotation = 2 * Math.PI;
       double difference = measuredOutputPosition.getDoubleValue();
       int rotationInterval = (int) Math.floor(Math.abs(difference) / fullRotation);
+      double outputDirection = getOutputDirection();
       if (difference >= (fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.add(motorDirection.getDoubleValue() * fullRotation);
+            outputPositionOffset.add(outputDirection * fullRotation);
          else
-            outputPositionOffset.add(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.add(outputDirection * rotationInterval * fullRotation);
       }
       if (difference <= -(fullRotation / 2.0))
       {
          if (rotationInterval == 0)
-            outputPositionOffset.sub(motorDirection.getDoubleValue() * fullRotation);
+            outputPositionOffset.sub(outputDirection * fullRotation);
          else
-            outputPositionOffset.sub(motorDirection.getDoubleValue() * rotationInterval * fullRotation);
+            outputPositionOffset.sub(outputDirection * rotationInterval * fullRotation);
       }
+      measuredOutputPosition.set(outputDirection * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getDoubleValue()));
    }
 
    /**
@@ -923,8 +930,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void checkAndUpdateEncoderOffsets()
    {
       checkAndUpdateOutputOffset();
-      //Set the output position based on new offset
-      measuredOutputPosition.set(motorDirection.getDoubleValue() * (platinumTwitter.getMeasuredOutputPosition() - outputPositionOffset.getDoubleValue()));
       checkAndUpdateMotorOffset();
    }
 
@@ -1088,6 +1093,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    }
 
    @Override
+   public double getEncoderDifferenceAtOutput()
+   {
+      return useOutputPositionFromMotor.getBooleanValue() ? 0.0 : encoderDifferenceAtOutput.getDoubleValue();
+   }
+
+   @Override
    public boolean isMotorFaulted()
    {
       return MOTOR_FAULT.getBooleanValue();
@@ -1119,6 +1130,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double getKt()
    {
       return kt.getDoubleValue();
+   }
+
+   private double getOutputDirection()
+   {
+      return outputEncoderInverted.getBooleanValue() ? -motorDirection.getDoubleValue() : motorDirection.getDoubleValue();
    }
 
    @Override
@@ -1261,5 +1277,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public void setOutputVelocityBreakFrequency(double breakFrequency)
    {
       outputVelocityBreakFrequency.set(breakFrequency);
+   }
+
+   public void setOutputEncoderInverted(boolean outputEncoderInverted)
+   {
+      this.outputEncoderInverted.set(outputEncoderInverted);
    }
 }
