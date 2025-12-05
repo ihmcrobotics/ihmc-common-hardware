@@ -2,6 +2,7 @@ package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
 import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
+import us.ihmc.commonHardware.mechanisms.CycloidMechanismManager;
 import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
@@ -66,6 +67,14 @@ public abstract class AbstractHardwareManager
    protected final YoBoolean hasMotorOverHeated;
    protected final YoDouble totalMeasuredMotorCurrent;
 
+   protected final YoDouble mainActuatorPositionBreakFrequency;
+   protected final YoDouble mainActuatorVelocityBreakFrequency;
+   protected final YoBoolean useMainActuatorBreakFrequencies;
+
+   protected final YoDouble mainMotorPositionBreakFrequency;
+   protected final YoDouble mainMotorVelocityBreakFrequency;
+   protected final YoBoolean useMainMotorBreakFrequencies;
+
    protected RobotOverHeatedListener robotOverHeatedListener;
 
    /**
@@ -105,6 +114,14 @@ public abstract class AbstractHardwareManager
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
       masterGain = new YoDouble("lowLevelMasterGain", registry);
+
+      mainActuatorPositionBreakFrequency = new YoDouble("mainActuatorPositionBreakFrequency", registry);
+      mainActuatorVelocityBreakFrequency = new YoDouble("mainActuatorVelocityBreakFrequency", registry);
+      useMainActuatorBreakFrequencies = new YoBoolean("useMainBreakFrequencies", registry);
+
+      mainMotorPositionBreakFrequency = new YoDouble("mainMotorPositionBreakFrequency", registry);
+      mainMotorVelocityBreakFrequency = new YoDouble("mainMotorVelocityBreakFrequency", registry);
+      useMainMotorBreakFrequencies = new YoBoolean("useMainMotorBreakFrequencies", registry);
 
       areMotorsFaulted = new YoBoolean("AreMotorsFaulted", registry);
 
@@ -204,6 +221,11 @@ public abstract class AbstractHardwareManager
       long mechanismWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
+         if(useMainActuatorBreakFrequencies.getBooleanValue())
+         {
+            mechanismManager.setPositionBreakFrequency(mainActuatorPositionBreakFrequency.getDoubleValue());
+            mechanismManager.setVelocityBreakFrequency(mainActuatorVelocityBreakFrequency.getDoubleValue());
+         }
          mechanismManager.setMasterGain(masterGain.getValue());
          mechanismManager.write(desiredJointData); // this also ticks the low level controllers
       }

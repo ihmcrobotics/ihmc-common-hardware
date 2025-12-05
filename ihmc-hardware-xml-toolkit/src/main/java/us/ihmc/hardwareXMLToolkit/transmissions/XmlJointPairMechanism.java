@@ -41,6 +41,15 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
    protected double torqueBreakFrequency = Double.POSITIVE_INFINITY;
 
+   @XmlElement(defaultValue = "false")
+   protected boolean useFilteredStates;
+
+   @XmlElement(defaultValue = "false")
+   protected boolean publishFilteredStates;
+
+   @XmlElement(defaultValue = "false")
+   protected boolean doDampingControlOnTwitters;
+
    public double getRollJointLowerLimit()
    {
       return rollJointLowerLimit;
@@ -129,5 +138,20 @@ public class XmlJointPairMechanism extends AbstractXmlDevice
    public double getRollSign()
    {
       return rollSign;
+   }
+
+   public boolean useFilteredStates()
+   {
+      return useFilteredStates;
+   }
+
+   public boolean publishFilteredStates()
+   {
+      return publishFilteredStates;
+   }
+
+   public boolean doDampingControlOnTwitters()
+   {
+      return doDampingControlOnTwitters;
    }
 }

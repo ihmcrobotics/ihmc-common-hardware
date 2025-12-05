@@ -23,6 +23,7 @@ import us.ihmc.commonHardware.devices.genericSensor.YoGenericIMU;
 import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.hardwareXMLToolkit.XmlHardwareDescription;
+import us.ihmc.hardwareXMLToolkit.XmlHardwareDescriptionLoader;
 import us.ihmc.hardwareXMLToolkit.devices.XmlDevices;
 import us.ihmc.hardwareXMLToolkit.devices.XmlEncoder;
 import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
@@ -52,6 +53,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,23 +69,26 @@ public abstract class AbstractHardwareMap
    protected final double dt;
    protected final YoDouble yoTime;
 
+   protected final Collection<XmlHardwareDescription> xmlHardwareDescriptions;
+   protected final StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions;
+
    protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
 
-   protected final String[] imuNames;
+   protected final ArrayList<String> imuNames = new ArrayList<>();
    protected final ArrayList<IMUManagerInterface> imuManagers = new ArrayList<>();
    protected final Map<String, ImuData> measuredIMUData = new HashMap<>();
    protected final Map<String, IMUDefinition> imuDefinitions = new HashMap<>();
 
-   protected final String[] forceSensorNames;
+   protected final ArrayList<String> forceSensorNames = new ArrayList<>();
    protected final ArrayList<ForceSensorManagerInterface> forceSensorManagers = new ArrayList<>();
    protected final Map<String, DMatrixRMaj> forceSensorData = new HashMap<>();
 
    protected final ArrayList<YoCycloidPlatinumTwitter> cycloidTwitters = new ArrayList<>();
    protected final Map<String, YoCycloidPlatinumTwitter> cycloidPlatinumTwitterMap = new HashMap<>();
    protected final ArrayList<MechanismManagerInterface> mechanismManagers = new ArrayList<>();
-   protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("doCycloidPDControlOnTwitters", registry);
+   protected final YoBoolean doCycloidPDControlOnTwitters = new YoBoolean("masterDoCycloidPDControlOnTwitters", registry);
 
-   protected final String[] jointNames;
+   protected final ArrayList<String> jointNames = new ArrayList<>();
    protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
 
@@ -94,69 +99,110 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
+   // URDF stuff
+   protected static final String URDF_SUB_DIRECTORY = "urdf";
+   protected static final String MESH_SUB_DIRECTORY = "meshes";
+   private final List<String> urdfResourceDirectories = new ArrayList<>();
+   private final List<String> urdfResources = new ArrayList<>();
+
    /**
     * Construct the hardware map for the robot
     *
-    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
-    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
-    * @param dt                      desired control timesteo
-    * @param yoTime                  YoDouble that holds the current time of the robot
-    * @param parentRegistry          Parent YoRegistry
+    * @param robotModelResourcesDirectory Directory containing robot model urdf and xml resources
+    * @param xmlFiles                     xml files that make up xml description of the robot
+    * @param urdfFiles                    urdf files that make up urdf description of the robot
+    * @param etherCATMaster               Main ethercat device used to register all EtherCAT devices in the robot
+    * @param dt                           desired control timesteo
+    * @param yoTime                       YoDouble that holds the current time of the robot
+    * @param parentRegistry               Parent YoRegistry
     */
-   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+   public AbstractHardwareMap(String robotModelResourcesDirectory,
+                              List<String> xmlFiles,
+                              List<String> urdfFiles,
                               MasterInterface etherCATMaster,
                               double dt,
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(xmlHardwareDescriptions, etherCATMaster, null, dt, yoTime, parentRegistry);
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
+           List.of(robotModelResourcesDirectory,
+                   robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
+                   robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
+           urdfFiles.stream().map(file ->
+                                  {
+                                     if (file.contains("ezGripper/") || file.contains("abilityHand/"))
+                                        return file;
+                                     else
+                                        return robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file;
+                                  }).toList(),
+           etherCATMaster,
+           null,
+           dt,
+           yoTime,
+           parentRegistry);
    }
 
    /**
     * Construct the hardware map for the robot
     *
-    * @param xmlHardwareDescriptions Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
-    * @param etherCATMaster          Main ethercat device used to register all EtherCAT devices in the robot
+    * @param xmlHardwareDescriptions         Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
+    * @param etherCATMaster                  Main ethercat device used to register all EtherCAT devices in the robot
     * @param stateEstimatorSensorDefinitions Sensor definitions for the state estimator. If there is no state estimator, then leave as null
-    * @param dt                      desired control timesteo
-    * @param yoTime                  YoDouble that holds the current time of the robot
-    * @param parentRegistry          Parent YoRegistry
+    * @param dt                              desired control timesteo
+    * @param yoTime                          YoDouble that holds the current time of the robot
+    * @param parentRegistry                  Parent YoRegistry
     */
    public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+                              List<String> urdfResourceDirectories,
+                              List<String> urdfResources,
                               MasterInterface etherCATMaster,
                               @Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions,
                               double dt,
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
+      this.xmlHardwareDescriptions = xmlHardwareDescriptions;
+      this.stateEstimatorSensorDefinitions = stateEstimatorSensorDefinitions;
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
 
-      createSensorDefinitions(stateEstimatorSensorDefinitions);
-
-      for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
-      {
-         // Hardware maps will be skipped if they don't contain both devices and transmissions
-         if (xmlHardwareDescription.getDevices() == null || xmlHardwareDescription.getTransmissions() == null)
-            continue;
-
-         XmlDevices devices = xmlHardwareDescription.getDevices();
-         createDevices(devices);
-
-         XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
-         createTransmissions(transmissions); // consider passing in devices here
-
-         XmlJoints joints = xmlHardwareDescription.getJoints();
-         if (joints != null)
-            createJoints(joints);
-      }
-
-      jointNames = measuredJointData.keySet().toArray(new String[0]);
-      imuNames = measuredIMUData.keySet().toArray(new String[0]);
-      forceSensorNames = forceSensorData.keySet().toArray(new String[0]);
+      createSensorDefinitions(stateEstimatorSensorDefinitions, urdfResources, urdfResourceDirectories);
 
       parentRegistry.addChild(registry);
+   }
+
+   protected void createXmlDefinitions()
+   {
+      for (XmlHardwareDescription xmlHardwareDescription : xmlHardwareDescriptions)
+      {
+         if (xmlHardwareDescription.getDevices() != null)
+         {
+            XmlDevices devices = xmlHardwareDescription.getDevices();
+            createDevices(devices);
+         }
+
+         if (xmlHardwareDescription.getTransmissions() != null)
+         {
+            XmlTransmissions transmissions = xmlHardwareDescription.getTransmissions();
+            createTransmissions(transmissions);
+         }
+
+         if (xmlHardwareDescription.getJoints() != null)
+         {
+            XmlJoints joints = xmlHardwareDescription.getJoints();
+            createJoints(joints);
+         }
+      }
+
+      jointNames.clear();
+      jointNames.addAll(measuredJointData.keySet());
+
+      imuNames.clear();
+      imuNames.addAll(measuredIMUData.keySet());
+
+      forceSensorNames.clear();
+      forceSensorNames.addAll(forceSensorData.keySet());
    }
 
    /**
@@ -200,7 +246,7 @@ public abstract class AbstractHardwareMap
     *
     * @param stateEstimatorSensorDefinitions If not null, use the definitions provided to create the sensor definitions
     */
-   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions);
+   protected abstract void createSensorDefinitions(@Nullable StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions, List<String> urdfResources, List<String> urdfResourceDirectories);
 
    /**
     * Create the H4 ethercat junction port objects and register them on the etherCAT line
@@ -271,8 +317,8 @@ public abstract class AbstractHardwareMap
       int position = xmlPlatinumTwitter.getPosition();
       String actuatorPackage = xmlPlatinumTwitter.getActuatorPackage();
       boolean reverseMotorDirection = xmlPlatinumTwitter.isMotorDirectionReversed();
-      int inputOffset = xmlPlatinumTwitter.getInputOffset();
-      int outputOffset = xmlPlatinumTwitter.getOutputOffset();
+      double motorOffset = xmlPlatinumTwitter.getMotorOffset();
+      double outputOffset = xmlPlatinumTwitter.getOutputOffset();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter;
       if(xmlPlatinumTwitter.useLatestCode())
@@ -286,11 +332,12 @@ public abstract class AbstractHardwareMap
                                                                                        parameterDirectory,
                                                                                        actuatorPackage,
                                                                                        reverseMotorDirection,
-                                                                                       inputOffset,
+                                                                                       motorOffset,
                                                                                        outputOffset,
                                                                                        dt,
                                                                                        registry);
 
+      yoCycloidPlatinumTwitter.setOutputEncoderInverted(xmlPlatinumTwitter.isOutputEncoderInverted());
       System.out.println("Registering " + name + " on " + alias + ":" + position);
       etherCATMaster.registerSlave(cycloidPlatinumTwitter);
       etherCATDevices.add(cycloidPlatinumTwitter);
@@ -312,13 +359,19 @@ public abstract class AbstractHardwareMap
       double upperLimit = mechanism.getUpperJointLimit();
       double lowerLimit = mechanism.getLowerJointLimit();
       double torqueBreakFrequency = mechanism.getTorqueBreakFrequency();
+      boolean useFilteredStates = mechanism.useFilteredStates();
+      boolean publishFilteredStates = mechanism.publishFilteredStates();
+      boolean doPDControlOnTwitter = mechanism.doPDControlOnTwitter();
 
       CycloidMechanismManager cycloidMechanismManager = createCycloidMechanismManager(jointName,
                                                                                       motorName,
                                                                                       jointOffset,
                                                                                       lowerLimit,
                                                                                       upperLimit,
-                                                                                      torqueBreakFrequency); //TODO add joint limits to xml
+                                                                                      torqueBreakFrequency,
+                                                                                      useFilteredStates,
+                                                                                      publishFilteredStates);
+      cycloidMechanismManager.doPDControlOnTwitter(doPDControlOnTwitter);
       mechanismManagers.add(cycloidMechanismManager);
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
@@ -329,7 +382,9 @@ public abstract class AbstractHardwareMap
                                                                    double jointOffset,
                                                                    double jointLimitLower,
                                                                    double jointLimitUpper,
-                                                                   double torqueBreakFrequency)
+                                                                   double torqueBreakFrequency,
+                                                                   boolean useFilteredStates,
+                                                                   boolean publishFilteredStates)
    {
       YoCycloidPlatinumTwitter platinumTwitter = cycloidPlatinumTwitterMap.get(motorName);
       nullCheck(platinumTwitter, motorName + " Not found, Likely incorrect name in XML Hardware Description");
@@ -343,6 +398,8 @@ public abstract class AbstractHardwareMap
                                          this.dt,
                                          doCycloidPDControlOnTwitters,
                                          torqueBreakFrequency,
+                                         useFilteredStates,
+                                         publishFilteredStates,
                                          registry);
    }
 
@@ -495,7 +552,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getJointNames()
    {
-      return jointNames;
+      return jointNames.toArray(new String[0]);
    }
 
    /**
@@ -503,7 +560,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getIMUNames()
    {
-      return imuNames;
+      return imuNames.toArray(new String[0]);
    }
 
    /**
@@ -511,7 +568,7 @@ public abstract class AbstractHardwareMap
     */
    public String[] getForceSensorNames()
    {
-      return forceSensorNames;
+      return forceSensorNames.toArray(new String[0]);
    }
 
    /**

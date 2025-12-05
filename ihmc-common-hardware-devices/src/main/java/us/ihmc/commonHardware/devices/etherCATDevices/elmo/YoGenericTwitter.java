@@ -41,17 +41,21 @@ public interface YoGenericTwitter
 
    double getMeasuredOutputPosition();
 
+   double getFilteredMotorPosition();
+
+   double getFilteredOutputPosition();
+
    double getMeasuredMotorVelocity();
 
-   double getMeasuredMotorTorque();
+   double getMeasuredOutputVelocity();
 
    double getFilteredMotorVelocity();
 
    double getFilteredOutputVelocity();
 
-   Slave.State getEtherCATState();
+   double getMeasuredMotorTorque();
 
-   double getMeasuredOutputVelocity();
+   Slave.State getEtherCATState();
 
    double getMeasuredOutputTorque();
 
@@ -61,6 +65,8 @@ public interface YoGenericTwitter
    }
 
    double getKt();
+
+   double getEncoderDifferenceAtOutput();
 
    boolean isMotorFaulted();
 

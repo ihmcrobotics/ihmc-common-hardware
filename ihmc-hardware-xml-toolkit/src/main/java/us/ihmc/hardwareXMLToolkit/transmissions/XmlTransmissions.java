@@ -16,7 +16,8 @@ public class XmlTransmissions
 {
    @XmlElements({@XmlElement(name = "XmlCycloidMechanism", type = XmlCycloidMechanism.class),
                  @XmlElement(name = "XmlSakeFingerMechanism", type = XmlSakeFingerMechanism.class),
-                 @XmlElement(name = "XmlJointPairMechanism", type = XmlJointPairMechanism.class)})
+                 @XmlElement(name = "XmlJointPairMechanism", type = XmlJointPairMechanism.class),
+                 @XmlElement(name = "XmlHand", type = XmlHand.class)})
    protected List<? extends AbstractXmlObject> transmissions;
 
    public List<? extends AbstractXmlObject> getTransmissions()

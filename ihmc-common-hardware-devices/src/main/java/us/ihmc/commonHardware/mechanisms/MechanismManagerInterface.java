@@ -60,5 +60,9 @@ public interface MechanismManagerInterface
 
    void setMasterGain(double masterGain);
 
+   void setPositionBreakFrequency(double breakFrequency);
+
+   void setVelocityBreakFrequency(double breakFrequency);
+
    String getName();
 }
