@@ -17,6 +17,12 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
    @XmlElement(required = true)
    protected XmlEtherSnacksBoardType boardType;
 
+   @XmlElement(defaultValue = "0x00000603")
+   protected int vendorID;
+
+   @XmlElement(defaultValue = "0x10003103")
+   protected int productCode;
+
    public List<AbstractXmlDevice> getDaughterDevices()
    {
       return this.daughterDevices.getDevices();
@@ -25,5 +31,15 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
    public XmlEtherSnacksBoardType getBoardType()
    {
       return boardType;
+   }
+
+   public int getVendorID()
+   {
+      return vendorID;
+   }
+
+   public int getProductCode()
+   {
+      return productCode;
    }
 }
