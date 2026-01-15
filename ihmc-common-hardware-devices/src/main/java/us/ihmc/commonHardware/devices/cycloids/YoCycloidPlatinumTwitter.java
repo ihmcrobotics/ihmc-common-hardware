@@ -121,6 +121,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble measuredAnalogInput1InVolts;
    private final YoBoolean outputEncoderInverted;
 
+   private final YoDouble statorTemp;
+
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
    private static final double[] TEMPERATURE_VOLTAGE_FUNCTION_COEFFECIENTS = new double[] {0, 334.0, -516.0};
@@ -334,6 +336,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       estimatedDt = new YoDouble(prefix + "EstimatedDt", registry);
       previousTime.setToNaN();
       estimatedDt.setToNaN();
+
+      statorTemp = new YoDouble("StatorTemp", registry);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -612,6 +616,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
          mode = 0;
       }
       currentModeOfOperation.set(mode);
+
+      statorTemp.set(getStatorTemperature());
 
       DRIVE_FAULTED.set(platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
       UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage());
