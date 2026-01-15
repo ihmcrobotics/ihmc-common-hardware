@@ -15,6 +15,12 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
    @XmlElement(defaultValue = "9.81")
    protected double gravity;
 
+   @XmlElement(defaultValue = "4113") //4113 in decimal = 0x1011 in hex
+   protected int vendorID = 0x1011;
+
+   @XmlElement(defaultValue = "512") //512 in decimal = 0x00000200 in hex
+   protected int productCode = 0x00000200;
+
    @XmlElement(defaultValue = "0.0")
    protected double linearAccelerationBiasX;
    @XmlElement(defaultValue = "0.0")
@@ -112,5 +118,15 @@ public class XmlIMU extends AbstractXmlEtherCATDevice
    public void setPresent(boolean present)
    {
       this.present = present;
+   }
+
+   public int getVendorID()
+   {
+      return vendorID;
+   }
+
+   public int getProductCode()
+   {
+      return productCode;
    }
 }
