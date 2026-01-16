@@ -275,6 +275,8 @@ public abstract class AbstractHardwareMap
       XmlIMUType type = xmlIMU.getIMUType();
       int alias = xmlIMU.getAlias();
       int position = xmlIMU.getPosition();
+      int vendorID = xmlIMU.getVendorID();
+      int productCode = xmlIMU.getProductCode();
 
       double angularBiasX = xmlIMU.getAngularVelocityBiasX();
       double angularBiasY = xmlIMU.getAngularVelocityBiasY();
@@ -286,7 +288,7 @@ public abstract class AbstractHardwareMap
 
       if (type == XmlIMUType.H4)
       {
-         H4IMU imu = new H4IMU(alias, position);
+         H4IMU imu = new H4IMU(vendorID, productCode, alias, position);
          YoH4IMU yoImu = new YoH4IMU(name, imu, registry);
 
          yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
