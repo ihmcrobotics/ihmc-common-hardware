@@ -223,6 +223,19 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
 
+      zeroAgainstLowerLimit.addListener(s ->
+                                        {
+                                           if (zeroAgainstLowerLimit.getBooleanValue())
+                                              platinumTwitter.zeroEncodersWithOffset(jointLimitLower);
+                                           zeroAgainstLowerLimit.set(false, false);
+                                        });
+      zeroAgainstUpperLimit.addListener(s ->
+                                        {
+                                           if (zeroAgainstUpperLimit.getBooleanValue())
+                                              platinumTwitter.zeroEncodersWithOffset(jointLimitUpper);
+                                           zeroAgainstUpperLimit.set(false, false);
+                                        });
+
       jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
 
       parentRegistry.addChild(registry);
@@ -262,18 +275,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       platinumTwitter.read();
 
       // recompute the joint offset as if this is the zero position for the joint.
-      if (updateJointOffset.getBooleanValue() || zeroAgainstUpperLimit.getBooleanValue() || zeroAgainstLowerLimit.getBooleanValue())
+      if (updateJointOffset.getBooleanValue())
       {
-         double addedOffset = 0.0;
-         if (zeroAgainstLowerLimit.getBooleanValue())
-            addedOffset = jointLimitLower;
-         else if (zeroAgainstUpperLimit.getBooleanValue())
-            addedOffset = jointLimitUpper;
          updateJointOffset();
-         yoJointOffset.add(addedOffset);
          updateJointOffset.set(false);
-         zeroAgainstUpperLimit.set(false);
-         zeroAgainstLowerLimit.set(false);
       }
 
       measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
@@ -494,6 +499,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void updateJointOffset()
    {
       yoJointOffset.set(-1.0 * platinumTwitter.getMeasuredOutputPosition());
+   }
+
+   public void zeroAgainstLimit(double limit)
+   {
+      platinumTwitter.zeroEncodersWithOffset(limit);
    }
 
    /**
