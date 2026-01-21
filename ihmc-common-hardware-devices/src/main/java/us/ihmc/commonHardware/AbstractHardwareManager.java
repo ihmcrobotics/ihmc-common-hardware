@@ -109,7 +109,11 @@ public abstract class AbstractHardwareManager
 
       hasMotorOverHeated = new YoBoolean("hasArmMotorOverHeated", registry);
       isMotorWarm = new YoBoolean("isArmMotorWarm", registry);
-      hasMotorOverHeated.addListener(s -> robotOverHeatedListener.changed(hasMotorOverHeated.getValue()));
+      hasMotorOverHeated.addListener(s ->
+      {
+         if (robotOverHeatedListener != null)
+            robotOverHeatedListener.changed(hasMotorOverHeated.getValue());
+      });
 
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
