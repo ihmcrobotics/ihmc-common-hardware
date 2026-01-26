@@ -213,6 +213,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble outputVelocityBreakFrequency;
 
    private final YoBoolean checkEncoderOffsets;
+   private double offsetFromZero;
 
    private enum EncoderState
    {
@@ -536,6 +537,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       useOutputPositionFromMotor = new YoBoolean(prefix + "UseOutputPositionFromInput", registry);
 
       outputEncoderInverted = new YoBoolean(prefix + "outputEncoderIsInverted", registry);
+      offsetFromZero = 0.0;
 
       DRIVE_FAULTED.addListener(new YoVariableChangedListener()
       {
@@ -701,8 +703,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       {
          if(averageMotorPosition.getHasBufferWindowFilled())
          {
-            motorPositionOffset.set(averageMotorPosition.getDoubleValue());
-            outputPositionOffset.set(averageOutputPosition.getDoubleValue());
+            motorPositionOffset.set(averageMotorPosition.getDoubleValue() - motorDirection.getDoubleValue() * offsetFromZero * gearRatio.getDoubleValue());
+            outputPositionOffset.set(averageOutputPosition.getDoubleValue() - outputDirection * offsetFromZero);
+            offsetFromZero = 0.0;
             zeroEncoders.set(false, false);
          }
          else
@@ -957,6 +960,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public double convertAnalogInput2FromCountsToVolts(double valueInCounts)
    {
       return valueInCounts * ANALOG_INPUT_2_CONVERSION_CONSTANT_FROM_NADIA;
+   }
+
+   public void zeroEncodersWithOffset(double offsetFromZero)
+   {
+      this.offsetFromZero = offsetFromZero;
+      zeroEncoders.set(true);
    }
 
    private void beginZeroing()
