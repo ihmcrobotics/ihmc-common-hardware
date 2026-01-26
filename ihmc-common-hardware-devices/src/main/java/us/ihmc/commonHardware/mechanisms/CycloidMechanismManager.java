@@ -226,13 +226,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       zeroAgainstLowerLimit.addListener(s ->
                                         {
                                            if (zeroAgainstLowerLimit.getBooleanValue())
-                                              platinumTwitter.zeroEncodersWithOffset(jointLimitLower);
+                                              zeroAgainstLimit(jointLimitLower);
                                            zeroAgainstLowerLimit.set(false, false);
                                         });
       zeroAgainstUpperLimit.addListener(s ->
                                         {
                                            if (zeroAgainstUpperLimit.getBooleanValue())
-                                              platinumTwitter.zeroEncodersWithOffset(jointLimitUpper);
+                                              zeroAgainstLimit(jointLimitUpper);
                                            zeroAgainstUpperLimit.set(false, false);
                                         });
 

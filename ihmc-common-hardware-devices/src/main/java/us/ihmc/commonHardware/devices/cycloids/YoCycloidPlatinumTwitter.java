@@ -703,9 +703,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       {
          if(averageMotorPosition.getHasBufferWindowFilled())
          {
-            double additionalOffset = outputDirection * offsetFromZero;
-            motorPositionOffset.set(averageMotorPosition.getDoubleValue() - additionalOffset * gearRatio.getDoubleValue());
-            outputPositionOffset.set(averageOutputPosition.getDoubleValue() - additionalOffset);
+            motorPositionOffset.set(averageMotorPosition.getDoubleValue() - motorDirection.getDoubleValue() * offsetFromZero * gearRatio.getDoubleValue());
+            outputPositionOffset.set(averageOutputPosition.getDoubleValue() - outputDirection * offsetFromZero);
             offsetFromZero = 0.0;
             zeroEncoders.set(false, false);
          }
