@@ -84,6 +84,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private final double jointLimitLower;
    private final double jointLimitUpper;
+   private boolean disableJointLimitZero = false;
 
    private final JointLimitTorqueLimiter jointLimitTorqueLimiter;
 
@@ -225,13 +226,17 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
       zeroAgainstLowerLimit.addListener(s ->
                                         {
-                                           if (zeroAgainstLowerLimit.getBooleanValue())
+                                           if (disableJointLimitZero)
+                                              LogTools.warn("Attempting to zero " + getName() + " using lower joint limit, but method is disabled for this cycloid");
+                                           else if (zeroAgainstLowerLimit.getBooleanValue())
                                               zeroAgainstLimit(jointLimitLower);
                                            zeroAgainstLowerLimit.set(false, false);
                                         });
       zeroAgainstUpperLimit.addListener(s ->
                                         {
-                                           if (zeroAgainstUpperLimit.getBooleanValue())
+                                           if (disableJointLimitZero)
+                                              LogTools.warn("Attempting to zero " + getName() + " using lower joint limit, but method is disabled for this cycloid");
+                                           else if (zeroAgainstUpperLimit.getBooleanValue())
                                               zeroAgainstLimit(jointLimitUpper);
                                            zeroAgainstUpperLimit.set(false, false);
                                         });
@@ -504,6 +509,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void zeroAgainstLimit(double limit)
    {
       platinumTwitter.zeroEncodersWithOffset(limit);
+   }
+
+   public void disableJointLimitZeroing(boolean disableJointLimitZero)
+   {
+      this.disableJointLimitZero = disableJointLimitZero;
    }
 
    /**
