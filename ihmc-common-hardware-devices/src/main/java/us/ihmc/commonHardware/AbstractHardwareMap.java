@@ -321,6 +321,7 @@ public abstract class AbstractHardwareMap
       boolean reverseMotorDirection = xmlPlatinumTwitter.isMotorDirectionReversed();
       double motorOffset = xmlPlatinumTwitter.getMotorOffset();
       double outputOffset = xmlPlatinumTwitter.getOutputOffset();
+      boolean dynamicBrakingEnabled = xmlPlatinumTwitter.isDynamicBrakingEnabled();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter;
       if(xmlPlatinumTwitter.useLatestCode())

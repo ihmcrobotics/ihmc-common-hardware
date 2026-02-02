@@ -547,15 +547,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
-      if (isRobotServoed)
+      if (enableMotors)
       {
          wakeUpTime.set(time.getValue());
          wakeUpPosition.set(measuredActuatorData.getPosition());
       }
 
-      platinumTwitter.enableDrive(isRobotServoed);
+      platinumTwitter.enableDrive(enableMotors);
    }
 
    @Override

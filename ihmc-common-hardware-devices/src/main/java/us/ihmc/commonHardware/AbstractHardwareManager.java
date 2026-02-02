@@ -359,15 +359,15 @@ public abstract class AbstractHardwareManager
    }
 
    /**
-    * Set if the actuators are servoed (Not sure why it is called this, we are just enabling or disabling actuators with this)
+    * Set the motors to enable
     *
-    * @param isRobotServoed If true, enable the actuators. If false, disable the actuators
+    * @param enableMotors If true, enable the actuators. If false, disable the actuators
     */
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
-         mechanismManager.setIsRobotServoed(isRobotServoed);
+         mechanismManager.setEnableMotors(enableMotors);
       }
    }
 
