@@ -1269,6 +1269,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return enableDrive.getBooleanValue();
    }
 
+   public boolean isDynamicBrakingEnabled()
+   {
+      return dynamicBrakingEnabled.getBooleanValue();
+   }
+
    public String getActuatorPackage()
    {
       return actuatorPackage;

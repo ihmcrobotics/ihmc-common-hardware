@@ -65,4 +65,6 @@ public interface MechanismManagerInterface
    void setVelocityBreakFrequency(double breakFrequency);
 
    String getName();
+
+   boolean isDynamicBrakingEnabled();
 }

@@ -704,4 +704,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    {
       platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
    }
+
+   @Override
+   public boolean isDynamicBrakingEnabled()
+   {
+      return platinumTwitter.isDynamicBrakingEnabled();
+   }
 }
