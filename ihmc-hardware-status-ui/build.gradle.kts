@@ -4,7 +4,7 @@ plugins {
 
 ihmc {
    group = "us.ihmc"
-   version = "0.0.1"
+   version = "0.0.2"
    vcsUrl = "https://github.com/ihmcrobotics/ihmc-common-hardware.git"
    openSource = false
 
@@ -13,8 +13,8 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-ethercat-master:0.16.0")
-   api("us.ihmc:scs2-simulation-construction-set:17-0.31.3")
+   api("us.ihmc:ihmc-ethercat-master:0.16.1")
+   api("us.ihmc:scs2-simulation-construction-set:17-0.32.0")
    api("us.ihmc:ihmc-java-toolkit:0.14.0-241016")
    api("us.ihmc:ihmc-robotics-toolkit:20251002")
    api("us.ihmc:ihmc-hardware-xml-toolkit:source")
