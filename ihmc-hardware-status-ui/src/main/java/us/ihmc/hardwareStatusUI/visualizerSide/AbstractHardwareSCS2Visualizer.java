@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * Abstract class to standardize the hardware visualizer for low level hardware control.
  * It includes lists for the startup, shutdown, and debugging panes to add the necessary buttons.
- * It also includes the ability to add a hardware status UI for easier debuggning
+ * It also includes the ability to add a hardware status UI for easier debugging
  */
 public abstract class AbstractHardwareSCS2Visualizer
 {
@@ -33,7 +33,7 @@ public abstract class AbstractHardwareSCS2Visualizer
    }
 
    /**
-    * Add a {@code HardwareStatusUI} for better debugging of sensors
+    * Add a {@link HardwareStatusUI} for better debugging of sensors
     *
     * @param hardwareStatusUIDataManager Data manager for the UI
     * @param createLaunchUIButtonPane    If true, create a button to launch the UI manually
