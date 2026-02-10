@@ -56,8 +56,11 @@ There are four steps to follow for basic implementation for your own robot using
    `MasterInterface`](https://github.com/ihmcrobotics/ihmc-ethercat-master/blob/develop/src/main/java/us/ihmc/etherCAT/master/MasterInterface.java). Both
    classes are part of [ihmc-ethercat-master](https://github.com/ihmcrobotics/ihmc-ethercat-master).
 
-## Maintainers
+## Making a Release
+- Bump the version in `group.product.properties`
+- Follow the remaining steps [here](https://ihmcrobotics.atlassian.net/wiki/spaces/HOWTO/pages/1497530369/Default+Release+a+Library) (skip the version bump step in that guide, since you have already done it)
 
+## Maintainers
 * Reese Peterson (rpeterson@ihmc.org)
 * Stefan Fasano (sfasano@ihmc.org)
 * Dexton Anderson (danderson@ihmc.org)
