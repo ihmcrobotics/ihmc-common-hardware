@@ -3,10 +3,7 @@ plugins {
 }
 
 ihmc {
-   group = "us.ihmc"
-   version = "0.0.2"
-   vcsUrl = "https://github.com/ihmcrobotics/ihmc-common-hardware.git"
-   openSource = false
+   loadProductProperties("../group.product.properties")
 
    configureDependencyResolution()
    configurePublications()
