@@ -292,7 +292,7 @@ public abstract class AbstractHardwareManager
    /**
     * Shuts down the robot. Use when terminating the program
     */
-   public void shutDown()
+   public void shutdown()
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
          mechanismManager.shutDown();
