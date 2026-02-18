@@ -114,7 +114,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoEnum<DSP402Slave.StatusWord> statusWord;
    private final YoLong elmoStatusRegister;
    private final YoInteger errorCode;
-   private final YoEnum<ElmoTwitterErrorCodeEnum> errorCodeEnum;
+   private final YoEnum<ElmoTwitterErrorCodeEnum> currentErrorCodeEnum;
+   private final YoEnum<ElmoTwitterErrorCodeEnum> lastErrorCodeEnum;
    //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
    private final YoDouble measuredAnalogInput2InADCCounts;
@@ -519,8 +520,17 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       statusWord = new YoEnum<>(prefix + "statusWord", registry, DSP402Slave.StatusWord.class);
       elmoStatusRegister = new YoLong(prefix + "elmoStatusRegister", registry);
       errorCode = new YoInteger(prefix + "elmoErrorCode", registry);
-      errorCodeEnum = new YoEnum<>(prefix + "elmoErrorCodeEnum", registry, ElmoTwitterErrorCodeEnum.class, true);
-      //      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
+      currentErrorCodeEnum = new YoEnum<>(prefix + "currentErrorCodeEnum", registry, ElmoTwitterErrorCodeEnum.class, true);
+      lastErrorCodeEnum = new YoEnum<>(prefix + "lastErrorCodeEnum", registry, ElmoTwitterErrorCodeEnum.class, true);
+      currentErrorCodeEnum.set(ElmoTwitterErrorCodeEnum.NO_ERROR);
+      lastErrorCodeEnum.set(ElmoTwitterErrorCodeEnum.NO_ERROR);
+
+      currentErrorCodeEnum.addListener(s ->
+                                       {
+                                          if (currentErrorCodeEnum.getEnumValue() != ElmoTwitterErrorCodeEnum.NO_ERROR)
+                                             lastErrorCodeEnum.set(currentErrorCodeEnum.getEnumValue());
+                                       });
+
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
       //faults
@@ -595,7 +605,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       controlWord.set(platinumTwitter.getCurrentControlword());
       errorCode.set(platinumTwitter.getErrorRegister());
-      errorCodeEnum.set(ElmoTwitterErrorCodeEnum.decode(errorCode.getIntegerValue()));
+      currentErrorCodeEnum.set(ElmoTwitterErrorCodeEnum.decode(errorCode.getIntegerValue()));
       //TODO Implement fully
       //      elmoErrorString.set(errorCode.getIntegerValue());
       previousModeOfOperation.set(currentModeOfOperation.getEnumValue());
