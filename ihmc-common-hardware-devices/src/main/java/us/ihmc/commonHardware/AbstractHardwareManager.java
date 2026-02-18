@@ -2,7 +2,6 @@ package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
 import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
-import us.ihmc.commonHardware.mechanisms.CycloidMechanismManager;
 import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
 import us.ihmc.commonHardware.devices.etherCATDevices.h4.etherSnacks.EtherSnacksBoardInterface;
@@ -109,7 +108,11 @@ public abstract class AbstractHardwareManager
 
       hasMotorOverHeated = new YoBoolean("hasArmMotorOverHeated", registry);
       isMotorWarm = new YoBoolean("isArmMotorWarm", registry);
-      hasMotorOverHeated.addListener(s -> robotOverHeatedListener.changed(hasMotorOverHeated.getValue()));
+      hasMotorOverHeated.addListener(s ->
+      {
+         if (robotOverHeatedListener != null)
+            robotOverHeatedListener.changed(hasMotorOverHeated.getValue());
+      });
 
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
@@ -243,7 +246,7 @@ public abstract class AbstractHardwareManager
    /**
     * Shuts down the robot. Use when terminating the program
     */
-   public void shutDown()
+   public void shutdown()
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
          mechanismManager.shutDown();

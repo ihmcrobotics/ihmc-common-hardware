@@ -14,8 +14,8 @@ import us.ihmc.hardwareStatusUI.controllerSide.EtherCATDeviceStatusProvider;
  */
 public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusProvider
 {
-   private static final int VENDOR_ID = 0x1011;
-   private static final int PRODUCT_CODE = 0x00000200;
+   private static final int DEFAULT_VENDOR_ID = 0x1011;
+   private static final int DEFAULT_PRODUCT_CODE = 0x00000200;
 
    public static double RAW_ACCEL_TO_G = 0.000244;
    public static double RAW_GYRO_TO_RAD_PER_SEC = (2000.0 * (Math.PI * 2.0) / 360.0) / 65535.0;
@@ -69,7 +69,12 @@ public class H4IMU extends Slave implements IMUInterface, EtherCATDeviceStatusPr
     */
    public H4IMU(int aliasAddress, int position)
    {
-      super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
+      this(DEFAULT_VENDOR_ID, DEFAULT_PRODUCT_CODE, aliasAddress, position);
+   }
+
+   public H4IMU(int vendorID, int productCode, int aliasAddress, int position)
+   {
+      super(vendorID, productCode, aliasAddress, position);
 
       registerSyncManager(new SyncManager(2, false));
       registerSyncManager(new SyncManager(3, false));
