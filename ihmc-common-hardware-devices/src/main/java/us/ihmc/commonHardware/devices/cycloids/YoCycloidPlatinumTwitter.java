@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
 import org.jline.utils.Log;
+import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.commons.MathTools;
@@ -114,6 +115,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoEnum<DSP402Slave.StatusWord> statusWord;
    private final YoLong elmoStatusRegister;
    private final YoInteger errorCode;
+   private final YoEnum<ElmoTwitterErrorCodeEnum> errorCodeEnum;
    //   private final YoEnum<?> elmoErrorString;
    private final YoDouble measuredBusVoltage;
    private final YoDouble measuredAnalogInput2InADCCounts;
@@ -518,6 +520,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       statusWord = new YoEnum<>(prefix + "statusWord", registry, DSP402Slave.StatusWord.class);
       elmoStatusRegister = new YoLong(prefix + "elmoStatusRegister", registry);
       errorCode = new YoInteger(prefix + "elmoErrorCode", registry);
+      errorCodeEnum = new YoEnum<>(prefix + "elmoErrorCodeEnum", registry, ElmoTwitterErrorCodeEnum.class, true);
       //      elmoErrorString = new YoEnum<>(prefix + "elmoErrorString", "", registry, true, ElmoErrorCodes.EC);
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
@@ -593,6 +596,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       controlWord.set(platinumTwitter.getCurrentControlword());
       errorCode.set(platinumTwitter.getErrorRegister());
+      errorCodeEnum.set(ElmoTwitterErrorCodeEnum.decode(errorCode.getIntegerValue()));
       //TODO Implement fully
       //      elmoErrorString.set(errorCode.getIntegerValue());
       previousModeOfOperation.set(currentModeOfOperation.getEnumValue());
