@@ -3,6 +3,8 @@ package us.ihmc.hardwareStatusUI.visualizerSide;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
@@ -17,6 +19,8 @@ import java.util.ArrayList;
  */
 public class UIDeviceStatusHolder
 {
+   protected static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";
+
    protected final SimpleStringProperty name = new SimpleStringProperty("");
    protected final SimpleStringProperty childDescription = new SimpleStringProperty("");
    protected final SimpleStringProperty description = new SimpleStringProperty("");
@@ -107,9 +111,17 @@ public class UIDeviceStatusHolder
       stoDisabled.addListener(change -> this.stoDisabled.set(stoDisabled.getValueAsString()));
       currentShort.addListener(change -> this.currentShort.set(currentShort.getValueAsString()));
       overTemp.addListener(change -> this.overTemp.set(overTemp.getValueAsString()));
-      elmoErrorCode.addListener(change -> this.elmoErrorCode.set(elmoErrorCode.getValueAsString()));
       inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.getValueAsString()));
       outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.getValueAsString()));
+
+      elmoErrorCode.addListener(change ->
+                                {
+                                   ElmoTwitterErrorCodeEnum errorCodeEnum = ElmoTwitterErrorCodeEnum.decode(elmoErrorCode.getValue());
+                                   if (errorCodeEnum != null)
+                                      this.elmoErrorCode.set(errorCodeEnum.toString());
+                                   else
+                                      this.elmoErrorCode.set(UNKNOWN_ERROR + "_" + elmoErrorCode.getValueAsString());
+                                });
    }
 
    /**

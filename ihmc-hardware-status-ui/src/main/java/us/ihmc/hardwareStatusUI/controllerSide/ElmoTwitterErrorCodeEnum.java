@@ -1,4 +1,4 @@
-package us.ihmc.commonHardware.devices.etherCATDevices.elmo;
+package us.ihmc.hardwareStatusUI.controllerSide;
 
 public enum ElmoTwitterErrorCodeEnum
 {

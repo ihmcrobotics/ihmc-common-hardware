@@ -1,7 +1,6 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import org.jline.utils.Log;
-import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterErrorCodeEnum;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
 import us.ihmc.commons.MathTools;
