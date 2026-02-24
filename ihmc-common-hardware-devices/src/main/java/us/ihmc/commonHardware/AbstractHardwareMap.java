@@ -451,10 +451,15 @@ public abstract class AbstractHardwareMap
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
 
-      GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+      //TODO remove!
+      if (!name.contains("2"))
+      {
+         GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
-      imuManagers.add(imuManager);
-      measuredIMUData.put(imuManager.getName(), new ImuData());
+         imuManagers.add(imuManager);
+         measuredIMUData.put(imuManager.getName(), new ImuData());
+      }
+
       yoEtherSnacksSensors.add(yoImu);
       return imu;
    }
