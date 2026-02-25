@@ -116,10 +116,7 @@ public class UIDeviceStatusHolder
       inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.getValueAsString()));
       outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.getValueAsString()));
 
-      elmoErrorCode.addListener(change ->
-                                {
-                                    decodeErrorCode(elmoErrorCode.getIntegerValue());
-                                });
+      elmoErrorCode.addListener(change -> decodeErrorCode(elmoErrorCode.getIntegerValue()));
    }
 
    /**

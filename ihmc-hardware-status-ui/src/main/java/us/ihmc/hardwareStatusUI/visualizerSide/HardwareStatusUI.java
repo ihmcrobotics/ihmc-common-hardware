@@ -329,7 +329,7 @@ public class HardwareStatusUI implements VisualizerController
       elmoErrorCodeColumn.setMinWidth(150);
       elmoErrorCodeColumn.setCellValueFactory(new PropertyValueFactory<>("elmoErrorCode"));
 
-      TableColumn<UIDeviceStatusHolder, String> lastElmoErrorCodeColumn = new TableColumn<>("Last Error Code");
+      TableColumn<UIDeviceStatusHolder, String> lastElmoErrorCodeColumn = new TableColumn<>("Last Elmo Error Code");
       lastElmoErrorCodeColumn.setMinWidth(150);
       lastElmoErrorCodeColumn.setCellValueFactory(new PropertyValueFactory<>("lastElmoErrorCode"));
 

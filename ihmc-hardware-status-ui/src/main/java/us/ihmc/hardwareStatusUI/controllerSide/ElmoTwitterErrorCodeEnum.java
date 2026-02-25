@@ -3,7 +3,7 @@ package us.ihmc.hardwareStatusUI.controllerSide;
 public enum ElmoTwitterErrorCodeEnum
 {
    FEEDBACK_ERROR(0x7300),
-   COMMUTATION_FAIL(7382),
+   COMMUTATION_FAIL(0x7382),
    HALL_FEEDBACK_MISMATCH(0x7380),
    PEAK_CURRENT_EXCEEDED(0x8311),
    EXTERNAL_INHIBIT(0x5441),

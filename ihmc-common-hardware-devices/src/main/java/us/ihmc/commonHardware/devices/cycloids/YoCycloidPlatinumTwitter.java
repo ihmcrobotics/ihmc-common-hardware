@@ -821,8 +821,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       platinumTwitter.setMotorStiffnessForImpedanceControl(impedanceControlStiffness.getDoubleValue());
       platinumTwitter.setMotorDampingForImpedanceControl(impedanceControlDamping.getDoubleValue());
 
-      desiredMotorPositionForImpedanceControl.set(
-            motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue());
+      desiredMotorPositionForImpedanceControl.set(motorDirection.getDoubleValue() *
+                                                  desiredMotorPosition.getDoubleValue() +
+                                                  motorPositionOffset.getDoubleValue());
       desiredMotorVelocityForImpedanceControl.set(motorDirection.getDoubleValue() * desiredMotorVelocity.getDoubleValue());
       platinumTwitter.setDesiredMotorPositionForImpedanceControl(desiredMotorPositionForImpedanceControl.getDoubleValue());
       platinumTwitter.setDesiredMotorVelocityForImpedanceControl(desiredMotorVelocityForImpedanceControl.getDoubleValue());
@@ -869,6 +870,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                 {
                                    if (etherCATState.getEnumValue() == State.OFFLINE)
                                       LogTools.error(getName() + " just went OFFLINE");
+                                   else if (etherCATState.getEnumValue() == State.SAFE_OPERR)
+                                      LogTools.error(getName() + " just went to SAFE_OPERR");
                                 });
 
       UNDER_VOLTAGE.addListener(s ->
