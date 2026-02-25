@@ -451,8 +451,7 @@ public abstract class AbstractHardwareMap
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
 
-      //TODO remove!
-      if (!name.contains("2"))
+      if (xmlIMU.isPresent())
       {
          GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
