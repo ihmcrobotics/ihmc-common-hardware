@@ -17,7 +17,7 @@ public abstract class AbstractHardwareSCS2Visualizer
 {
    protected final SessionVisualizerControls sessionVisualizerControls;
    protected final SessionVisualizerToolkit toolkit;
-   protected final ArrayList<Node> startupSequencePaneNodes = new ArrayList<>();
+   protected final ArrayList<Node> manualStartupSequencePaneNodes = new ArrayList<>();
    protected final ArrayList<Node> shutdownSequencePaneNodes = new ArrayList<>();
    protected final ArrayList<Node> debuggingPaneNodes = new ArrayList<>();
 
@@ -46,9 +46,9 @@ public abstract class AbstractHardwareSCS2Visualizer
       toolkit.getWindowManager().queueVisualizationController(hardwareStatusUI);
    }
 
-   protected void addStartupSequencePaneNode(Node node)
+   protected void addManualStartupSequencePaneNode(Node node)
    {
-      startupSequencePaneNodes.add(node);
+      manualStartupSequencePaneNodes.add(node);
    }
 
    protected void addShutdownSequencePaneNode(Node node)
@@ -82,9 +82,9 @@ public abstract class AbstractHardwareSCS2Visualizer
       sessionVisualizerControls.addCustomGUIPane(paneDescription, pane);
    }
 
-   protected void createStartupSequencePane()
+   protected void createManualStartupSequencePane()
    {
-      createPane(sessionVisualizerControls, "Startup Sequence", startupSequencePaneNodes);
+      createPane(sessionVisualizerControls, "Manual Startup Sequence", manualStartupSequencePaneNodes);
    }
 
    protected void createShutdownSequencePane()
@@ -95,5 +95,23 @@ public abstract class AbstractHardwareSCS2Visualizer
    protected void createDebuggingPane()
    {
       createPane(sessionVisualizerControls, "Hardware Status/Debugging", debuggingPaneNodes);
+   }
+
+   protected void createSimpleStartupSequencePane(Node autoStartupButton, Node autoShutdownButton, Node clearFaultsButton, Node servoRobotButton)
+   {
+      Pane pane = new Pane();
+      pane.getChildren().add(autoStartupButton);
+      pane.getChildren().add(autoShutdownButton);
+      pane.getChildren().add(clearFaultsButton);
+      pane.getChildren().add(servoRobotButton);
+
+      autoStartupButton.relocate(5, 5);
+      servoRobotButton.relocate(5, 45);
+
+      autoShutdownButton.relocate(170, 5);
+      clearFaultsButton.relocate(170, 45);
+
+
+      sessionVisualizerControls.addCustomGUIPane("Simple Startup Sequence", pane);
    }
 }
