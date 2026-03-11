@@ -96,22 +96,4 @@ public abstract class AbstractHardwareSCS2Visualizer
    {
       createPane(sessionVisualizerControls, "Hardware Status/Debugging", debuggingPaneNodes);
    }
-
-   protected void createSimpleStartupSequencePane(Node autoStartupButton, Node autoShutdownButton, Node clearFaultsButton, Node servoRobotButton)
-   {
-      Pane pane = new Pane();
-      pane.getChildren().add(autoStartupButton);
-      pane.getChildren().add(autoShutdownButton);
-      pane.getChildren().add(clearFaultsButton);
-      pane.getChildren().add(servoRobotButton);
-
-      autoStartupButton.relocate(5, 5);
-      servoRobotButton.relocate(5, 45);
-
-      autoShutdownButton.relocate(170, 5);
-      clearFaultsButton.relocate(170, 45);
-
-
-      sessionVisualizerControls.addCustomGUIPane("Simple Startup Sequence", pane);
-   }
 }
