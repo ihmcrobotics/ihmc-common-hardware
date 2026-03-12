@@ -2,5 +2,5 @@ package us.ihmc.hardwareXMLToolkit.devices;
 
 public enum XmlEtherSnacksBoardType
 {
-   ALEX, ALEX_PDO_LIGHT, ALEX_HAND_CONTROL, NADIA_ARM;
+   ALEX, ALEX_PDO_LIGHT, ALEX_HAND_CONTROL, ALEX_PMB_PRIMARY, ALEX_PMB_SECONDARY, NADIA_ARM;
 }
