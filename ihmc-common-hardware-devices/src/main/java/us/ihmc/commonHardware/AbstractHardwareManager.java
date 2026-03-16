@@ -60,7 +60,7 @@ public abstract class AbstractHardwareManager
    protected final YoBoolean areMotorsFaulted;
 
    protected final YoDouble lowLevelMasterGain;
-   protected final YoDouble highLevelMasterGain;
+   protected final YoDouble requestedMasterGain;
    protected final YoBoolean servoActuators;
    protected final YoBoolean unservoQuickly;
    protected final YoBoolean useHighLevelServo;
@@ -126,7 +126,7 @@ public abstract class AbstractHardwareManager
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
       lowLevelMasterGain = new YoDouble("lowLevelMasterGain", registry);
-      highLevelMasterGain = new YoDouble("highLevelMasterGain", registry);
+      requestedMasterGain = new YoDouble("requestedMasterGain", registry);
       servoActuators = new YoBoolean("servoActuators", registry);
       unservoQuickly = new YoBoolean("unservoQuickly", registry);
       useHighLevelServo = new YoBoolean("useHighLevelServo", registry);
@@ -154,7 +154,7 @@ public abstract class AbstractHardwareManager
                                     if(unservoQuickly.getBooleanValue())
                                     {
                                        lowLevelMasterGain.set(0.0);
-                                       highLevelMasterGain.set(0.0);
+                                       requestedMasterGain.set(0.0);
                                        unservoQuickly.set(false, false);
                                        servoStartPoint = 0.0;
                                        servoActuators.set(false, false);
@@ -302,7 +302,7 @@ public abstract class AbstractHardwareManager
    protected void updateLowLevelMasterGain()
    {
       if (useHighLevelServo.getBooleanValue())
-         lowLevelMasterGain.set(highLevelMasterGain.getValue());
+         lowLevelMasterGain.set(requestedMasterGain.getValue());
       else if (servoTimer.isExpired(servoTransitionTime.getDoubleValue()))
          lowLevelMasterGain.set(servoActuators.getValue() ? 1.0 : 0.0);
       else if (servoActuators.getBooleanValue())
@@ -388,9 +388,9 @@ public abstract class AbstractHardwareManager
       lowLevelMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
-   public void setHighLevelMasterGain(double desiredMasterGain)
+   public void setRequestedMasterGain(double desiredMasterGain)
    {
-      this.highLevelMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
+      this.requestedMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
    /**
@@ -398,9 +398,9 @@ public abstract class AbstractHardwareManager
     *
     * @return masterGain current master gain for robot
     */
-   public double getCurrentMasterGain()
+   public double getLowLevelMasterGain()
    {
-      return masterGain.getDoubleValue();
+      return lowLevelMasterGain.getDoubleValue();
    }
 
    /**
