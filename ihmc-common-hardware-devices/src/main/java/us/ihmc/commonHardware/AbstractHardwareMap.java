@@ -338,6 +338,8 @@ public abstract class AbstractHardwareMap
                                                                                        motorOffset,
                                                                                        outputOffset,
                                                                                        dt,
+                                                                                       dynamicBrakingEnabled,
+                                                                                       false,
                                                                                        registry);
 
       yoCycloidPlatinumTwitter.setOutputEncoderInverted(xmlPlatinumTwitter.isOutputEncoderInverted());
