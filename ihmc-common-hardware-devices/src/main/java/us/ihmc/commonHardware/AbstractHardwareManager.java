@@ -394,6 +394,16 @@ public abstract class AbstractHardwareManager
    }
 
    /**
+    * Returns current master gain
+    *
+    * @return masterGain current master gain for robot
+    */
+   public double getCurrentMasterGain()
+   {
+      return masterGain.getDoubleValue();
+   }
+
+   /**
     * @return The yoboolean for seeing if the motors are faulted
     */
    public YoBoolean getAreMotorsFaulted()

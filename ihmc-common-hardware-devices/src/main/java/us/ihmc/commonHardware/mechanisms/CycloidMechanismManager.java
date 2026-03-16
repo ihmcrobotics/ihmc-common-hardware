@@ -579,7 +579,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    @Override
    public double getTotalMeasuredMotorCurrent()
    {
-      return platinumTwitter.getMeasuredMotorCurrent();
+      return Math.abs(platinumTwitter.getMeasuredMotorCurrent());
    }
 
    /**
