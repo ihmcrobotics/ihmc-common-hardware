@@ -547,15 +547,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
-      if (isRobotServoed)
+      if (enableMotors)
       {
          wakeUpTime.set(time.getValue());
          wakeUpPosition.set(measuredActuatorData.getPosition());
       }
 
-      platinumTwitter.enableDrive(isRobotServoed);
+      platinumTwitter.enableDrive(enableMotors);
    }
 
    @Override
@@ -703,5 +703,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void setMotorVelocityBreakFrequency(double breakFrequency)
    {
       platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
+   }
+
+   @Override
+   public boolean isDynamicBrakingEnabled()
+   {
+      return platinumTwitter.isDynamicBrakingEnabled();
    }
 }

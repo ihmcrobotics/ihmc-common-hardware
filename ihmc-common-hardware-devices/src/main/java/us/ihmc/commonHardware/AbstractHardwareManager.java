@@ -13,6 +13,7 @@ import us.ihmc.realtime.RealtimeThread;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+import us.ihmc.tools.Timer;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -58,7 +59,15 @@ public abstract class AbstractHardwareManager
 
    protected final YoBoolean areMotorsFaulted;
 
-   protected final YoDouble masterGain;
+   protected final YoDouble lowLevelMasterGain;
+   protected final YoDouble requestedMasterGain;
+   protected final YoBoolean servoActuators;
+   protected final YoBoolean unservoQuickly;
+   protected final YoBoolean useRequestedMasterGain;
+   protected double servoStartPoint = 0.0;
+
+   protected final Timer servoTimer = new Timer();
+   protected final YoDouble servoTransitionTime;
 
    protected final HardwareStatusManager hardwareStatusManager;
 
@@ -116,7 +125,52 @@ public abstract class AbstractHardwareManager
 
       totalMeasuredMotorCurrent = new YoDouble("totalMeasuredMotorCurrent", registry);
 
-      masterGain = new YoDouble("lowLevelMasterGain", registry);
+      lowLevelMasterGain = new YoDouble("lowLevelMasterGain", registry);
+      requestedMasterGain = new YoDouble("requestedMasterGain", registry);
+      servoActuators = new YoBoolean("servoActuators", registry);
+      unservoQuickly = new YoBoolean("unservoQuickly", registry);
+      useRequestedMasterGain = new YoBoolean("useRequestedMasterGain", registry);
+
+      servoTransitionTime = new YoDouble("servoTransitionTime", registry);
+      servoTransitionTime.set(2.0); //Arbitrary
+
+      servoActuators.addListener(s ->
+                                 {
+                                    if (!servoActuators.getBooleanValue()  || servoTimer.isExpired(servoTransitionTime.getDoubleValue()))
+                                    {
+                                       servoStartPoint = lowLevelMasterGain.getDoubleValue();
+                                       servoTimer.reset();
+                                    }
+                                    else
+                                    {
+                                       servoActuators.set(false, false);
+                                    }
+
+                                    // If the platinum twitter has dynamic braking enabled, then disable the actuator when unservoing, enable when servoing
+                                    for (MechanismManagerInterface mechanismManager : mechanismManagers)
+                                    {
+                                       if(mechanismManager.isDynamicBrakingEnabled())
+                                          mechanismManager.setEnableMotors(servoActuators.getBooleanValue());
+                                    }
+                                 });
+
+      unservoQuickly.addListener(s ->
+                                 {
+                                    if(unservoQuickly.getBooleanValue() && !useRequestedMasterGain.getBooleanValue())
+                                    {
+                                       lowLevelMasterGain.set(0.0);
+                                       requestedMasterGain.set(0.0);
+                                       servoStartPoint = 0.0;
+                                       unservoQuickly.set(false, false);
+                                       servoActuators.set(false, false);
+
+                                       for (MechanismManagerInterface mechanismManager : mechanismManagers)
+                                       {
+                                          if(mechanismManager.isDynamicBrakingEnabled())
+                                             mechanismManager.setEnableMotors(false);
+                                       }
+                                    }
+                                 });
 
       mainActuatorPositionBreakFrequency = new YoDouble("mainActuatorPositionBreakFrequency", registry);
       mainActuatorVelocityBreakFrequency = new YoDouble("mainActuatorVelocityBreakFrequency", registry);
@@ -130,6 +184,7 @@ public abstract class AbstractHardwareManager
 
       jointNames = hardwareMap.getJointNames();
 
+      servoTimer.reset();
       parentRegistry.addChild(registry);
    }
 
@@ -222,6 +277,7 @@ public abstract class AbstractHardwareManager
 
       //compute actuator desireds from Controller Joint setpoints
       long mechanismWriteStartTime = RealtimeThread.getCurrentMonotonicClockTime();
+      updateLowLevelMasterGain();
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
          if(useMainActuatorBreakFrequencies.getBooleanValue())
@@ -229,7 +285,7 @@ public abstract class AbstractHardwareManager
             mechanismManager.setPositionBreakFrequency(mainActuatorPositionBreakFrequency.getDoubleValue());
             mechanismManager.setVelocityBreakFrequency(mainActuatorVelocityBreakFrequency.getDoubleValue());
          }
-         mechanismManager.setMasterGain(masterGain.getValue());
+         mechanismManager.setMasterGain(lowLevelMasterGain.getValue());
          mechanismManager.write(desiredJointData); // this also ticks the low level controllers
       }
       mechanismWriteTime.set(RealtimeThread.getCurrentMonotonicClockTime() - mechanismWriteStartTime);
@@ -251,6 +307,20 @@ public abstract class AbstractHardwareManager
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
          mechanismManager.shutDown();
       System.out.println("Hardware manager has been shut down");
+   }
+
+   protected void updateLowLevelMasterGain()
+   {
+      double masterGain = lowLevelMasterGain.getDoubleValue();
+      if (useRequestedMasterGain.getBooleanValue())
+         masterGain = requestedMasterGain.getValue();
+      else if (servoTimer.isExpired(servoTransitionTime.getDoubleValue()) && (masterGain > 0.0 && masterGain < 1.0))
+         masterGain = servoActuators.getValue() ? 1.0 : 0.0;
+      else if (servoActuators.getBooleanValue())
+         masterGain = servoStartPoint + (1.0 - servoStartPoint) * servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue();
+      else
+         masterGain = servoStartPoint * (1.0 - servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue());
+      setLowLevelMasterGain(masterGain);
    }
 
    /**
@@ -292,16 +362,31 @@ public abstract class AbstractHardwareManager
       }
    }
 
+   public void setServoActuators(boolean servoActuators)
+   {
+      this.servoActuators.set(servoActuators);
+   }
+
+   public void setUnservoQuickly(boolean unservoQuickly)
+   {
+      this.unservoQuickly.set(unservoQuickly);
+   }
+
+   public void setUseRequestedMasterGain(boolean useRequestedMasterGain)
+   {
+      this.useRequestedMasterGain.set(useRequestedMasterGain);
+   }
+
    /**
-    * Set if the actuators are servoed (Not sure why it is called this, we are just enabling or disabling actuators with this)
+    * Set the motors to enable
     *
-    * @param isRobotServoed If true, enable the actuators. If false, disable the actuators
+    * @param enableMotors If true, enable the actuators. If false, disable the actuators
     */
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
       for (MechanismManagerInterface mechanismManager : mechanismManagers)
       {
-         mechanismManager.setIsRobotServoed(isRobotServoed);
+         mechanismManager.setEnableMotors(enableMotors);
       }
    }
 
@@ -310,9 +395,14 @@ public abstract class AbstractHardwareManager
     *
     * @param desiredMasterGain desired master gain for robot
     */
-   public void setMasterGain(double desiredMasterGain)
+   public void setLowLevelMasterGain(double desiredMasterGain)
    {
-      masterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
+      lowLevelMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
+   }
+
+   public void setRequestedMasterGain(double desiredMasterGain)
+   {
+      this.requestedMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
    /**
@@ -320,9 +410,9 @@ public abstract class AbstractHardwareManager
     *
     * @return masterGain current master gain for robot
     */
-   public double getCurrentMasterGain()
+   public double getLowLevelMasterGain()
    {
-      return masterGain.getDoubleValue();
+      return lowLevelMasterGain.getDoubleValue();
    }
 
    /**

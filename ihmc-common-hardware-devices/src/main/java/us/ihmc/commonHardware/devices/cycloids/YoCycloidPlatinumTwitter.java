@@ -212,6 +212,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble motorVelocityBreakFrequency;
    private final YoDouble outputVelocityBreakFrequency;
 
+   private final YoBoolean dynamicBrakingEnabled;
+
    private final YoBoolean checkEncoderOffsets;
    private double offsetFromZero;
 
@@ -245,7 +247,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    YoRegistry parentRegistry)
 
    {
-      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, parentRegistry);
+      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, false, parentRegistry);
    }
 
    /**
@@ -272,6 +274,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    double motorOffset,
                                    double outputOffset,
                                    double dt,
+                                   boolean dynamicBrakingEnabled,
                                    boolean enableCompensationAtStart,
                                    YoRegistry parentRegistry)
    {
@@ -289,6 +292,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
+      this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
+      this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
 
       this.reverseMotorDirection = new YoBoolean(name + "MotorDirectionIsReversed", registry);
       this.reverseMotorDirection.set(isMotorDirectionReversed);
@@ -1262,6 +1267,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public boolean isDriveEnabled()
    {
       return enableDrive.getBooleanValue();
+   }
+
+   public boolean isDynamicBrakingEnabled()
+   {
+      return dynamicBrakingEnabled.getBooleanValue();
    }
 
    public String getActuatorPackage()
