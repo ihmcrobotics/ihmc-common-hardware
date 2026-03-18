@@ -160,8 +160,15 @@ public abstract class AbstractHardwareManager
                                     {
                                        lowLevelMasterGain.set(0.0);
                                        requestedMasterGain.set(0.0);
+                                       servoStartPoint = 0.0;
                                        unservoQuickly.set(false, false);
-                                       servoActuators.set(false);
+                                       servoActuators.set(false, false);
+
+                                       for (MechanismManagerInterface mechanismManager : mechanismManagers)
+                                       {
+                                          if(mechanismManager.isDynamicBrakingEnabled())
+                                             mechanismManager.setEnableMotors(false);
+                                       }
                                     }
                                  });
 
