@@ -141,6 +141,10 @@ public abstract class AbstractHardwareManager
                                        servoStartPoint = lowLevelMasterGain.getDoubleValue();
                                        servoTimer.reset();
                                     }
+                                    else
+                                    {
+                                       servoActuators.set(false, false);
+                                    }
 
                                     // If the platinum twitter has dynamic braking enabled, then disable the actuator when unservoing, enable when servoing
                                     for (MechanismManagerInterface mechanismManager : mechanismManagers)
@@ -152,7 +156,7 @@ public abstract class AbstractHardwareManager
 
       unservoQuickly.addListener(s ->
                                  {
-                                    if(unservoQuickly.getBooleanValue())
+                                    if(unservoQuickly.getBooleanValue() && !useRequestedMasterGain.getBooleanValue())
                                     {
                                        lowLevelMasterGain.set(0.0);
                                        requestedMasterGain.set(0.0);
