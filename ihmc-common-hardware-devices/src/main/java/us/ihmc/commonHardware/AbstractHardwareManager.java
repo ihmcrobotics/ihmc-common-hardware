@@ -63,7 +63,7 @@ public abstract class AbstractHardwareManager
    protected final YoDouble requestedMasterGain;
    protected final YoBoolean servoActuators;
    protected final YoBoolean unservoQuickly;
-   protected final YoBoolean useHighLevelServo;
+   protected final YoBoolean useRequestedMasterGain;
    protected double servoStartPoint = 0.0;
 
    protected final Timer servoTimer = new Timer();
@@ -129,9 +129,10 @@ public abstract class AbstractHardwareManager
       requestedMasterGain = new YoDouble("requestedMasterGain", registry);
       servoActuators = new YoBoolean("servoActuators", registry);
       unservoQuickly = new YoBoolean("unservoQuickly", registry);
-      useHighLevelServo = new YoBoolean("useHighLevelServo", registry);
+      useRequestedMasterGain = new YoBoolean("useRequestedMasterGain", registry);
 
       servoTransitionTime = new YoDouble("servoTransitionTime", registry);
+      servoTransitionTime.set(2.0); //Arbitrary
 
       servoActuators.addListener(s ->
                                  {
@@ -156,9 +157,7 @@ public abstract class AbstractHardwareManager
                                        lowLevelMasterGain.set(0.0);
                                        requestedMasterGain.set(0.0);
                                        unservoQuickly.set(false, false);
-                                       servoStartPoint = 0.0;
-                                       servoActuators.set(false, false);
-
+                                       servoActuators.set(false);
                                     }
                                  });
 
@@ -301,14 +300,16 @@ public abstract class AbstractHardwareManager
 
    protected void updateLowLevelMasterGain()
    {
-      if (useHighLevelServo.getBooleanValue())
-         lowLevelMasterGain.set(requestedMasterGain.getValue());
-      else if (servoTimer.isExpired(servoTransitionTime.getDoubleValue()))
-         lowLevelMasterGain.set(servoActuators.getValue() ? 1.0 : 0.0);
+      double masterGain = lowLevelMasterGain.getDoubleValue();
+      if (useRequestedMasterGain.getBooleanValue())
+         masterGain = requestedMasterGain.getValue();
+      else if (servoTimer.isExpired(servoTransitionTime.getDoubleValue()) && (masterGain > 0.0 && masterGain < 1.0))
+         masterGain = servoActuators.getValue() ? 1.0 : 0.0;
       else if (servoActuators.getBooleanValue())
-         lowLevelMasterGain.set(servoStartPoint + (1.0 - servoStartPoint) * servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue());
+         masterGain = servoStartPoint + (1.0 - servoStartPoint) * servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue();
       else
-         lowLevelMasterGain.set(servoStartPoint * (1 - servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue()));
+         masterGain = servoStartPoint * (1.0 - servoTimer.getElapsedTime() / servoTransitionTime.getDoubleValue());
+      setLowLevelMasterGain(masterGain);
    }
 
    /**
@@ -360,9 +361,9 @@ public abstract class AbstractHardwareManager
       this.unservoQuickly.set(unservoQuickly);
    }
 
-   public void setUseHighLevelServo(boolean useHighLevelServo)
+   public void setUseRequestedMasterGain(boolean useRequestedMasterGain)
    {
-      this.useHighLevelServo.set(useHighLevelServo);
+      this.useRequestedMasterGain.set(useRequestedMasterGain);
    }
 
    /**
