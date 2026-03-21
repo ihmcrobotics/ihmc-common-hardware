@@ -11,6 +11,7 @@ public class CycloidPhysicalParameters
    private int countsPerOutputRevolution;
    private double gearRatio;
    private double kt;
+   private double torqueLimit;
 
    /**
     * Construct the physical parameters from an xml
@@ -19,7 +20,11 @@ public class CycloidPhysicalParameters
     */
    public CycloidPhysicalParameters(XmlCycloidPhysicalParameters physicalParameters)
    {
-      this(physicalParameters.getInputResolution(), physicalParameters.getOutputResolution(), physicalParameters.getGearRatio(), physicalParameters.getKt());
+      this(physicalParameters.getInputResolution(),
+           physicalParameters.getOutputResolution(),
+           physicalParameters.getGearRatio(),
+           physicalParameters.getKt(),
+           physicalParameters.getTorqueLimit());
    }
 
    /**
@@ -29,13 +34,15 @@ public class CycloidPhysicalParameters
     * @param outputResolution The number of bits the output encoder uses
     * @param gearRatio        Gear ratio of the actuator
     * @param kt               ratio of current to torque for the motor
+    * @param torqueLimit      The maximum allowable torque for the actuator
     */
-   public CycloidPhysicalParameters(int inputResolution, int outputResolution, double gearRatio, double kt)
+   public CycloidPhysicalParameters(int inputResolution, int outputResolution, double gearRatio, double kt, double torqueLimit)
    {
       setCountsPerMotorRevolution(1 << inputResolution);
       setCountsPerOutputRevolution(1 << outputResolution);
       setGearRatio(gearRatio);
       setKt(kt);
+      setTorqueLimit(torqueLimit);
    }
 
    public int getCountsPerMotorRevolution()
@@ -76,5 +83,15 @@ public class CycloidPhysicalParameters
    public void setKt(double kt)
    {
       this.kt = kt;
+   }
+
+   public double getTorqueLimit()
+   {
+      return torqueLimit;
+   }
+
+   public void setTorqueLimit(double torqueLimit)
+   {
+      this.torqueLimit = torqueLimit;
    }
 }

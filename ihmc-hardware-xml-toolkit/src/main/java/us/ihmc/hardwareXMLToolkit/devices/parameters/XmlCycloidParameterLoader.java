@@ -42,6 +42,7 @@ public class XmlCycloidParameterLoader
       System.out.println("Gear Ratio: " + physicalParameters.getGearRatio());
       System.out.println("Input Resolution: " + physicalParameters.getInputResolution());
       System.out.println("Output Resolution: " + physicalParameters.getOutputResolution());
+      System.out.println("Torque Limit: " + physicalParameters.getTorqueLimit());
       System.out.println("Friction Gain: " + silParameters.getFrictionGain());
       System.out.println("Friction Slope: " + silParameters.getFrictionSlope());
       System.out.println("Damping Gain: " + silParameters.getDampingGain());
