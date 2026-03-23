@@ -669,6 +669,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    /**
+    * Returns the maximum torque this actuator can physically produce, computed as
+    * Kt * gearRatio * maxDriveCurrent.
+    */
+   public double getMaxActuatorTorque()
+   {
+      return platinumTwitter.getMaxActuatorTorque();
+   }
+
+   /**
     * Set if the stator is above the recommended temperature
     *
     * @param isStatorAboveRecommendedTemperature boolean dictating if the stator is above the recommended temperature
