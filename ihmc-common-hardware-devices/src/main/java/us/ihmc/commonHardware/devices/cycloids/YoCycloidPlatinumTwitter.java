@@ -1152,14 +1152,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return kt.getDoubleValue();
    }
 
-   public long getMaxDriveCurrentMilliAmps()
-   {
-      return maxDriveCurrentMilliAmps.getLongValue();
-   }
-
    public double getMaxActuatorTorque()
    {
-      return kt.getDoubleValue() * gearRatio.getDoubleValue() * maxDriveCurrentMilliAmps.getLongValue() * 1e-3;
+      return kt.getDoubleValue() * gearRatio.getDoubleValue() * platinumTwitter.getMaxDriveCurrentAmps();
    }
 
    private double getOutputDirection()
