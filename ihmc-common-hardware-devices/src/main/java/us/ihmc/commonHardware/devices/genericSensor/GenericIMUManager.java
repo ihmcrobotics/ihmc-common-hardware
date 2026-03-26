@@ -51,6 +51,9 @@ public class GenericIMUManager implements IMUManagerInterface
    private final Optional<YoFramePoseUsingYawPitchRoll> imuCorrectionOffset;
    private final Optional<ReferenceFrame> correctedIMUFrame;
 
+   private final YoDouble pitchAccelerationBiasFromIdeal;
+   private final YoDouble rollAccelerationBiasFromIdeal;
+
    private final MovingReferenceFrame rootJointFrame;
    private final YoFrameYawPitchRoll rootJointEstimate;
 
@@ -104,6 +107,9 @@ public class GenericIMUManager implements IMUManagerInterface
       orientationInIMUFrame = new YoFrameQuaternion(prefix + "OrientationInIMUFrame", originalIMUFrame, registry);
       angularVelocityInIMUFrame = new YoFrameVector3D(prefix + "AngularVelocityInIMUFrame", originalIMUFrame, registry);
       linearAccelerationInIMUFrame = new YoFrameVector3D(prefix + "LinearAccelerationInIMUFrame", originalIMUFrame, registry);
+
+      pitchAccelerationBiasFromIdeal = new YoDouble(prefix + "pitchAccelerationBiasFromIdeal", registry);
+      rollAccelerationBiasFromIdeal = new YoDouble(prefix + "rollAccelerationBiasFromIdeal", registry);
 
       // These are for finding the offset between the expected and true IMU mounting orientation
       if (DEBUG_IMU_ORIENTATION_OFFSETS)
@@ -161,12 +167,12 @@ public class GenericIMUManager implements IMUManagerInterface
 
       // This is for recording a filtered steady state signal of linear accel and angular vel to estimate biases
       averagedIMUs = new SimpleMovingAverageFilteredYoVariable[6];
-      averagedIMUs[0] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddX", 50, registry);
-      averagedIMUs[1] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddY", 50, registry);
-      averagedIMUs[2] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddZ", 50, registry);
-      averagedIMUs[3] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwX", 50, registry);
-      averagedIMUs[4] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwY", 50, registry);
-      averagedIMUs[5] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwZ", 50, registry);
+      averagedIMUs[0] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddX", 1000, registry);
+      averagedIMUs[1] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddY", 1000, registry);
+      averagedIMUs[2] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qddZ", 1000, registry);
+      averagedIMUs[3] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwX", 100, registry);
+      averagedIMUs[4] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwY", 100, registry);
+      averagedIMUs[5] = new SimpleMovingAverageFilteredYoVariable(prefix + "Avg_qdwZ", 100, registry);
 
       collectAverages = new YoBoolean(prefix + "CollectAveragesForBiasEstimation", registry);
       collectAverages.addListener(v ->
@@ -277,12 +283,22 @@ public class GenericIMUManager implements IMUManagerInterface
                                     yoIMU.getAngularVelocityBias().getY(),
                                     yoIMU.getAngularVelocityBias().getZ());
             isAveraging.set(false);
+            computeAccelBias();
          }
       }
 
       // Calculate IMU orientation in parent link frame (visualization purposes only)
       if (rootJointEstimate != null && rootJointFrame != null)
          computeOrientationAtEstimateFrame(imuFrame, orientationInIMUFrame, rootJointFrame, rootJointEstimate);
+   }
+
+   private void computeAccelBias()
+   {
+      double x = averagedIMUs[0].getDoubleValue();
+      double y = averagedIMUs[1].getDoubleValue();
+      double z = averagedIMUs[2].getDoubleValue();
+      pitchAccelerationBiasFromIdeal.set(Math.asin(-x/Math.sqrt(Math.pow(x, 2) + Math.pow(z, 2))));
+      rollAccelerationBiasFromIdeal.set(Math.asin(y/Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))));
    }
 
    /**
@@ -316,9 +332,9 @@ public class GenericIMUManager implements IMUManagerInterface
 
    private boolean updateAveraging()
    {
-      averagedIMUs[0].update(yoIMU.getLinearAcceleration().getX());
-      averagedIMUs[1].update(yoIMU.getLinearAcceleration().getY());
-      averagedIMUs[2].update(yoIMU.getLinearAcceleration().getZ());
+      averagedIMUs[0].update(linearAccelerationInWorld.getX());
+      averagedIMUs[1].update(linearAccelerationInWorld.getY());
+      averagedIMUs[2].update(linearAccelerationInWorld.getZ());
       averagedIMUs[3].update(yoIMU.getAngularVelocity().getX());
       averagedIMUs[4].update(yoIMU.getAngularVelocity().getY());
       averagedIMUs[5].update(yoIMU.getAngularVelocity().getZ());
