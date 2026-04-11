@@ -24,7 +24,7 @@ import us.ihmc.yoVariables.variable.YoVariable;
 
 public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 {
-   public static final boolean DEBUG_VARIABLES_SIL = false;
+   public static final boolean DEBUG_VARIABLES_SIL = true;
    public static final boolean DEBUG_ELMO_STATUS_REGISTER = false;
 
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware

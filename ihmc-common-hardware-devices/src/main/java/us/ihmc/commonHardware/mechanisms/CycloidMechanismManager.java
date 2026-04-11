@@ -44,8 +44,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private final YoBoolean publishFilteredJointStates;
    private final YoBoolean useFilteredJointStates;
-   private final YoJointData measuredMotorData;
-   private final YoJointData desiredMotorData;
 
    private final YoDouble positionError;
    private final YoDouble velocityError;
@@ -179,9 +177,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
 
-      measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
-      desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
-
       useFilteredJointStates = new YoBoolean(jointName + "_UseFilteredJointStates", registry);
       publishFilteredJointStates = new YoBoolean(jointName + "_PublishFilteredJointStates", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
@@ -285,14 +280,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          updateJointOffset();
          updateJointOffset.set(false);
       }
-
-      measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
-                                          platinumTwitter.getFilteredMotorPosition() :
-                                          platinumTwitter.getMeasuredMotorPosition());
-      measuredMotorData.setVelocity(publishFilteredJointStates.getBooleanValue() ?
-                                          platinumTwitter.getFilteredMotorVelocity() :
-                                          platinumTwitter.getMeasuredMotorVelocity());
-      measuredMotorData.setTorque(platinumTwitter.getMeasuredMotorTorque());
 
       statorTemperature.set(temperatureProvider.getValue());
       if (statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature())
@@ -443,28 +430,19 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       // Low pass filter the desired torque.
       filteredDesiredTau.update(this.desiredActuatorData.getTorque());
 
-      desiredMotorData.setLoadMode(loaded);
-
       double gearRatio = platinumTwitter.getGearRatio();
       double desiredOutputPosition = computeOutputPosition(this.desiredActuatorData.getPosition(), yoJointOffset.getValue());
       double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, platinumTwitter.getEncoderDifferenceAtOutput());
       double kt = platinumTwitter.getKt();
 
-      desiredMotorData.setPosition(desiredMotorPosition);
-      desiredMotorData.setVelocity(this.desiredActuatorData.getVelocity() * gearRatio);
-      desiredMotorData.setAcceleration(this.desiredActuatorData.getAcceleration() * gearRatio);
-      desiredMotorData.setTorque(filteredDesiredTau.getDoubleValue() / gearRatio);
-
       // We want to do this because it's way computationally cheaper
       double reflectedMultiplier = 1.0 / (gearRatio * gearRatio * kt);
-      desiredMotorData.setStiffness(this.desiredActuatorData.getStiffness() * reflectedMultiplier);
-      desiredMotorData.setDamping(this.desiredActuatorData.getDamping() * reflectedMultiplier);
 
-      platinumTwitter.setDesiredMotorPosition(desiredMotorData.getPosition());
-      platinumTwitter.setDesiredMotorVelocity(desiredMotorData.getVelocity());
-      platinumTwitter.setDesiredMotorTorque(desiredMotorData.getTorque());
-      platinumTwitter.setDesiredMotorStiffness(desiredMotorData.getStiffness());
-      platinumTwitter.setDesiredMotorDamping(desiredMotorData.getDamping());
+      platinumTwitter.setDesiredMotorPosition(desiredMotorPosition);
+      platinumTwitter.setDesiredMotorVelocity(this.desiredActuatorData.getVelocity() * gearRatio);
+      platinumTwitter.setDesiredMotorTorque(filteredDesiredTau.getDoubleValue() / gearRatio);
+      platinumTwitter.setDesiredMotorStiffness(this.desiredActuatorData.getStiffness() * reflectedMultiplier);
+      platinumTwitter.setDesiredMotorDamping(this.desiredActuatorData.getDamping() * reflectedMultiplier);
 
       platinumTwitter.setMaxPositionFeedbackError(maxPositionFeedbackError * gearRatio);
       platinumTwitter.setMaxVelocityFeedbackError(maxVelocityFeedbackError * gearRatio);
