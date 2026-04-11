@@ -24,6 +24,9 @@ import us.ihmc.yoVariables.variable.YoVariable;
 
 public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 {
+   public static final boolean DEBUG_VARIABLES_SIL = false;
+   public static final boolean DEBUG_ELMO_STATUS_REGISTER = false;
+
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
 
@@ -138,7 +141,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoEnum<State> etherCATState;
 
    // error variables
-   private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
+   private ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
    private final YoBoolean DRIVE_FAULTED;
    private final YoBoolean UNDER_VOLTAGE;
    private final YoBoolean OVER_VOLTAGE;
@@ -176,12 +179,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final CycloidSILParameters silParameters;
 
    // SIL Debuggging variables
-   private final YoDouble sil_linearDampingCompensationCurrent;
-   private final YoDouble sil_coggingCompensationMotorCurrent;
-   private final YoDouble sil_dahlFrictionCompensationCurrent;
-   private final YoDouble sil_impedanceControlMotorFeedbackCurrent;
-   private final YoDouble sil_feedForwardCurrent;
-   private final YoDouble sil_totalDesiredCurrent;
+   private YoDouble sil_linearDampingCompensationCurrent;
+   private YoDouble sil_coggingCompensationMotorCurrent;
+   private YoDouble sil_dahlFrictionCompensationCurrent;
+   private YoDouble sil_impedanceControlMotorFeedbackCurrent;
+   private YoDouble sil_feedForwardCurrent;
+   private YoDouble sil_totalDesiredCurrent;
 
    // SIL Socket warning and error status variables
    private final YoDouble inputEncoderWarningValue;
@@ -449,13 +452,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       impedanceControlMaxPositionError = new YoDouble(prefix + "ImpedanceControl_MaxPositionError", registry);
       impedanceControlMaxVelocityError = new YoDouble(prefix + "ImpedanceControl_MaxVelocityError", registry);
 
-      // SIL debugging variables
-      sil_linearDampingCompensationCurrent = new YoDouble(prefix + "sil_linearDampingCompensationCurrent", registry);
-      sil_coggingCompensationMotorCurrent = new YoDouble(prefix + "sil_coggingCompensationMotorCurrent", registry);
-      sil_dahlFrictionCompensationCurrent = new YoDouble(prefix + "sil_dahlFrictionCompensationCurrent", registry);
-      sil_impedanceControlMotorFeedbackCurrent = new YoDouble(prefix + "sil_impedanceControlMotorFeedbackCurrent", registry);
-      sil_feedForwardCurrent = new YoDouble(prefix + "sil_feedForwardCurrent", registry);
-      sil_totalDesiredCurrent = new YoDouble(prefix + "sil_totalDesiredCurrent", registry);
+      if (DEBUG_VARIABLES_SIL)
+      {
+         // SIL debugging variables
+         sil_linearDampingCompensationCurrent = new YoDouble(prefix + "sil_linearDampingCompensationCurrent", registry);
+         sil_coggingCompensationMotorCurrent = new YoDouble(prefix + "sil_coggingCompensationMotorCurrent", registry);
+         sil_dahlFrictionCompensationCurrent = new YoDouble(prefix + "sil_dahlFrictionCompensationCurrent", registry);
+         sil_impedanceControlMotorFeedbackCurrent = new YoDouble(prefix + "sil_impedanceControlMotorFeedbackCurrent", registry);
+         sil_feedForwardCurrent = new YoDouble(prefix + "sil_feedForwardCurrent", registry);
+         sil_totalDesiredCurrent = new YoDouble(prefix + "sil_totalDesiredCurrent", registry);
+      }
 
       // SIL Socket error and warning status signals
       inputEncoderWarningValue = new YoDouble(prefix + "sil_inputEncoderWarningValue", registry);
@@ -526,7 +532,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       measuredBusVoltage = new YoDouble(prefix + "busVoltage", registry);
 
       //faults
-      statusRegisterProcessor = new ElmoTwitterStatusRegisterProcessor(registry);
+      if (DEBUG_ELMO_STATUS_REGISTER)
+         statusRegisterProcessor = new ElmoTwitterStatusRegisterProcessor(registry);
+
       DRIVE_FAULTED = new YoBoolean(prefix + "_DRIVE_FAULTED", registry);
       UNDER_VOLTAGE = new YoBoolean(prefix + "_UNDER_VOLTAGE", registry);
       OVER_VOLTAGE = new YoBoolean(prefix + "_OVER_VOLTAGE", registry);
@@ -609,7 +617,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       int rawElmoStatusRegisterValue = platinumTwitter.getElmoStatusRegister();
       elmoStatusRegister.set(rawElmoStatusRegisterValue);
-      statusRegisterProcessor.processStatusRegisterBits(rawElmoStatusRegisterValue);
+      if (DEBUG_ELMO_STATUS_REGISTER)
+         statusRegisterProcessor.processStatusRegisterBits(rawElmoStatusRegisterValue);
 
       controlWord.set(platinumTwitter.getCurrentControlword());
       errorCode.set(platinumTwitter.getErrorRegister());
@@ -633,15 +642,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
 
-      // Update SIL readable variables
-      sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
-      sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
-      sil_coggingCompensationMotorCurrent.set(platinumTwitter.getSILDesiredCoggingCompensationCurrent());
-      sil_impedanceControlMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
+      if (DEBUG_VARIABLES_SIL)
+      {      // Update SIL readable variables
+         sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
+         sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
+         sil_coggingCompensationMotorCurrent.set(platinumTwitter.getSILDesiredCoggingCompensationCurrent());
+         sil_impedanceControlMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
 
-      sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
-      sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
-
+         sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
+         sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
+      }
 //      driveTemperature.set(platinumTwitter.getSILTemperature());
 
       inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
