@@ -8,6 +8,7 @@ import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
@@ -23,7 +24,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
 import us.ihmc.yoVariables.variable.YoVariable;
 
-public class YoCycloidPlatinumTwitter implements YoGenericTwitter
+public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDeviceStatusProvider
 {
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
@@ -39,7 +40,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
-   private static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = 57.0;
+   private static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = 58.0;
    private static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = Double.NEGATIVE_INFINITY;
 
    private final double dt;
@@ -1226,6 +1227,72 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
    @Override
    public State getEtherCATState()
+   {
+      return etherCATState.getEnumValue();
+   }
+
+   @Override
+   public boolean isResponding()
+   {
+      return platinumTwitter.isOperational();
+   }
+
+   @Override
+   public boolean isFaulted()
+   {
+      return MOTOR_FAULT.getBooleanValue();
+   }
+
+   @Override
+   public boolean isUnderVoltage()
+   {
+      return UNDER_VOLTAGE.getBooleanValue();
+   }
+
+   @Override
+   public boolean isOverVoltage()
+   {
+      return OVER_VOLTAGE.getBooleanValue();
+   }
+
+   @Override
+   public boolean isSTODisabled()
+   {
+      return STO_DISABLED.getBooleanValue();
+   }
+
+   @Override
+   public boolean isCurrentShort()
+   {
+      return CURRENT_SHORT.getBooleanValue();
+   }
+
+   @Override
+   public boolean isOverTemp()
+   {
+      return OVER_TEMPERATURE.getBooleanValue();
+   }
+
+   @Override
+   public int getElmoErrorCode()
+   {
+      return platinumTwitter.getErrorRegister();
+   }
+
+   @Override
+   public double getInputEncoderError()
+   {
+      return platinumTwitter.getSocket1Error();
+   }
+
+   @Override
+   public double getOutputEncoderError()
+   {
+      return platinumTwitter.getSocket2Error();
+   }
+
+   @Override
+   public State getState()
    {
       return etherCATState.getEnumValue();
    }
