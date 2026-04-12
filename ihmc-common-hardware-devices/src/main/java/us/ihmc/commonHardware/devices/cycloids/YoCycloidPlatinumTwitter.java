@@ -41,7 +41,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
    private static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = 58.0;
-   private static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = Double.NEGATIVE_INFINITY;
+   private static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = 24.0;
 
    private final double dt;
    private final String name;
