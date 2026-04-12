@@ -348,7 +348,7 @@ public abstract class AbstractHardwareMap
       etherCATDevices.add(cycloidPlatinumTwitter);
       cycloidTwitters.add(yoCycloidPlatinumTwitter);
       cycloidPlatinumTwitterMap.put(name, yoCycloidPlatinumTwitter);
-      hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
+      hardwareStatusManager.registerDevice(xmlPlatinumTwitter, yoCycloidPlatinumTwitter);
    }
 
    /**

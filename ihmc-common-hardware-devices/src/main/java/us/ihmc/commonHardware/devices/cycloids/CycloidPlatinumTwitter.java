@@ -11,7 +11,7 @@ import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 
 import java.io.IOException;
 
-public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitterDeviceStatusProvider
+public class CycloidPlatinumTwitter extends PlatinumTwitter
 {
    private static final int MAX_CURRENT_ADDRESS = 0x6075;
    private static final int MAX_TORQUE_ADDRESS = 0x6076;
@@ -347,72 +347,6 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter implements ElmoTwitt
       verifyWorkingCounter(writeSDO(0x1C13, 3, (short) 0x1A02), "failed to write to 0x1C13 -- 0x1A02");
       verifyWorkingCounter(writeSDO(0x1C13, 4, (short) 0x1A03), "failed to write to 0x1C13 -- 0x1A03");
       verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 4), "failed to write to 0x1C13 -- 0x4");
-   }
-
-   @Override
-   public boolean isResponding()
-   {
-      return super.isOperational();
-   }
-
-   @Override
-   public Slave.State getState()
-   {
-      return super.getState();
-   }
-
-   @Override
-   public boolean isFaulted()
-   {
-      return super.isFaulted();
-   }
-
-   @Override
-   public boolean isUnderVoltage()
-   {
-      return super.isUnderVoltage();
-   }
-
-   @Override
-   public boolean isOverVoltage()
-   {
-      return super.isOverVoltage();
-   }
-
-   @Override
-   public boolean isSTODisabled()
-   {
-      return super.isSTODisabled();
-   }
-
-   @Override
-   public boolean isCurrentShort()
-   {
-      return super.isCurrentShorted();
-   }
-
-   @Override
-   public boolean isOverTemp()
-   {
-      return super.isOverTemperature();
-   }
-
-   @Override
-   public int getElmoErrorCode()
-   {
-      return getErrorRegister();
-   }
-
-   @Override
-   public double getInputEncoderError()
-   {
-      return getSocket1Error();
-   }
-
-   @Override
-   public double getOutputEncoderError()
-   {
-      return getSocket2Error();
    }
 
    //untested
