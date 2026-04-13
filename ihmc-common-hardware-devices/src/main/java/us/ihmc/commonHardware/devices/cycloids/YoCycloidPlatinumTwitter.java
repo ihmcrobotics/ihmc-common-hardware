@@ -1157,6 +1157,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       return gearRatio.getDoubleValue();
    }
 
+   public double getMeasuredBusVoltage()
+   {
+      return measuredBusVoltage.getDoubleValue();
+   }
+
    public double getKt()
    {
       return kt.getDoubleValue();
