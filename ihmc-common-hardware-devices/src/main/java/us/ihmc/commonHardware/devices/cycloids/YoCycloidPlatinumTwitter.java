@@ -143,7 +143,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoEnum<State> etherCATState;
 
    // error variables
-   private ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
+   private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
    private final YoBoolean DRIVE_FAULTED;
    private final YoBoolean UNDER_VOLTAGE;
    private final YoBoolean OVER_VOLTAGE;
@@ -529,6 +529,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       //faults
       if (DEBUG_ELMO_STATUS_REGISTER)
          statusRegisterProcessor = new ElmoTwitterStatusRegisterProcessor(registry);
+      else
+         statusRegisterProcessor = null;
 
       DRIVE_FAULTED = new YoBoolean(prefix + "_DRIVE_FAULTED", registry);
       UNDER_VOLTAGE = new YoBoolean(prefix + "_UNDER_VOLTAGE", registry);
@@ -606,7 +608,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       int rawElmoStatusRegisterValue = platinumTwitter.getElmoStatusRegister();
       elmoStatusRegister.set(rawElmoStatusRegisterValue);
-      if (DEBUG_ELMO_STATUS_REGISTER)
+      if (statusRegisterProcessor != null)
          statusRegisterProcessor.processStatusRegisterBits(rawElmoStatusRegisterValue);
 
       controlWord.set(platinumTwitter.getCurrentControlword());
@@ -624,7 +626,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemp.set(getStatorTemperature());
 
-      if (DEBUG_VARIABLES_SIL)
+      if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
       //      driveTemperature.set(platinumTwitter.getSILTemperature());
 
