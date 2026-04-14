@@ -816,7 +816,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    {
       DRIVE_FAULTED.addListener(source ->
                                 {
-                                   if (DRIVE_FAULTED.getBooleanValue())
+                                   if (DRIVE_FAULTED.getBooleanValue() && isDriveEnabled())
                                    {
                                       LogTools.error(getName() + " just faulted");
                                       MOTOR_FAULT.set(true);
@@ -833,25 +833,25 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       UNDER_VOLTAGE.addListener(s ->
                                 {
-                                   if (UNDER_VOLTAGE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+                                   if (UNDER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
                                       LogTools.error(getName() + " faulted due to under voltage, bus voltage dropped to " + measuredBusVoltage.getValue());
                                 });
 
       OVER_VOLTAGE.addListener(s ->
                                {
-                                  if (OVER_VOLTAGE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+                                  if (OVER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
                                      LogTools.error(getName() + " faulted due to over voltage, bus voltage rose to " + measuredBusVoltage.getValue());
                                });
 
       CURRENT_SHORT.addListener(s ->
                                 {
-                                   if (CURRENT_SHORT.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+                                   if (CURRENT_SHORT.getBooleanValue() && !isMotorFaulted())
                                       LogTools.error(getName() + " faulted due to current short");
                                 });
 
       OVER_TEMPERATURE.addListener(s ->
                                    {
-                                      if (OVER_TEMPERATURE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+                                      if (OVER_TEMPERATURE.getBooleanValue() && !isMotorFaulted())
                                          LogTools.error(getName() + " faulted due to twitter overheating at " + driveTemperature.getValue());
                                    });
 
