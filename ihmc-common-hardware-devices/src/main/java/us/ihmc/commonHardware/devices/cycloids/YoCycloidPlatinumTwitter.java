@@ -12,6 +12,7 @@ import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
+import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.parameters.DoubleParameter;
@@ -26,8 +27,8 @@ import us.ihmc.yoVariables.variable.YoVariable;
 
 public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDeviceStatusProvider
 {
-   public static final boolean DEBUG_VARIABLES_SIL = true;
-   public static final boolean DEBUG_ELMO_STATUS_REGISTER = false;
+   public static boolean DEBUG_VARIABLES_SIL = true;
+   public static boolean DEBUG_ELMO_STATUS_REGISTER = false;
 
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
@@ -184,12 +185,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoDouble softwareBasedUnderVoltThreshold;
 
    // SIL Debuggging variables
-   private YoDouble sil_linearDampingCompensationCurrent;
-   private YoDouble sil_coggingCompensationMotorCurrent;
-   private YoDouble sil_dahlFrictionCompensationCurrent;
-   private YoDouble sil_impedanceControlMotorFeedbackCurrent;
-   private YoDouble sil_feedForwardCurrent;
-   private YoDouble sil_totalDesiredCurrent;
+   private final YoSILDesiredCurrents silDesiredCurrents;
 
    // SIL Socket warning and error status variables
    private final YoDouble inputEncoderWarningValue;
@@ -464,15 +460,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       impedanceControlMaxVelocityError = new YoDouble(prefix + "ImpedanceControl_MaxVelocityError", registry);
 
       if (DEBUG_VARIABLES_SIL)
-      {
-         // SIL debugging variables
-         sil_linearDampingCompensationCurrent = new YoDouble(prefix + "sil_linearDampingCompensationCurrent", registry);
-         sil_coggingCompensationMotorCurrent = new YoDouble(prefix + "sil_coggingCompensationMotorCurrent", registry);
-         sil_dahlFrictionCompensationCurrent = new YoDouble(prefix + "sil_dahlFrictionCompensationCurrent", registry);
-         sil_impedanceControlMotorFeedbackCurrent = new YoDouble(prefix + "sil_impedanceControlMotorFeedbackCurrent", registry);
-         sil_feedForwardCurrent = new YoDouble(prefix + "sil_feedForwardCurrent", registry);
-         sil_totalDesiredCurrent = new YoDouble(prefix + "sil_totalDesiredCurrent", registry);
-      }
+         silDesiredCurrents = new YoSILDesiredCurrents(prefix, registry);
+      else
+         silDesiredCurrents = null;
 
       // SIL Socket error and warning status signals
       inputEncoderWarningValue = new YoDouble(prefix + "sil_inputEncoderWarningValue", registry);
@@ -606,7 +596,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          previousTime.set(time.getValue());
       }
       double prevSILTime = silTime.getDoubleValue();
-//      silTime.set(platinumTwitter.getSILControlTime());
+      //      silTime.set(platinumTwitter.getSILControlTime());
       silDT.set(silTime.getDoubleValue() - prevSILTime);
 
       /*
@@ -635,16 +625,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       statorTemp.set(getStatorTemperature());
 
       if (DEBUG_VARIABLES_SIL)
-      {      // Update SIL readable variables
-         sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
-         sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
-         sil_coggingCompensationMotorCurrent.set(platinumTwitter.getSILDesiredCoggingCompensationCurrent());
-         sil_impedanceControlMotorFeedbackCurrent.set(platinumTwitter.getSILDesiredPDControlFeedbackCurrent());
-
-         sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
-         sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
-      }
-//      driveTemperature.set(platinumTwitter.getSILTemperature());
+         silDesiredCurrents.update(platinumTwitter);
+      //      driveTemperature.set(platinumTwitter.getSILTemperature());
 
       inputEncoderWarningValue.set(platinumTwitter.getSocket1Warning());
       inputEncoderErrorValue.set(platinumTwitter.getSocket1Error());
@@ -661,10 +643,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       STO_DISABLED.set(platinumTwitter.isSTODisabled());
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
-      boolean isFaulted = UNDER_VOLTAGE.getBooleanValue()
-                          || OVER_VOLTAGE.getBooleanValue()
-                          || STO_DISABLED.getBooleanValue()
-                          || CURRENT_SHORT.getBooleanValue()
+      boolean isFaulted = UNDER_VOLTAGE.getBooleanValue() || OVER_VOLTAGE.getBooleanValue() || STO_DISABLED.getBooleanValue() || CURRENT_SHORT.getBooleanValue()
                           || OVER_TEMPERATURE.getBooleanValue();
       DRIVE_FAULTED.set(isFaulted || platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
 
@@ -716,9 +695,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
-      if(zeroEncoders.getBooleanValue())
+      if (zeroEncoders.getBooleanValue())
       {
-         if(averageMotorPosition.getHasBufferWindowFilled())
+         if (averageMotorPosition.getHasBufferWindowFilled())
          {
             motorPositionOffset.set(averageMotorPosition.getDoubleValue() - motorDirection.getDoubleValue() * offsetFromZero * gearRatio.getDoubleValue());
             outputPositionOffset.set(averageOutputPosition.getDoubleValue() - outputDirection * offsetFromZero);
@@ -733,7 +712,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       }
       else if (!isDriveEnabled() && checkEncoderOffsets.getBooleanValue())
          checkAndUpdateEncoderOffsets(); // While the motor is disabled, check if the encoder isn't correct
-
    }
 
    /**
@@ -826,8 +804,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       // Set the actual objectives for the drive. This includes the desired motor encoder counts, the desired motor encoder counts per second, and the
       // desired percentage of max effort, -1000 to 1000.
-//      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
-//      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
+      //      platinumTwitter.setRawTargetPosition(rawDesiredMotorPosition.getIntegerValue());
+      //      platinumTwitter.setRawTargetVelocity(rawDesiredMotorVelocity.getIntegerValue());
       platinumTwitter.setPercentageMaxEffort(rawDesiredMotorEffortPercentage.getIntegerValue());
 
       // Set the desired SIL controller parameters to the amplifier.
@@ -841,7 +819,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       platinumTwitter.setMotorStiffnessForImpedanceControl(impedanceControlStiffness.getDoubleValue());
       platinumTwitter.setMotorDampingForImpedanceControl(impedanceControlDamping.getDoubleValue());
 
-      desiredMotorPositionForImpedanceControl.set(motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue());
+      desiredMotorPositionForImpedanceControl.set(
+            motorDirection.getDoubleValue() * desiredMotorPosition.getDoubleValue() + motorPositionOffset.getDoubleValue());
       desiredMotorVelocityForImpedanceControl.set(motorDirection.getDoubleValue() * desiredMotorVelocity.getDoubleValue());
       platinumTwitter.setDesiredMotorPositionForImpedanceControl(desiredMotorPositionForImpedanceControl.getDoubleValue());
       platinumTwitter.setDesiredMotorVelocityForImpedanceControl(desiredMotorVelocityForImpedanceControl.getDoubleValue());
@@ -1183,7 +1162,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    @Override
    public double getFilteredMotorPosition()
    {
-      return  filteredMotorPosition.getDoubleValue();
+      return filteredMotorPosition.getDoubleValue();
    }
 
    @Override
