@@ -854,31 +854,31 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       UNDER_VOLTAGE.addListener(s ->
                                 {
-                                   if (UNDER_VOLTAGE.getBooleanValue())
+                                   if (UNDER_VOLTAGE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
                                       LogTools.error(getName() + " faulted due to under voltage, bus voltage dropped to " + measuredBusVoltage.getValue());
                                 });
 
       OVER_VOLTAGE.addListener(s ->
                                {
-                                  if (OVER_VOLTAGE.getBooleanValue())
+                                  if (OVER_VOLTAGE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
                                      LogTools.error(getName() + " faulted due to over voltage, bus voltage rose to " + measuredBusVoltage.getValue());
                                });
 
       CURRENT_SHORT.addListener(s ->
                                 {
-                                   if (CURRENT_SHORT.getBooleanValue())
+                                   if (CURRENT_SHORT.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
                                       LogTools.error(getName() + " faulted due to current short");
                                 });
 
       OVER_TEMPERATURE.addListener(s ->
                                    {
-                                      if (OVER_TEMPERATURE.getBooleanValue())
+                                      if (OVER_TEMPERATURE.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
                                          LogTools.error(getName() + " faulted due to twitter overheating at " + driveTemperature.getValue());
                                    });
 
       STO_DISABLED.addListener(s ->
                                {
-                                  if (STO_DISABLED.getBooleanValue())
+                                  if (STO_DISABLED.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
                                      LogTools.error(getName() + " faulted due to STO being disabled");
                                });
    }
