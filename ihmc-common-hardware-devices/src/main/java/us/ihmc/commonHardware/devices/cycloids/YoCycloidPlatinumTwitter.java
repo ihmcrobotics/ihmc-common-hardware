@@ -96,8 +96,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoDouble measuredMotorVelocity;
    private final YoDouble filteredMotorPosition;
    private final YoDouble filteredMotorVelocity;
-   private final YoDouble measuredMotorVelocityFD;
-   private final YoBoolean useFDforMotorVelocity;
 
    private final YoDouble measuredOutputPositionFromMotor;
    private final YoDouble measuredOutputVelocityFromMotor;
@@ -108,8 +106,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoDouble measuredOutputVelocity;
    private final YoDouble filteredOutputPosition;
    private final YoDouble filteredOutputVelocity;
-   private final YoDouble measuredOutputVelocityFD;
-   private final YoBoolean useFDforOutputVelocity;
 
    private final YoLong maxDriveCurrentMilliAmps;
    private final YoDouble measuredMotorCurrent;
@@ -494,9 +490,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", registry);
       filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", registry);
       filteredMotorVelocity = new YoDouble(prefix + "filteredMotorVelocity", registry);
-      measuredMotorVelocityFD = new YoDouble(prefix + "measuredMotorVelocityFD", registry);
-      useFDforMotorVelocity = new YoBoolean(prefix + "useFDforMotorVelocity", registry);
-      useFDforMotorVelocity.set(false);
 
       measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
       measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
@@ -507,9 +500,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       measuredOutputVelocity = new YoDouble(prefix + "measuredOutputVelocity", registry);
       filteredOutputPosition = new YoDouble(prefix + "filteredOutputPosition", registry);
       filteredOutputVelocity = new YoDouble(prefix + "filteredOutputVelocity", registry);
-      measuredOutputVelocityFD = new YoDouble(prefix + "measuredOutputVelocityFD", registry);
-      useFDforOutputVelocity = new YoBoolean(prefix + "useFDforOutputVelocity", registry);
-      useFDforOutputVelocity.set(false);
 
       measuredMotorCurrent = new YoDouble(prefix + "measuredMotorCurrent", registry);
       estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
@@ -704,9 +694,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       filteredOutputPosition.set(outputDirection * (platinumTwitter.getFilteredOutputPosition() - outputPositionOffset.getValue()));
       measuredOutputVelocity.set(outputDirection * platinumTwitter.getMeasuredOutputVelocity());
       filteredOutputVelocity.set(outputDirection * platinumTwitter.getFilteredOutputVelocity());
-
-      // finite difference the measured velocity, looking at the previous encoder measurement.
-      measuredOutputVelocityFD.set((measuredOutputPosition.getDoubleValue() - previousMeasuredOutputPosition) / estimatedDt.getDoubleValue());
 
       /** Current and Torque **/
 
