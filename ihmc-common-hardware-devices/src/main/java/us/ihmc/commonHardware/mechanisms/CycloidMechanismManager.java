@@ -385,7 +385,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          q_d = EuclidCoreTools.interpolate(wakeUpPosition.getValue(), q_d, alpha);
       }
 
-      q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
+      // TODO figure out how to switch this off and on for different controllers
+//      q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
       double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
@@ -547,15 +548,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
-      if (isRobotServoed)
+      if (enableMotors)
       {
          wakeUpTime.set(time.getValue());
          wakeUpPosition.set(measuredActuatorData.getPosition());
       }
 
-      platinumTwitter.enableDrive(isRobotServoed);
+      platinumTwitter.enableDrive(enableMotors);
    }
 
    @Override
@@ -579,7 +580,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    @Override
    public double getTotalMeasuredMotorCurrent()
    {
-      return platinumTwitter.getMeasuredMotorCurrent();
+      return Math.abs(platinumTwitter.getMeasuredMotorCurrent());
    }
 
    /**
@@ -669,6 +670,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    /**
+    * Returns the maximum torque this actuator can physically produce, computed as
+    * Kt * gearRatio * maxDriveCurrent.
+    */
+   public double getMaxActuatorTorque()
+   {
+      return platinumTwitter.getMaxActuatorTorque();
+   }
+
+   /**
     * Set if the stator is above the recommended temperature
     *
     * @param isStatorAboveRecommendedTemperature boolean dictating if the stator is above the recommended temperature
@@ -703,5 +713,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void setMotorVelocityBreakFrequency(double breakFrequency)
    {
       platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
+   }
+
+   @Override
+   public boolean isDynamicBrakingEnabled()
+   {
+      return platinumTwitter.isDynamicBrakingEnabled();
    }
 }

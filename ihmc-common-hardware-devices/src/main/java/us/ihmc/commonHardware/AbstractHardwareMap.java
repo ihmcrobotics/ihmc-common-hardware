@@ -321,6 +321,7 @@ public abstract class AbstractHardwareMap
       boolean reverseMotorDirection = xmlPlatinumTwitter.isMotorDirectionReversed();
       double motorOffset = xmlPlatinumTwitter.getMotorOffset();
       double outputOffset = xmlPlatinumTwitter.getOutputOffset();
+      boolean dynamicBrakingEnabled = xmlPlatinumTwitter.isDynamicBrakingEnabled();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter;
       if(xmlPlatinumTwitter.useLatestCode())
@@ -337,6 +338,8 @@ public abstract class AbstractHardwareMap
                                                                                        motorOffset,
                                                                                        outputOffset,
                                                                                        dt,
+                                                                                       dynamicBrakingEnabled,
+                                                                                       false,
                                                                                        registry);
 
       yoCycloidPlatinumTwitter.setOutputEncoderInverted(xmlPlatinumTwitter.isOutputEncoderInverted());
@@ -345,7 +348,7 @@ public abstract class AbstractHardwareMap
       etherCATDevices.add(cycloidPlatinumTwitter);
       cycloidTwitters.add(yoCycloidPlatinumTwitter);
       cycloidPlatinumTwitterMap.put(name, yoCycloidPlatinumTwitter);
-      hardwareStatusManager.registerDevice(xmlPlatinumTwitter, cycloidPlatinumTwitter);
+      hardwareStatusManager.registerDevice(xmlPlatinumTwitter, yoCycloidPlatinumTwitter);
    }
 
    /**
@@ -451,10 +454,14 @@ public abstract class AbstractHardwareMap
       yoImu.setAngularVelocityBias(angularBiasX, angularBiasY, angularBiasZ);
       yoImu.setLinearAccelerationBias(linearBiasX, linearBiasY, linearBiasZ);
 
-      GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
+      if (xmlIMU.isPresent())
+      {
+         GenericIMUManager imuManager = new GenericIMUManager(imuDefinitions.get(name), yoImu, dt, registry);
 
-      imuManagers.add(imuManager);
-      measuredIMUData.put(imuManager.getName(), new ImuData());
+         imuManagers.add(imuManager);
+         measuredIMUData.put(imuManager.getName(), new ImuData());
+      }
+
       yoEtherSnacksSensors.add(yoImu);
       return imu;
    }

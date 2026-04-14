@@ -9,11 +9,13 @@ import us.ihmc.etherCAT.slaves.DSP402Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
+import us.ihmc.yoVariables.parameters.DoubleParameter;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -23,7 +25,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
 import us.ihmc.yoVariables.variable.YoVariable;
 
-public class YoCycloidPlatinumTwitter implements YoGenericTwitter
+public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDeviceStatusProvider
 {
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
@@ -38,6 +40,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private static final double DEFAULT_OUTPUT_POSITION_BREAK_FREQUENCY = 10000.0;
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
+
+   private static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = 58.0;
+   private static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = 24.0;
 
    private final double dt;
    private final String name;
@@ -178,6 +183,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final CycloidPhysicalParameters physicalParameters;
    private final CycloidSILParameters silParameters;
 
+   // Tunable thresholds for under and over volt protection
+   private final YoDouble softwareBasedOverVoltThreshold;
+   private final YoDouble softwareBasedUnderVoltThreshold;
+
    // SIL Debuggging variables
    private final YoDouble sil_linearDampingCompensationCurrent;
    private final YoDouble sil_coggingCompensationMotorCurrent;
@@ -215,6 +224,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    private final YoDouble motorVelocityBreakFrequency;
    private final YoDouble outputVelocityBreakFrequency;
 
+   private final YoBoolean dynamicBrakingEnabled;
+
    private final YoBoolean checkEncoderOffsets;
    private double offsetFromZero;
 
@@ -248,7 +259,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    YoRegistry parentRegistry)
 
    {
-      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, parentRegistry);
+      this(prefix, twitter, time, actuatorDirectory, actuatorPackage, isMotorDirectionReversed, motorOffset, outputOffset, dt, false, false, parentRegistry);
    }
 
    /**
@@ -275,6 +286,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
                                    double motorOffset,
                                    double outputOffset,
                                    double dt,
+                                   boolean dynamicBrakingEnabled,
                                    boolean enableCompensationAtStart,
                                    YoRegistry parentRegistry)
    {
@@ -292,6 +304,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
+      this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
+      this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
 
       this.reverseMotorDirection = new YoBoolean(name + "MotorDirectionIsReversed", registry);
       this.reverseMotorDirection.set(isMotorDirectionReversed);
@@ -440,6 +454,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
             }
          }
       });
+
+      // Tunable thresholds for under and over volt protection
+      softwareBasedOverVoltThreshold = new YoDouble(prefix + "SoftwareBasedOverVoltThreshold", registry);
+      softwareBasedOverVoltThreshold.set(DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD);
+      softwareBasedUnderVoltThreshold = new YoDouble(prefix + "SoftwareBasedUnderVoltThreshold", registry);
+      softwareBasedUnderVoltThreshold.set(DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD);
 
       // SIL Acceleration Integration Variables
       impedanceControlStiffness = new YoDouble(prefix + "ImpedanceControl_Stiffness", registry);
@@ -619,13 +639,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
 
       statorTemp.set(getStatorTemperature());
 
-      DRIVE_FAULTED.set(platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
-      UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage());
-      OVER_VOLTAGE.set(platinumTwitter.isOverVoltage());
-      STO_DISABLED.set(platinumTwitter.isSTODisabled());
-      CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
-      OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
-
       // Update SIL readable variables
       sil_dahlFrictionCompensationCurrent.set(platinumTwitter.getSILDahlFrictionCompensationCurrent());
       sil_linearDampingCompensationCurrent.set(platinumTwitter.getSILLinearDampingCompensationCurrent());
@@ -645,6 +658,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       updateEncoderStates();
 
       measuredBusVoltage.set(platinumTwitter.getDCLinkVoltageMilliVolts() / 1000.0);
+
+      // Update fault info
+      UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage() || measuredBusVoltage.getDoubleValue() < softwareBasedUnderVoltThreshold.getDoubleValue());
+      OVER_VOLTAGE.set(platinumTwitter.isOverVoltage() || measuredBusVoltage.getDoubleValue() > softwareBasedOverVoltThreshold.getDoubleValue());
+      STO_DISABLED.set(platinumTwitter.isSTODisabled());
+      CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
+      OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
+      boolean isFaulted = UNDER_VOLTAGE.getBooleanValue()
+                          || OVER_VOLTAGE.getBooleanValue()
+                          || STO_DISABLED.getBooleanValue()
+                          || CURRENT_SHORT.getBooleanValue()
+                          || OVER_TEMPERATURE.getBooleanValue();
+      DRIVE_FAULTED.set(isFaulted || platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
 
       /** Motor Space Encoders **/
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
@@ -1176,11 +1202,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return MOTOR_FAULT.getBooleanValue();
    }
 
-   public boolean getDriveFaulted()
-   {
-      return DRIVE_FAULTED.getBooleanValue();
-   }
-
    @Override
    public double getMeasuredOutputTorque()
    {
@@ -1199,9 +1220,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return gearRatio.getDoubleValue();
    }
 
+   public double getMeasuredBusVoltage()
+   {
+      return measuredBusVoltage.getDoubleValue();
+   }
+
    public double getKt()
    {
       return kt.getDoubleValue();
+   }
+
+   public double getMaxActuatorTorque()
+   {
+      return kt.getDoubleValue() * gearRatio.getDoubleValue() * platinumTwitter.getMaxDriveCurrentAmps();
    }
 
    private double getOutputDirection()
@@ -1268,6 +1299,72 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
       return etherCATState.getEnumValue();
    }
 
+   @Override
+   public boolean isResponding()
+   {
+      return platinumTwitter.isOperational();
+   }
+
+   @Override
+   public boolean isFaulted()
+   {
+      return MOTOR_FAULT.getBooleanValue();
+   }
+
+   @Override
+   public boolean isUnderVoltage()
+   {
+      return UNDER_VOLTAGE.getBooleanValue();
+   }
+
+   @Override
+   public boolean isOverVoltage()
+   {
+      return OVER_VOLTAGE.getBooleanValue();
+   }
+
+   @Override
+   public boolean isSTODisabled()
+   {
+      return STO_DISABLED.getBooleanValue();
+   }
+
+   @Override
+   public boolean isCurrentShort()
+   {
+      return CURRENT_SHORT.getBooleanValue();
+   }
+
+   @Override
+   public boolean isOverTemp()
+   {
+      return OVER_TEMPERATURE.getBooleanValue();
+   }
+
+   @Override
+   public int getElmoErrorCode()
+   {
+      return platinumTwitter.getErrorRegister();
+   }
+
+   @Override
+   public double getInputEncoderError()
+   {
+      return platinumTwitter.getSocket1Error();
+   }
+
+   @Override
+   public double getOutputEncoderError()
+   {
+      return platinumTwitter.getSocket2Error();
+   }
+
+   @Override
+   public State getState()
+   {
+      return etherCATState.getEnumValue();
+   }
+
    public CycloidPhysicalParameters getPhysicalParameters()
    {
       return physicalParameters;
@@ -1319,6 +1416,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter
    public boolean isDriveEnabled()
    {
       return enableDrive.getBooleanValue();
+   }
+
+   public boolean isDynamicBrakingEnabled()
+   {
+      return dynamicBrakingEnabled.getBooleanValue();
    }
 
    public String getActuatorPackage()

@@ -21,6 +21,8 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    protected double motorOffset;
    @XmlElement(required = true)
    protected double outputOffset;
+   @XmlElement(defaultValue = "false")
+   protected boolean dynamicBrakingEnabled;
 
    public XmlPlatinumTwitter()
    {
@@ -80,5 +82,10 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    public void setOutputOffset(int outputOffset)
    {
       this.outputOffset = outputOffset;
+   }
+
+   public boolean isDynamicBrakingEnabled()
+   {
+      return dynamicBrakingEnabled;
    }
 }

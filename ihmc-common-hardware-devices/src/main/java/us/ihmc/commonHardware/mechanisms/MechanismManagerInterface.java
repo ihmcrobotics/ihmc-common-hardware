@@ -54,7 +54,7 @@ public interface MechanismManagerInterface
 
    void clearFaults();
 
-   void setIsRobotServoed(boolean isRobotServoed);
+   void setEnableMotors(boolean enableMotors);
 
    void setEnableCompensationEfforts(boolean enable);
 
@@ -65,4 +65,6 @@ public interface MechanismManagerInterface
    void setVelocityBreakFrequency(double breakFrequency);
 
    String getName();
+
+   boolean isDynamicBrakingEnabled();
 }
