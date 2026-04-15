@@ -29,6 +29,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 {
    public static boolean DEBUG_VARIABLES_SIL = true;
    public static boolean DEBUG_ELMO_STATUS_REGISTER = false;
+   public static boolean DEBUG_MOTOR_VARIABLES = false;
 
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
@@ -50,6 +51,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final double dt;
    private final String name;
    private final YoRegistry registry;
+   private final YoRegistry motorRegistry;
 
    private final DoubleProvider time;
    private final YoDouble silTime;
@@ -152,7 +154,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoBoolean STO_DISABLED;
    private final YoBoolean CURRENT_SHORT;
    private final YoBoolean OVER_TEMPERATURE;
-   private final YoBoolean MOTOR_ENABLED;
    private final YoBoolean MOTOR_FAULT;
 
    private final YoDouble dahlFrictionForce; // Dahl Friction Force
@@ -281,6 +282,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       this.actuatorPackage = actuatorPackage;
       name = prefix + getClass().getSimpleName();
       registry = new YoRegistry(name);
+      motorRegistry = new YoRegistry(name + "_Motor");
       XmlCycloidParameters cycloidParameters;
       if (actuatorDirectory != null)
          cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
@@ -370,20 +372,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       outputPositionOffset = new YoDouble(name + "OutputPositionOffset", registry);
       outputPositionOffset.set(outputOffset);
 
-      averageMotorPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageMotorPosition", 100, registry);
-      averageOutputPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageOutputPosition", 100, registry);
+      averageMotorPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageMotorPosition", 100, motorRegistry);
+      averageOutputPosition = new SimpleMovingAverageFilteredYoVariable(name + "AverageOutputPosition", 100, motorRegistry);
 
       maxDriveCurrentMilliAmps = new YoLong(prefix + "MaxDriveCurrentMilliAmps", registry);
 
       //desireds
       desiredMotorPositionForImpedanceControl = new YoDouble(prefix + "desiredMotorPositionForImpedanceControl", registry);
       desiredMotorVelocityForImpedanceControl = new YoDouble(prefix + "desiredMotorVelocityForImpedanceControl", registry);
-      desiredMotorPosition = new YoDouble(prefix + "desiredMotorPosition", registry);
-      desiredMotorVelocity = new YoDouble(prefix + "desiredMotorVelocity", registry);
-      desiredFeedForwardMotorCurrent = new YoDouble(prefix + "desiredFeedForwardMotorCurrent", registry);
-      desiredMotorCurrent = new YoDouble(prefix + "desiredMotorCurrent", registry);
+      desiredMotorPosition = new YoDouble(prefix + "desiredMotorPosition", motorRegistry);
+      desiredMotorVelocity = new YoDouble(prefix + "desiredMotorVelocity", motorRegistry);
+      desiredFeedForwardMotorCurrent = new YoDouble(prefix + "desiredFeedForwardMotorCurrent", motorRegistry);
+      desiredMotorCurrent = new YoDouble(prefix + "desiredMotorCurrent", motorRegistry);
       desiredMotorCurrentWithFF = new YoDouble(prefix + "desiredMotorCurrentWithFF", registry);
-      desiredMotorTorque = new YoDouble(prefix + "desiredMotorTorque", registry);
+      desiredMotorTorque = new YoDouble(prefix + "desiredMotorTorque", motorRegistry);
       desiredOutputTorque = new YoDouble(prefix + "desiredOutputTorque", registry);
 
       //desired in raw units
@@ -465,12 +467,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       outputEncoderStatusManager = new TwitterEncoderStatusManager(prefix + "_output", errorPersistenceThreshold, registry);
 
       //actuals
-      rawMotorPositionFromTwitters = new YoDouble(prefix + "rawMotorPositionFromTwitters", registry);
-      rawMotorVelocityFromTwitters = new YoDouble(prefix + "rawMotorVelocityFromTwitters", registry);
-      measuredMotorPosition = new YoDouble(prefix + "measuredMotorPosition", registry);
-      measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", registry);
-      filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", registry);
-      filteredMotorVelocity = new YoDouble(prefix + "filteredMotorVelocity", registry);
+      rawMotorPositionFromTwitters = new YoDouble(prefix + "rawMotorPositionFromTwitters", motorRegistry);
+      rawMotorVelocityFromTwitters = new YoDouble(prefix + "rawMotorVelocityFromTwitters", motorRegistry);
+      measuredMotorPosition = new YoDouble(prefix + "measuredMotorPosition", motorRegistry);
+      measuredMotorVelocity = new YoDouble(prefix + "measuredMotorVelocity", motorRegistry);
+      filteredMotorPosition = new YoDouble(prefix + "filteredMotorPosition", motorRegistry);
+      filteredMotorVelocity = new YoDouble(prefix + "filteredMotorVelocity", motorRegistry);
 
       measuredOutputPositionFromMotor = new YoDouble(prefix + "measuredOutputPositionFromMotor", registry);
       measuredOutputVelocityFromMotor = new YoDouble(prefix + "measuredOutputVelocityFromMotor", registry);
@@ -483,7 +485,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       filteredOutputVelocity = new YoDouble(prefix + "filteredOutputVelocity", registry);
 
       measuredMotorCurrent = new YoDouble(prefix + "measuredMotorCurrent", registry);
-      estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", registry);
+      estimatedMotorTorque = new YoDouble(prefix + "estimatedMotorTorque", motorRegistry);
       estimatedOutputTorque = new YoDouble(prefix + "estimatedOutputTorque", registry);
 
       measuredAnalogInput2InADCCounts = new YoDouble(prefix + "MeasuredAnalogInput2InADCCounts", registry);
@@ -539,7 +541,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       STO_DISABLED = new YoBoolean(prefix + "_STO_DISABLED", registry);
       CURRENT_SHORT = new YoBoolean(prefix + "_CURRENT_SHORT", registry);
       OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
-      MOTOR_ENABLED = new YoBoolean(prefix + "_MOTOR_ENABLED", registry);
       MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
 
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
@@ -570,6 +571,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       platinumTwitter.setOutputVelocityBreakFrequency(DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY);
 
       parentRegistry.addChild(registry);
+      if (DEBUG_MOTOR_VARIABLES)
+         parentRegistry.addChild(motorRegistry);
    }
 
    @Override

@@ -1,7 +1,5 @@
 package us.ihmc.commonHardware.mechanisms;
 
-import us.ihmc.robotics.outputData.JointDesiredLoadMode;
-
 /**
  * This interface allows for placing all joint data in a common location, including position, velocity, acceleration,torque,
  * stiffness, damping, and the current load mode
@@ -16,7 +14,6 @@ public interface JointDataBasics extends JointDataReadOnly
       setTorque(jointData.getTorque());
       setStiffness(jointData.getStiffness());
       setDamping(jointData.getDamping());
-      setLoadMode(jointData.getLoadMode());
    }
 
    void setPosition(double position);
@@ -30,6 +27,4 @@ public interface JointDataBasics extends JointDataReadOnly
    void setStiffness(double stiffness);
 
    void setDamping(double damping);
-
-   void setLoadMode(JointDesiredLoadMode loadMode);
 }
