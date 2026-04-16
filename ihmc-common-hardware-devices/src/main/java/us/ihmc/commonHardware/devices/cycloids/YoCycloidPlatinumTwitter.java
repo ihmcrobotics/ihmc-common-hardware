@@ -619,7 +619,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       // Update encoder status managers
       inputEncoderStatusManager.update(platinumTwitter.getSocket1Warning(), platinumTwitter.getSocket1Error());
-      outputEncoderStatusManager.update(platinumTwitter.getSocket2Warning(), platinumTwitter.getSocket2Error());
+      outputEncoderStatusManager.update(platinumTwitter.getSocket2Warning(), platinumTwitter.getSocket2Error(), !useOutputPositionFromMotor.getBooleanValue());
 
       measuredBusVoltage.set(platinumTwitter.getDCLinkVoltageMilliVolts() / 1000.0);
 
