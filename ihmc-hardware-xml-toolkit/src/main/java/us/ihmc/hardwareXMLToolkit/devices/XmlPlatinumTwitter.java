@@ -17,6 +17,8 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    protected boolean reversePositiveMotorDirection;
    @XmlElement(defaultValue = "false")
    protected boolean outputEncoderInverted;
+   @XmlElement(defaultValue = "false")
+   protected boolean outputFromMotorEncoder;
    @XmlElement(required = true)
    protected double motorOffset;
    @XmlElement(required = true)
@@ -87,5 +89,10 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
    public boolean isDynamicBrakingEnabled()
    {
       return dynamicBrakingEnabled;
+   }
+
+   public boolean getOutputFromMotorEncoder()
+   {
+      return outputFromMotorEncoder;
    }
 }

@@ -45,8 +45,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static final double DEFAULT_MOTOR_VELOCITY_BREAK_FREQUENCY = 100.0;
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
-   private static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = 58.0;
-   private static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = 24.0;
+   // Default under/over volt threshold limits, set to infinity so we use firmware-based limits by default
+   public static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = Double.POSITIVE_INFINITY;
+   public static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = Double.NEGATIVE_INFINITY;
 
    private final double dt;
    private final String name;
@@ -184,8 +185,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final CycloidSILParameters silParameters;
 
    // Tunable thresholds for under and over volt protection
-   private final YoDouble softwareBasedOverVoltThreshold;
-   private final YoDouble softwareBasedUnderVoltThreshold;
+   private DoubleProvider softwareBasedOverVoltThreshold = () -> DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD;
+   private DoubleProvider softwareBasedUnderVoltThreshold = () -> DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD;
 
    // SIL Debuggging variables
    private final YoSILDesiredCurrents silDesiredCurrents;
@@ -442,12 +443,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          }
       });
 
-      // Tunable thresholds for under and over volt protection
-      softwareBasedOverVoltThreshold = new YoDouble(prefix + "SoftwareBasedOverVoltThreshold", registry);
-      softwareBasedOverVoltThreshold.set(DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD);
-      softwareBasedUnderVoltThreshold = new YoDouble(prefix + "SoftwareBasedUnderVoltThreshold", registry);
-      softwareBasedUnderVoltThreshold.set(DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD);
-
       // SIL Acceleration Integration Variables
       impedanceControlStiffness = new YoDouble(prefix + "ImpedanceControl_Stiffness", registry);
       impedanceControlDamping = new YoDouble(prefix + "ImpedanceControl_Damping", registry);
@@ -627,13 +622,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       // Update encoder status managers
       inputEncoderStatusManager.update(platinumTwitter.getSocket1Warning(), platinumTwitter.getSocket1Error());
-      outputEncoderStatusManager.update(platinumTwitter.getSocket2Warning(), platinumTwitter.getSocket2Error());
+      outputEncoderStatusManager.update(platinumTwitter.getSocket2Warning(), platinumTwitter.getSocket2Error(), !useOutputPositionFromMotor.getBooleanValue());
 
       measuredBusVoltage.set(platinumTwitter.getDCLinkVoltageMilliVolts() / 1000.0);
 
       // Update fault info
-      UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage() || measuredBusVoltage.getDoubleValue() < softwareBasedUnderVoltThreshold.getDoubleValue());
-      OVER_VOLTAGE.set(platinumTwitter.isOverVoltage() || measuredBusVoltage.getDoubleValue() > softwareBasedOverVoltThreshold.getDoubleValue());
+      UNDER_VOLTAGE.set(platinumTwitter.isUnderVoltage() || measuredBusVoltage.getDoubleValue() < softwareBasedUnderVoltThreshold.getValue());
+      OVER_VOLTAGE.set(platinumTwitter.isOverVoltage() || measuredBusVoltage.getDoubleValue() > softwareBasedOverVoltThreshold.getValue());
       STO_DISABLED.set(platinumTwitter.isSTODisabled());
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
@@ -1360,5 +1355,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    public void setOutputEncoderInverted(boolean outputEncoderInverted)
    {
       this.outputEncoderInverted.set(outputEncoderInverted);
+   }
+
+   public void setSoftwareBasedOverVoltThreshold(DoubleProvider threshold)
+   {
+      softwareBasedOverVoltThreshold = threshold;
+   }
+
+   public void setSoftwareBasedUnderVoltThreshold(DoubleProvider threshold)
+   {
+      softwareBasedUnderVoltThreshold = threshold;
    }
 }

@@ -47,6 +47,11 @@ public class TwitterEncoderStatusManager
 
    public void update(int warningValue, int errorValue)
    {
+      update(warningValue, errorValue, true);
+   }
+
+   public void update(int warningValue, int errorValue, boolean printErrors)
+   {
       encoderWarningValue.set(warningValue);
       encoderErrorValue.set(errorValue);
 
@@ -57,7 +62,8 @@ public class TwitterEncoderStatusManager
          if (lastEncoderState != EncoderState.ERROR)
          {
             errorTimer.reset();
-            LogTools.warn(prefix + " has experienced an error, position and velocity may be inaccurate");
+            if (printErrors)
+               LogTools.warn(prefix + " has experienced an error, position and velocity may be inaccurate");
          }
          else if (errorTimer.isExpired(errorPersistenceThreshold.getValue()))
             encoderPersistentError.set(true);

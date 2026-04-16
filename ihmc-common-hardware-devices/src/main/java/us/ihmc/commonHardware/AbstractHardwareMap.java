@@ -322,6 +322,7 @@ public abstract class AbstractHardwareMap
       double motorOffset = xmlPlatinumTwitter.getMotorOffset();
       double outputOffset = xmlPlatinumTwitter.getOutputOffset();
       boolean dynamicBrakingEnabled = xmlPlatinumTwitter.isDynamicBrakingEnabled();
+      boolean outputFromMotorEncoder = xmlPlatinumTwitter.getOutputFromMotorEncoder();
 
       CycloidPlatinumTwitter cycloidPlatinumTwitter;
       if(xmlPlatinumTwitter.useLatestCode())
@@ -343,6 +344,8 @@ public abstract class AbstractHardwareMap
                                                                                        registry);
 
       yoCycloidPlatinumTwitter.setOutputEncoderInverted(xmlPlatinumTwitter.isOutputEncoderInverted());
+      yoCycloidPlatinumTwitter.setUseOutputPositionFromMotor(outputFromMotorEncoder);
+      yoCycloidPlatinumTwitter.setUseOutputVelocityFromMotor(outputFromMotorEncoder);
       System.out.println("Registering " + name + " on " + alias + ":" + position);
       etherCATMaster.registerSlave(cycloidPlatinumTwitter);
       etherCATDevices.add(cycloidPlatinumTwitter);
