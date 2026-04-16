@@ -63,7 +63,6 @@ public class GenericIMUManager implements IMUManagerInterface
    private final Optional<YoFrameVector3D> linearAccelerationInCorrectedIMUFrame;
 
    private final YoIMUMahonyFilter mahonyFilter;
-   private final YoFrameYawPitchRoll mahonyYawPitchRoll;
 
    private final YoBoolean filterIMUReadings;
    private final YoBoolean useMahoneyFilterAngularVelocity;
@@ -149,7 +148,6 @@ public class GenericIMUManager implements IMUManagerInterface
                               yoIMU.getAngularVelocityBias().getZ());
       mahonyFilter.setGains(0.5, 0.01);
       mahonyFilter.setYawDriftParameters(0.01, 1.0e-4);
-      mahonyYawPitchRoll = new YoFrameYawPitchRoll(prefix + "Mahony", worldFrame, registry);
 
       useMahoneyFilterAngularVelocity = new YoBoolean(prefix + "useMahonyFilterAngularVelocity", registry);
       useMahoneyFilterAngularVelocity.set(true);
@@ -220,7 +218,6 @@ public class GenericIMUManager implements IMUManagerInterface
       // Update the Mahony filter. We pass in regular angular velocity because Mahony class will calculate and account for bias internally
       mahonyFilter.update(yoIMU.getAngularVelocity(), yoIMU.getUnbiasedLinearAcceleration());
       yoIMU.setAngularVelocityBias(mahonyFilter.getIntegralTerm().getX(), mahonyFilter.getIntegralTerm().getY(), mahonyFilter.getIntegralTerm().getZ());
-      mahonyYawPitchRoll.set(mahonyFilter.getEstimatedOrientation());
 
       // Get our estimated orientation, estimated velocity (unbiased), and linear acceleration (unbiased)
       Tuple4DReadOnly orientation = mahonyFilter.getEstimatedOrientation();

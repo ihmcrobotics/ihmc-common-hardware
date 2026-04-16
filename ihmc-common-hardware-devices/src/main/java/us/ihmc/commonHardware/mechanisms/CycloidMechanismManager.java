@@ -30,17 +30,17 @@ import java.util.Map;
  */
 public class CycloidMechanismManager implements MechanismManagerInterface
 {
-   private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
    private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
+   private static final boolean INCLUDE_TORQUE_LIMITER = false;
 
    private final String jointName;
    private final YoRegistry registry;
    private final BooleanProvider masterDoPDControlOnTwitter;
    private final YoBoolean doPDControlOnTwitter;
 
-   private YoCycloidPlatinumTwitter platinumTwitter;
+   private final YoCycloidPlatinumTwitter platinumTwitter;
 
    private final YoBoolean publishFilteredJointStates;
    private final YoBoolean useFilteredJointStates;
@@ -236,7 +236,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                            zeroAgainstUpperLimit.set(false, false);
                                         });
 
-      jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
+      if (INCLUDE_TORQUE_LIMITER)
+         jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
+      else
+         jointLimitTorqueLimiter = null;
 
       parentRegistry.addChild(registry);
    }
@@ -352,8 +355,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getDesiredVelocity() : 0.0;
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
 
-      loaded = desiredJointData.getLoadMode();
-
       // clamping
       q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
       qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
@@ -413,7 +414,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          qd_d = 0.0;
       }
 
-      if (jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
+      if (INCLUDE_TORQUE_LIMITER && jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
       {
          tau_d = jointLimitTorqueLimiter.limitDesiredTorques(tau_d, measuredActuatorData.getPosition());
       }
@@ -421,7 +422,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       if (desiredJointData.hasMaxTorque())
          tau_d = MathTools.clamp(tau_d, desiredJointData.getMaxTorque());
 
-      this.desiredActuatorData.setLoadMode(loaded);
       this.desiredActuatorData.setPosition(q_d);
       this.desiredActuatorData.setVelocity(qd_d);
       this.desiredActuatorData.setTorque(tau_d);
@@ -640,11 +640,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public boolean getIsStatorAboveRecommendedTemperature()
    {
       return isStatorAboveRecommendedTemperature.getValue();
-   }
-
-   public JointLimitTorqueLimiter getJointLimitTorqueLimiter()
-   {
-      return jointLimitTorqueLimiter;
    }
 
    /**

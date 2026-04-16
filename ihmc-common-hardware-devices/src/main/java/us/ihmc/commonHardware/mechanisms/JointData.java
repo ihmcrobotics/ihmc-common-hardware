@@ -1,7 +1,5 @@
 package us.ihmc.commonHardware.mechanisms;
 
-import us.ihmc.robotics.outputData.JointDesiredLoadMode;
-
 public class JointData implements JointDataBasics
 {
    private double position = 0.0;
@@ -11,8 +9,6 @@ public class JointData implements JointDataBasics
 
    private double stiffness = Double.NaN;
    private double damping = Double.NaN;
-
-   private JointDesiredLoadMode loadMode = null;
 
    @Override
    public double getPosition()
@@ -48,12 +44,6 @@ public class JointData implements JointDataBasics
    public double getDamping()
    {
       return damping;
-   }
-
-   @Override
-   public JointDesiredLoadMode getLoadMode()
-   {
-      return loadMode;
    }
 
    @Override
@@ -93,12 +83,6 @@ public class JointData implements JointDataBasics
    public void setDamping(double damping)
    {
       this.damping = damping;
-   }
-
-   @Override
-   public void setLoadMode(JointDesiredLoadMode loadMode)
-   {
-      this.loadMode = loadMode;
    }
 
    private void checkNaN(double number)
