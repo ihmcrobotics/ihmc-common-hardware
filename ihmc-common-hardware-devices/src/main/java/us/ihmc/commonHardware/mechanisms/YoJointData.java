@@ -1,9 +1,7 @@
 package us.ihmc.commonHardware.mechanisms;
 
-import us.ihmc.robotics.outputData.JointDesiredLoadMode;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
-import us.ihmc.yoVariables.variable.YoEnum;
 
 public class YoJointData implements JointDataBasics
 {
@@ -15,7 +13,6 @@ public class YoJointData implements JointDataBasics
    private final YoDouble torque;
    private final YoDouble stiffness;
    private final YoDouble damping;
-   private final YoEnum<JointDesiredLoadMode> loadMode;
 
    public YoJointData(String prefix, boolean createGainVariables, YoRegistry registry)
    {
@@ -25,7 +22,6 @@ public class YoJointData implements JointDataBasics
       String torqueName = "Torque";
       String stiffnessName = "Kp";
       String dampingName = "Kd";
-      String loadName = "LoadMode";
 
       if (prefix != null)
       {
@@ -35,7 +31,6 @@ public class YoJointData implements JointDataBasics
          torqueName = prefix + torqueName;
          stiffnessName = prefix + stiffnessName;
          dampingName = prefix + dampingName;
-         loadName = prefix + loadName;
       }
 
       position = new YoDouble(positionName, registry);
@@ -45,14 +40,12 @@ public class YoJointData implements JointDataBasics
       {
          stiffness = new YoDouble(stiffnessName, registry);
          damping = new YoDouble(dampingName, registry);
-         loadMode = new YoEnum<>(loadName, registry, JointDesiredLoadMode.class, true);
          acceleration = new YoDouble(accelerationName, registry);
       }
       else
       {
          stiffness = null;
          damping = null;
-         loadMode = null;
          acceleration = null;
       }
    }
@@ -106,18 +99,6 @@ public class YoJointData implements JointDataBasics
    }
 
    @Override
-   public boolean hasLoadMode()
-   {
-      return loadMode != null && JointDataBasics.super.hasLoadMode();
-   }
-
-   @Override
-   public JointDesiredLoadMode getLoadMode()
-   {
-      return loadMode.getValue();
-   }
-
-   @Override
    public void setPosition(double position)
    {
       checkNaN(position);
@@ -157,12 +138,6 @@ public class YoJointData implements JointDataBasics
    {
       if (this.damping != null)
          this.damping.set(damping);
-   }
-
-   @Override
-   public void setLoadMode(JointDesiredLoadMode loadMode)
-   {
-      this.loadMode.set(loadMode);
    }
 
    private void checkNaN(double number)

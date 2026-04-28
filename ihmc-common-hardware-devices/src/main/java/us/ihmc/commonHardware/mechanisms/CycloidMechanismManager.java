@@ -30,22 +30,20 @@ import java.util.Map;
  */
 public class CycloidMechanismManager implements MechanismManagerInterface
 {
-   private static final double TWO_PI = 2.0 * Math.PI;
    private static final double DEFAULT_TORQUE_BREAK_FREQUENCY = 40.0;
    private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
+   private static final boolean INCLUDE_TORQUE_LIMITER = false;
 
    private final String jointName;
    private final YoRegistry registry;
    private final BooleanProvider masterDoPDControlOnTwitter;
    private final YoBoolean doPDControlOnTwitter;
 
-   private YoCycloidPlatinumTwitter platinumTwitter;
+   private final YoCycloidPlatinumTwitter platinumTwitter;
 
    private final YoBoolean publishFilteredJointStates;
    private final YoBoolean useFilteredJointStates;
-   private final YoJointData measuredMotorData;
-   private final YoJointData desiredMotorData;
 
    private final YoDouble positionError;
    private final YoDouble velocityError;
@@ -179,9 +177,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       yoJointOffset.set(jointOffset);
       updateJointOffset = new YoBoolean(jointName + "_updateJointOffset", registry);
 
-      measuredMotorData = new YoJointData(jointName + "_MeasuredMotor", false, registry);
-      desiredMotorData = new YoJointData(jointName + "_DesiredMotor", true, registry);
-
       useFilteredJointStates = new YoBoolean(jointName + "_UseFilteredJointStates", registry);
       publishFilteredJointStates = new YoBoolean(jointName + "_PublishFilteredJointStates", registry);
       measuredActuatorData = new YoJointData(jointName + "_MeasuredActuator", false, registry);
@@ -241,7 +236,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                            zeroAgainstUpperLimit.set(false, false);
                                         });
 
-      jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
+      if (INCLUDE_TORQUE_LIMITER)
+         jointLimitTorqueLimiter = new JointLimitTorqueLimiter(jointName, jointLimitLower, jointLimitUpper, registry);
+      else
+         jointLimitTorqueLimiter = null;
 
       parentRegistry.addChild(registry);
    }
@@ -285,14 +283,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          updateJointOffset();
          updateJointOffset.set(false);
       }
-
-      measuredMotorData.setPosition(publishFilteredJointStates.getBooleanValue() ?
-                                          platinumTwitter.getFilteredMotorPosition() :
-                                          platinumTwitter.getMeasuredMotorPosition());
-      measuredMotorData.setVelocity(publishFilteredJointStates.getBooleanValue() ?
-                                          platinumTwitter.getFilteredMotorVelocity() :
-                                          platinumTwitter.getMeasuredMotorVelocity());
-      measuredMotorData.setTorque(platinumTwitter.getMeasuredMotorTorque());
 
       statorTemperature.set(temperatureProvider.getValue());
       if (statorTemperature.getValue() > platinumTwitter.getMaxAllowableStatorTemperature())
@@ -365,8 +355,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getDesiredVelocity() : 0.0;
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
 
-      loaded = desiredJointData.getLoadMode();
-
       // clamping
       q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
       qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
@@ -385,7 +373,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          q_d = EuclidCoreTools.interpolate(wakeUpPosition.getValue(), q_d, alpha);
       }
 
-      q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
+      // TODO figure out how to switch this off and on for different controllers
+//      q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
       double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
@@ -425,7 +414,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          qd_d = 0.0;
       }
 
-      if (jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
+      if (INCLUDE_TORQUE_LIMITER && jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
       {
          tau_d = jointLimitTorqueLimiter.limitDesiredTorques(tau_d, measuredActuatorData.getPosition());
       }
@@ -433,7 +422,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       if (desiredJointData.hasMaxTorque())
          tau_d = MathTools.clamp(tau_d, desiredJointData.getMaxTorque());
 
-      this.desiredActuatorData.setLoadMode(loaded);
       this.desiredActuatorData.setPosition(q_d);
       this.desiredActuatorData.setVelocity(qd_d);
       this.desiredActuatorData.setTorque(tau_d);
@@ -443,28 +431,19 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       // Low pass filter the desired torque.
       filteredDesiredTau.update(this.desiredActuatorData.getTorque());
 
-      desiredMotorData.setLoadMode(loaded);
-
       double gearRatio = platinumTwitter.getGearRatio();
       double desiredOutputPosition = computeOutputPosition(this.desiredActuatorData.getPosition(), yoJointOffset.getValue());
       double desiredMotorPosition = computeMotorPosition(desiredOutputPosition, gearRatio, platinumTwitter.getEncoderDifferenceAtOutput());
       double kt = platinumTwitter.getKt();
 
-      desiredMotorData.setPosition(desiredMotorPosition);
-      desiredMotorData.setVelocity(this.desiredActuatorData.getVelocity() * gearRatio);
-      desiredMotorData.setAcceleration(this.desiredActuatorData.getAcceleration() * gearRatio);
-      desiredMotorData.setTorque(filteredDesiredTau.getDoubleValue() / gearRatio);
-
       // We want to do this because it's way computationally cheaper
       double reflectedMultiplier = 1.0 / (gearRatio * gearRatio * kt);
-      desiredMotorData.setStiffness(this.desiredActuatorData.getStiffness() * reflectedMultiplier);
-      desiredMotorData.setDamping(this.desiredActuatorData.getDamping() * reflectedMultiplier);
 
-      platinumTwitter.setDesiredMotorPosition(desiredMotorData.getPosition());
-      platinumTwitter.setDesiredMotorVelocity(desiredMotorData.getVelocity());
-      platinumTwitter.setDesiredMotorTorque(desiredMotorData.getTorque());
-      platinumTwitter.setDesiredMotorStiffness(desiredMotorData.getStiffness());
-      platinumTwitter.setDesiredMotorDamping(desiredMotorData.getDamping());
+      platinumTwitter.setDesiredMotorPosition(desiredMotorPosition);
+      platinumTwitter.setDesiredMotorVelocity(this.desiredActuatorData.getVelocity() * gearRatio);
+      platinumTwitter.setDesiredMotorTorque(filteredDesiredTau.getDoubleValue() / gearRatio);
+      platinumTwitter.setDesiredMotorStiffness(this.desiredActuatorData.getStiffness() * reflectedMultiplier);
+      platinumTwitter.setDesiredMotorDamping(this.desiredActuatorData.getDamping() * reflectedMultiplier);
 
       platinumTwitter.setMaxPositionFeedbackError(maxPositionFeedbackError * gearRatio);
       platinumTwitter.setMaxVelocityFeedbackError(maxVelocityFeedbackError * gearRatio);
@@ -547,15 +526,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setIsRobotServoed(boolean isRobotServoed)
+   public void setEnableMotors(boolean enableMotors)
    {
-      if (isRobotServoed)
+      if (enableMotors)
       {
          wakeUpTime.set(time.getValue());
          wakeUpPosition.set(measuredActuatorData.getPosition());
       }
 
-      platinumTwitter.enableDrive(isRobotServoed);
+      platinumTwitter.enableDrive(enableMotors);
    }
 
    @Override
@@ -579,7 +558,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    @Override
    public double getTotalMeasuredMotorCurrent()
    {
-      return platinumTwitter.getMeasuredMotorCurrent();
+      return Math.abs(platinumTwitter.getMeasuredMotorCurrent());
    }
 
    /**
@@ -663,9 +642,13 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       return isStatorAboveRecommendedTemperature.getValue();
    }
 
-   public JointLimitTorqueLimiter getJointLimitTorqueLimiter()
+   /**
+    * Returns the maximum torque this actuator can physically produce, computed as
+    * Kt * gearRatio * maxDriveCurrent.
+    */
+   public double getMaxActuatorTorque()
    {
-      return jointLimitTorqueLimiter;
+      return platinumTwitter.getMaxActuatorTorque();
    }
 
    /**
@@ -703,5 +686,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void setMotorVelocityBreakFrequency(double breakFrequency)
    {
       platinumTwitter.setMotorVelocityBreakFrequency(breakFrequency);
+   }
+
+   @Override
+   public boolean isDynamicBrakingEnabled()
+   {
+      return platinumTwitter.isDynamicBrakingEnabled();
    }
 }

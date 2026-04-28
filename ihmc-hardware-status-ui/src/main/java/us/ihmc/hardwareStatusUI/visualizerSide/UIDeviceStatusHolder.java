@@ -3,6 +3,8 @@ package us.ihmc.hardwareStatusUI.visualizerSide;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
+import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.hardwareStatusUI.visualizerSide.AbstractUIHardwareStatusManager.DeviceType;
 import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.scs2.sessionVisualizer.jfx.properties.YoEnumAsStringProperty;
@@ -17,6 +19,8 @@ import java.util.ArrayList;
  */
 public class UIDeviceStatusHolder
 {
+   protected static final String UNKNOWN_ERROR = "UNKNOWN_ERROR";
+
    protected final SimpleStringProperty name = new SimpleStringProperty("");
    protected final SimpleStringProperty childDescription = new SimpleStringProperty("");
    protected final SimpleStringProperty description = new SimpleStringProperty("");
@@ -35,6 +39,7 @@ public class UIDeviceStatusHolder
    protected final SimpleStringProperty currentShort = new SimpleStringProperty("");
    protected final SimpleStringProperty overTemp = new SimpleStringProperty("");
    protected final SimpleStringProperty elmoErrorCode = new SimpleStringProperty("");
+   protected final SimpleStringProperty lastElmoErrorCode = new SimpleStringProperty("");
    protected final SimpleStringProperty inputEncoderError = new SimpleStringProperty("");
    protected final SimpleStringProperty outputEncoderError = new SimpleStringProperty("");
 
@@ -97,9 +102,10 @@ public class UIDeviceStatusHolder
       this.stoDisabled.set(stoDisabled.getValueAsString());
       this.currentShort.set(currentShort.getValueAsString());
       this.overTemp.set(overTemp.getValueAsString());
-      this.elmoErrorCode.set(elmoErrorCode.getValueAsString());
       this.inputEncoderError.set(inputEncoderError.getValueAsString());
       this.outputEncoderError.set(outputEncoderError.getValueAsString());
+      decodeErrorCode(elmoErrorCode.getIntegerValue());
+      lastElmoErrorCode.set(ElmoTwitterErrorCodeEnum.NO_ERROR.toString());
 
       isFaulted.addListener(change -> this.isFaulted.set(isFaulted.getValue()));
       underVoltage.addListener(change -> this.underVoltage.set(underVoltage.getValueAsString()));
@@ -107,9 +113,10 @@ public class UIDeviceStatusHolder
       stoDisabled.addListener(change -> this.stoDisabled.set(stoDisabled.getValueAsString()));
       currentShort.addListener(change -> this.currentShort.set(currentShort.getValueAsString()));
       overTemp.addListener(change -> this.overTemp.set(overTemp.getValueAsString()));
-      elmoErrorCode.addListener(change -> this.elmoErrorCode.set(elmoErrorCode.getValueAsString()));
       inputEncoderError.addListener(change -> this.inputEncoderError.set(inputEncoderError.getValueAsString()));
       outputEncoderError.addListener(change -> this.outputEncoderError.set(outputEncoderError.getValueAsString()));
+
+      elmoErrorCode.addListener(change -> decodeErrorCode(elmoErrorCode.getIntegerValue()));
    }
 
    /**
@@ -187,6 +194,18 @@ public class UIDeviceStatusHolder
       elmoErrorCode.addListener(listener);
       inputEncoderError.addListener(listener);
       outputEncoderError.addListener(listener);
+   }
+
+   private void decodeErrorCode(int errorCode)
+   {
+      ElmoTwitterErrorCodeEnum errorCodeEnum = ElmoTwitterErrorCodeEnum.decode(errorCode);
+      if (errorCodeEnum != null)
+         this.elmoErrorCode.set(errorCodeEnum.toString());
+      else
+         this.elmoErrorCode.set(UNKNOWN_ERROR + "_" + errorCode);
+
+      if (errorCodeEnum != ElmoTwitterErrorCodeEnum.NO_ERROR)
+         lastElmoErrorCode.set(elmoErrorCode.getValue());
    }
 
    /**
@@ -282,6 +301,11 @@ public class UIDeviceStatusHolder
    public String getElmoErrorCode()
    {
       return elmoErrorCode.get();
+   }
+
+   public String getLastElmoErrorCode()
+   {
+      return lastElmoErrorCode.get();
    }
 
    public String getInputEncoderError()

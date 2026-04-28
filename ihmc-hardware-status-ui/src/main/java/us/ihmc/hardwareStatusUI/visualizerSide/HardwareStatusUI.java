@@ -329,6 +329,10 @@ public class HardwareStatusUI implements VisualizerController
       elmoErrorCodeColumn.setMinWidth(150);
       elmoErrorCodeColumn.setCellValueFactory(new PropertyValueFactory<>("elmoErrorCode"));
 
+      TableColumn<UIDeviceStatusHolder, String> lastElmoErrorCodeColumn = new TableColumn<>("Last Elmo Error Code");
+      lastElmoErrorCodeColumn.setMinWidth(150);
+      lastElmoErrorCodeColumn.setCellValueFactory(new PropertyValueFactory<>("lastElmoErrorCode"));
+
       // Create column that displays TODO
       TableColumn<UIDeviceStatusHolder, String> inputEncoderErrorColumn = new TableColumn<>("Input Encoder Error");
       inputEncoderErrorColumn.setMinWidth(160);
@@ -354,6 +358,7 @@ public class HardwareStatusUI implements VisualizerController
                                 currentShortColumn,
                                 overTempColumn,
                                 elmoErrorCodeColumn,
+                                lastElmoErrorCodeColumn,
                                 inputEncoderErrorColumn,
                                 outputEncoderErrorColumn);
 
@@ -375,6 +380,7 @@ public class HardwareStatusUI implements VisualizerController
          table.getColumns().remove(currentShortColumn);
          table.getColumns().remove(overTempColumn);
          table.getColumns().remove(elmoErrorCodeColumn);
+         table.getColumns().remove(lastElmoErrorCodeColumn);
          table.getColumns().remove(inputEncoderErrorColumn);
          table.getColumns().remove(outputEncoderErrorColumn);
       }
