@@ -1,12 +1,14 @@
 package us.ihmc.hardwareStatusUI.controllerSide;
 
 import us.ihmc.etherCAT.master.Slave;
-import us.ihmc.tools.factories.OptionalFactoryField;
+//import us.ihmc.tools.factories.OptionalFactoryField;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
+
+import java.util.List;
 
 public class DeviceStatusHolder
 {
@@ -32,17 +34,17 @@ public class DeviceStatusHolder
    private final DeviceStatusProvider deviceStatusProvider;
 
    private final YoBoolean isResponding;
-   private final OptionalFactoryField<YoEnum<Slave.State>> state;
-
-   private final OptionalFactoryField<YoBoolean> isFaulted;
-   private final OptionalFactoryField<YoBoolean> underVoltage;
-   private final OptionalFactoryField<YoBoolean> overVoltage;
-   private final OptionalFactoryField<YoBoolean> stoDisabled;
-   private final OptionalFactoryField<YoBoolean> currentShort;
-   private final OptionalFactoryField<YoBoolean> overTemp;
-   private final OptionalFactoryField<YoInteger> elmoErrorCode;
-   private final OptionalFactoryField<YoDouble> inputEncoderError;
-   private final OptionalFactoryField<YoDouble> outputEncoderError;
+//   private final OptionalFactoryField<YoEnum<Slave.State>> state;
+//
+//   private final OptionalFactoryField<YoBoolean> isFaulted;
+//   private final OptionalFactoryField<YoBoolean> underVoltage;
+//   private final OptionalFactoryField<YoBoolean> overVoltage;
+//   private final OptionalFactoryField<YoBoolean> stoDisabled;
+//   private final OptionalFactoryField<YoBoolean> currentShort;
+//   private final OptionalFactoryField<YoBoolean> overTemp;
+//   private final OptionalFactoryField<YoInteger> elmoErrorCode;
+//   private final OptionalFactoryField<YoDouble> inputEncoderError;
+//   private final OptionalFactoryField<YoDouble> outputEncoderError;
 
    /**
     * Class responsible for holding and YoVariableizing device status info for a given device.
@@ -58,17 +60,17 @@ public class DeviceStatusHolder
       this.registry = registry;
 
       isResponding = new YoBoolean(name + IS_RESPONDING_SUFFIX, registry);
-      state = new OptionalFactoryField<>(name + STATE_SUFFIX);
-
-      isFaulted = new OptionalFactoryField<>(name + IS_FAULTED_SUFFIX);
-      underVoltage = new OptionalFactoryField<>(name + UNDER_VOLTAGE_SUFFIX);
-      overVoltage = new OptionalFactoryField<>(name + OVER_VOLTAGE_SUFFIX);
-      stoDisabled = new OptionalFactoryField<>(name + STO_DISABLED_SUFFIX);
-      currentShort = new OptionalFactoryField<>(name + CURRENT_SHORT_SUFFIX);
-      overTemp = new OptionalFactoryField<>(name + OVER_TEMP_SUFFIX);
-      elmoErrorCode = new OptionalFactoryField<>(name + ELMO_ERROR_CODE_SUFFIX);
-      inputEncoderError = new OptionalFactoryField<>(name + INPUT_ENCODER_ERROR_SUFFIX);
-      outputEncoderError = new OptionalFactoryField<>(name + OUTPUT_ENCODER_ERROR_SUFFIX);
+//      state = new OptionalFactoryField<>(name + STATE_SUFFIX);
+//
+//      isFaulted = new OptionalFactoryField<>(name + IS_FAULTED_SUFFIX);
+//      underVoltage = new OptionalFactoryField<>(name + UNDER_VOLTAGE_SUFFIX);
+//      overVoltage = new OptionalFactoryField<>(name + OVER_VOLTAGE_SUFFIX);
+//      stoDisabled = new OptionalFactoryField<>(name + STO_DISABLED_SUFFIX);
+//      currentShort = new OptionalFactoryField<>(name + CURRENT_SHORT_SUFFIX);
+//      overTemp = new OptionalFactoryField<>(name + OVER_TEMP_SUFFIX);
+//      elmoErrorCode = new OptionalFactoryField<>(name + ELMO_ERROR_CODE_SUFFIX);
+//      inputEncoderError = new OptionalFactoryField<>(name + INPUT_ENCODER_ERROR_SUFFIX);
+//      outputEncoderError = new OptionalFactoryField<>(name + OUTPUT_ENCODER_ERROR_SUFFIX);
 
       update();
    }
@@ -117,82 +119,82 @@ public class DeviceStatusHolder
 
    public void setState(Slave.State state)
    {
-      if (!this.state.hasValue())
-         addStateDataHolder();
-
-      this.state.get().set(state);
+//      if (!this.state.hasValue())
+//         addStateDataHolder();
+//
+//      this.state.get().set(state);
    }
 
    public void setIsFaulted(boolean isFaulted)
    {
-      if (!this.isFaulted.hasValue())
-         addIsFaultedDataHolder();
-
-      this.isFaulted.get().set(isFaulted);
+//      if (!this.isFaulted.hasValue())
+//         addIsFaultedDataHolder();
+//
+//      this.isFaulted.get().set(isFaulted);
    }
 
    public void setUnderVoltage(boolean underVoltage)
    {
-      if (!this.underVoltage.hasValue())
-         addUnderVoltageDataHolder();
-
-      this.underVoltage.get().set(underVoltage);
+//      if (!this.underVoltage.hasValue())
+//         addUnderVoltageDataHolder();
+//
+//      this.underVoltage.get().set(underVoltage);
    }
 
    public void setOverVoltage(boolean overVoltage)
    {
-      if (!this.overVoltage.hasValue())
-         addOverVoltageDataHolder();
-
-      this.overVoltage.get().set(overVoltage);
+//      if (!this.overVoltage.hasValue())
+//         addOverVoltageDataHolder();
+//
+//      this.overVoltage.get().set(overVoltage);
    }
 
    public void setSTODisabled(boolean stoDisabled)
    {
-      if (!this.stoDisabled.hasValue())
-         addSTODisabledDataHolder();
-
-      this.stoDisabled.get().set(stoDisabled);
+//      if (!this.stoDisabled.hasValue())
+//         addSTODisabledDataHolder();
+//
+//      this.stoDisabled.get().set(stoDisabled);
    }
 
    public void setCurrentShort(boolean currentShort)
    {
-      if (!this.currentShort.hasValue())
-         addCurrentShortDataHolder();
-
-      this.currentShort.get().set(currentShort);
+//      if (!this.currentShort.hasValue())
+//         addCurrentShortDataHolder();
+//
+//      this.currentShort.get().set(currentShort);
    }
 
    public void setOverTemp(boolean overTemp)
    {
-      if (!this.overTemp.hasValue())
-         addOverTempDataHolder();
-
-      this.overTemp.get().set(overTemp);
+//      if (!this.overTemp.hasValue())
+//         addOverTempDataHolder();
+//
+//      this.overTemp.get().set(overTemp);
    }
 
    public void setElmoErrorCode(int elmoErrorCode)
    {
-      if (!this.elmoErrorCode.hasValue())
-         addElmoErrorCodeDataHolder();
-
-      this.elmoErrorCode.get().set(elmoErrorCode);
+//      if (!this.elmoErrorCode.hasValue())
+//         addElmoErrorCodeDataHolder();
+//
+//      this.elmoErrorCode.get().set(elmoErrorCode);
    }
 
    public void setInputEncoderError(double inputEncoderError)
    {
-      if (!this.inputEncoderError.hasValue())
-         addInputEncoderErrorDataHolder();
-
-      this.inputEncoderError.get().set(inputEncoderError);
+//      if (!this.inputEncoderError.hasValue())
+//         addInputEncoderErrorDataHolder();
+//
+//      this.inputEncoderError.get().set(inputEncoderError);
    }
 
    public void setOutputEncoderError(double outputEncoderError)
    {
-      if (!this.outputEncoderError.hasValue())
-         addOutputEncoderErrorDataHolder();
-
-      this.outputEncoderError.get().set(outputEncoderError);
+//      if (!this.outputEncoderError.hasValue())
+//         addOutputEncoderErrorDataHolder();
+//
+//      this.outputEncoderError.get().set(outputEncoderError);
    }
 
    /**
@@ -200,61 +202,61 @@ public class DeviceStatusHolder
     */
    public void addStateDataHolder()
    {
-      if (!this.state.hasValue())
-         state.set(new YoEnum<>(name + STATE_SUFFIX, registry, Slave.State.class));
+//      if (!this.state.hasValue())
+//         state.set(new YoEnum<>(name + STATE_SUFFIX, registry, Slave.State.class));
    }
 
    public void addIsFaultedDataHolder()
    {
-      if (!this.isFaulted.hasValue())
-         isFaulted.set(new YoBoolean(name + IS_FAULTED_SUFFIX, registry));
+//      if (!this.isFaulted.hasValue())
+//         isFaulted.set(new YoBoolean(name + IS_FAULTED_SUFFIX, registry));
    }
 
    public void addUnderVoltageDataHolder()
    {
-      if (!this.underVoltage.hasValue())
-         underVoltage.set(new YoBoolean(name + UNDER_VOLTAGE_SUFFIX, registry));
+//      if (!this.underVoltage.hasValue())
+//         underVoltage.set(new YoBoolean(name + UNDER_VOLTAGE_SUFFIX, registry));
    }
 
    public void addOverVoltageDataHolder()
    {
-      if (!this.overVoltage.hasValue())
-         overVoltage.set(new YoBoolean(name + OVER_VOLTAGE_SUFFIX, registry));
+//      if (!this.overVoltage.hasValue())
+//         overVoltage.set(new YoBoolean(name + OVER_VOLTAGE_SUFFIX, registry));
    }
 
    public void addSTODisabledDataHolder()
    {
-      if (!this.stoDisabled.hasValue())
-         stoDisabled.set(new YoBoolean(name + STO_DISABLED_SUFFIX, registry));
+//      if (!this.stoDisabled.hasValue())
+//         stoDisabled.set(new YoBoolean(name + STO_DISABLED_SUFFIX, registry));
    }
 
    public void addCurrentShortDataHolder()
    {
-      if (!this.currentShort.hasValue())
-         currentShort.set(new YoBoolean(name + CURRENT_SHORT_SUFFIX, registry));
+//      if (!this.currentShort.hasValue())
+//         currentShort.set(new YoBoolean(name + CURRENT_SHORT_SUFFIX, registry));
    }
 
    public void addOverTempDataHolder()
    {
-      if (!this.overTemp.hasValue())
-         overTemp.set(new YoBoolean(name + OVER_TEMP_SUFFIX, registry));
+//      if (!this.overTemp.hasValue())
+//         overTemp.set(new YoBoolean(name + OVER_TEMP_SUFFIX, registry));
    }
 
    public void addElmoErrorCodeDataHolder()
    {
-      if (!this.elmoErrorCode.hasValue())
-         elmoErrorCode.set(new YoInteger(name + ELMO_ERROR_CODE_SUFFIX, registry));
+//      if (!this.elmoErrorCode.hasValue())
+//         elmoErrorCode.set(new YoInteger(name + ELMO_ERROR_CODE_SUFFIX, registry));
    }
 
    public void addInputEncoderErrorDataHolder()
    {
-      if (!this.inputEncoderError.hasValue())
-         inputEncoderError.set(new YoDouble(name + INPUT_ENCODER_ERROR_SUFFIX, registry));
+//      if (!this.inputEncoderError.hasValue())
+//         inputEncoderError.set(new YoDouble(name + INPUT_ENCODER_ERROR_SUFFIX, registry));
    }
 
    public void addOutputEncoderErrorDataHolder()
    {
-      if (!this.outputEncoderError.hasValue())
-         outputEncoderError.set(new YoDouble(name + OUTPUT_ENCODER_ERROR_SUFFIX, registry));
+//      if (!this.outputEncoderError.hasValue())
+//         outputEncoderError.set(new YoDouble(name + OUTPUT_ENCODER_ERROR_SUFFIX, registry));
    }
 }
