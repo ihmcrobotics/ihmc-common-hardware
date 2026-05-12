@@ -356,8 +356,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
 
       // clamping
-      q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
-      qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
+//      q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
+//      qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
 
       double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
 
@@ -387,8 +387,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                                            platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
          double jointVelocity = useFilteredJointStates.getBooleanValue() ? platinumTwitter.getFilteredOutputVelocity() : platinumTwitter.getMeasuredOutputVelocity();
 
-         positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, jointPosition));
-         velocityError.set(qd_d - jointVelocity);
+         double clampedPositionError = desiredJointData.hasPositionFeedbackMaxError() ? MathTools.clamp(q_d - jointPosition, desiredJointData.getPositionFeedbackMaxError()) : q_d - jointPosition;
+         double clampedVelocityError = desiredJointData.hasVelocityFeedbackMaxError() ? MathTools.clamp(qd_d - jointVelocity, desiredJointData.getVelocityFeedbackMaxError()) : qd_d - jointVelocity;
+         positionError.set(clampedPositionError);//AngleTools.computeAngleDifferenceMinusPiToPi(q_d, jointPosition));
+         velocityError.set(clampedVelocityError);//qd_d - jointVelocity);
          positionFeedback.set(stiffness * positionError.getDoubleValue());
          velocityFeedback.set(damping * velocityError.getDoubleValue());
          feedback.set(positionFeedback.getDoubleValue() + velocityFeedback.getDoubleValue());
@@ -455,7 +457,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
 
    private static double getClampedDesiredPosition(double desiredPosition, double currentPosition, double maxFeedbackError)
    {
-      double error = AngleTools.computeAngleDifferenceMinusPiToPi(desiredPosition, currentPosition);
+      double error = desiredPosition - currentPosition;//AngleTools.computeAngleDifferenceMinusPiToPi(desiredPosition, currentPosition);
 
       if (Math.abs(error) > maxFeedbackError)
       {
