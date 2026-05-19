@@ -34,8 +34,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
    private static final boolean INCLUDE_TORQUE_LIMITER = false;
-   private static final boolean APPLY_POSITION_AND_VELOCITY_CLAMPING = false;
-   private static final boolean USING_IMPEDANCE_CONTROL = true;
 
    private final String jointName;
    private final YoRegistry registry;
@@ -354,12 +352,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getDesiredVelocity() : 0.0;
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
 
-      // Apply clamping on desired position and velocity
-      if (APPLY_POSITION_AND_VELOCITY_CLAMPING) //TODO (stefanfasano 202605) turn this boolean into JointDesiredOutputReadOnly field
-      {
-         q_d = getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError, jointLimitLower, jointLimitUpper);
-         qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
-      }
+      // Apply clamping on desired position
+      // TODO figure out how to switch this off and on for different controllers
+      // q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Scale based on master gain
       double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
@@ -448,30 +443,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       platinumTwitter.write();
 
       writeTime.set(System.nanoTime() - startTime);
-   }
-
-   private static double getClampedDesiredPosition(double desiredPosition, double currentPosition, double maxFeedbackError, double jointLimitLower, double jointLimitUpper)
-   {
-      double error;
-
-      // Determine error term. If using impedance control we don't care if setpoints are withing angle range
-      if (USING_IMPEDANCE_CONTROL)
-         error = desiredPosition - currentPosition;
-      else
-         error = AngleTools.trimAngleMinusPiToPi(desiredPosition) - AngleTools.trimAngleMinusPiToPi(currentPosition);
-
-      // Clamp error term
-      error = MathTools.clamp(error, maxFeedbackError);
-
-      // Calculate new desired position based on clamped error and current position
-      double clampedDesiredPosition = currentPosition + error;
-      if (!USING_IMPEDANCE_CONTROL)
-         clampedDesiredPosition = AngleTools.trimAngleMinusPiToPi(clampedDesiredPosition);
-
-      // Clamp desired position with joint limits
-      clampedDesiredPosition = MathTools.clamp(clampedDesiredPosition, jointLimitLower, jointLimitUpper);
-
-      return clampedDesiredPosition;
    }
 
    /**
