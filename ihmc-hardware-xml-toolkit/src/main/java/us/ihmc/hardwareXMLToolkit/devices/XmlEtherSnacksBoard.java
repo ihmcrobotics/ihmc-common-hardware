@@ -21,8 +21,13 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
    @XmlElement(defaultValue = "268448003") //268448003 in decimal = 0x10003103 in hex
    protected int productCode = 0x10003103;
 
-   @XmlElements({@XmlElement(name = "XmlPDOType", type = XmlPDOType.class)})
+   @XmlElementWrapper(name = "pdoList")
+   @XmlElement(name = "XmlPDOType")
    protected List<XmlPDOType> pdoList;
+
+   @XmlElementWrapper(name = "sdoList")
+   @XmlElement(name = "XmlSDOType")
+   protected List<XmlSDOType> sdoList;
 
    public List<AbstractXmlDevice> getDaughterDevices()
    {
@@ -49,5 +54,12 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
       if (pdoList == null)
          pdoList = new ArrayList<>();
       return pdoList;
+   }
+
+   public List<XmlSDOType> getSDOList()
+   {
+      if (sdoList == null)
+         sdoList = new ArrayList<>();
+      return sdoList;
    }
 }
