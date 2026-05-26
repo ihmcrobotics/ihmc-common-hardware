@@ -4,7 +4,7 @@ package us.ihmc.commonHardware.devices.etherCATDevices.novanta;
  * Enum to contain the Everest error codes. For more information on the error codes,
  * go to https://drives.novantamotion.com/summit/error-management and find the specific hex code
  */
-public enum EverestErrorCodeEnum
+public enum EverestErrorCodes
 {
    NO_ERROR(0x0000),
    COMMS_WATCHDOG_ERROR(0X1001),
@@ -122,20 +122,20 @@ public enum EverestErrorCodeEnum
    SDI_POSITION_LIMIT_EXC(0X90090701),
    SLI_LIMITS_EXC(0X90090801);
 
-   public static EverestErrorCodeEnum[] values = values();
+   public static EverestErrorCodes[] values = values();
 
    private int error;
 
-   EverestErrorCodeEnum(int error)
+   EverestErrorCodes(int error)
    {
       this.error = error;
    }
 
-   public static EverestErrorCodeEnum fromHex(int hexError)
+   public static EverestErrorCodes fromCode(int error)
    {
-      for (EverestErrorCodeEnum errorCode : values)
+      for (EverestErrorCodes errorCode : values)
       {
-         if (errorCode.error == hexError)
+         if (errorCode.error == error)
             return errorCode;
       }
       return null;

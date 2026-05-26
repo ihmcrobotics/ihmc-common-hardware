@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.novanta;
 
-public enum EverestEtherCATRegisterEnum {
+public enum EverestRegisters
+{
 
    // CANopen standard objects
    DEVICE_TYPE(0x1000),
@@ -598,7 +599,7 @@ public enum EverestEtherCATRegisterEnum {
 
    private final int address;
 
-   EverestEtherCATRegisterEnum(int address) {
+   EverestRegisters(int address) {
       this.address = address;
    }
 
@@ -612,8 +613,8 @@ public enum EverestEtherCATRegisterEnum {
     * @param address the register address (e.g. 0x2030)
     * @return the matching Register, or {@code null} if not found
     */
-   public static EverestEtherCATRegisterEnum fromAddress(int address) {
-      for (EverestEtherCATRegisterEnum r : values()) {
+   public static EverestRegisters fromAddress(int address) {
+      for (EverestRegisters r : values()) {
          if (r.address == address) {
             return r;
          }
