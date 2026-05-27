@@ -82,8 +82,8 @@ public class EverestMotorController extends DSP402Slave
 
       Signed32 motorPosition = new Signed32(); //0x6064 0, 4 bytes Tied to position actual, which is the motor position
       Float32 motorVelocity = new Float32(); //0x606C 0, 4 bytes Tied to velocity actual, which is the motor velocity
-      //      Unsigned32 actuatorPosition = new Unsigned32(); //0x2033 0, 4 bytes
-      //      Float32 actuatorVelocity = new Float32(); //0x2034 0, 4 bytes
+      Unsigned32 actuatorPosition = new Unsigned32(); //0x2033 0, 4 bytes
+//      Float32 actuatorVelocity = new Float32(); //0x2034 0, 4 bytes
 
       Float32 quadratureCurrent = new Float32(); //0x203B 0, 4 bytes
       Float32 busVoltage = new Float32(); //0x2060 0, 4 bytes
@@ -96,13 +96,13 @@ public class EverestMotorController extends DSP402Slave
 
       verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x6064, 0, 32)), "failed to write to 0x1A00 - 0x6064");
       verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(0x2031, 0, 32)), "failed to write to 0x1A00 - 0x2031");
-      //      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x2033, 0, 32)), "failed to write to 0x1A00 - 0x2033");
-      //      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
-      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x203B, 0, 32)), "failed to write to 0x1A00 - 0x203B");
-      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
+      verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x2033, 0, 32)), "failed to write to 0x1A00 - 0x2033");
+//      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
+      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x203B, 0, 32)), "failed to write to 0x1A00 - 0x203B");
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
 
 
-      verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 4), "failed to write to 0x1A01 - 0x3");
+      verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 5), "failed to write to 0x1A01 - 0x3");
    }
 
    public EverestMotorController(int aliasAddress, int position)
@@ -230,12 +230,12 @@ public class EverestMotorController extends DSP402Slave
 
    public long getActuatorPosition()
    {
-      return 0; //tpdo_1.actuatorPosition.get();
+      return tpdo_2.actuatorPosition.get();
    }
 
    public double getActuatorVelocity()
    {
-      return 0.0; // tpdo_1.actuatorVelocity.get();
+      return 0.0; //tpdo_2.actuatorVelocity.get();
    }
 
    public double getQuadratureCurrent()
