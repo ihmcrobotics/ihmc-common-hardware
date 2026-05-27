@@ -65,7 +65,7 @@ public class YoEverestMotorController
       name = prefix + "EverestMC";
       registry = new YoRegistry(name);
 
-      requestedControlWord = new YoEnum<>(prefix + "RequestedControlWord", registry, ControlWord.class);
+      requestedControlWord = new YoEnum<>(prefix + "RequestedControlWord", registry, ControlWord.class, true);
       requestedOperationMode = new YoEnum<>(prefix + "RequestedOperationMode", registry, EverestOperationModes.class);
       requestedOperationMode.set(EverestOperationModes.CURRENT);
       desiredMotorCurrent = new YoDouble(prefix + "DesiredMotorCurrent", registry);
@@ -117,6 +117,13 @@ public class YoEverestMotorController
 
    public void read()
    {
+      requestedControlWord.set(motorController.getCurrentControlword());
+      currentControlWord.set(motorController.getCurrentControlWord());
+      statusWord.set(motorController.getStatus());
+      currentOperationMode.set(EverestOperationModes.fromByte(motorController.getCurrentOperationMode()));
+      errorCode.set(motorController.getErrorCode());
+      errorMessage.set(EverestErrorCodes.fromCode(errorCode.getValue()));
+
       rawMeasuredMotorPosition.set(motorController.getMotorPosition());
       rawMeasuredMotorVelocity.set(motorController.getMotorVelocity());
       rawMeasuredActuatorPosition.set(motorController.getActuatorPosition());
@@ -130,13 +137,6 @@ public class YoEverestMotorController
       measuredMotorCurrent.set(motorController.getQuadratureCurrent());
       busVoltage.set(motorController.getBusVoltage());
       motorTemperature.set(motorController.getMotorTemperature());
-
-      statusWord.set(motorController.getStatus());
-      currentOperationMode.set(motorController.getCurrentOperationMode());
-      currentControlWord.set(motorController.getCurrentControlWord());
-
-      errorCode.set(motorController.getErrorCode());
-      errorMessage.set(EverestErrorCodes.fromCode(errorCode.getValue()));
    }
 
    public void write()
@@ -173,6 +173,21 @@ public class YoEverestMotorController
    public void setRequestedOperationMode(EverestOperationModes operationMode)
    {
       this.requestedOperationMode.set(operationMode);
+   }
+
+   public void setDesiredMotorPosition(double desiredMotorPosition)
+   {
+      this.desiredMotorPosition.set(desiredMotorPosition);
+   }
+
+   public void setDesiredMotorCurrent(double desiredMotorCurrent)
+   {
+      this.desiredMotorCurrent.set(desiredMotorCurrent);
+   }
+
+   public void setDesiredMotorVelocity(double desiredMotorVelocity)
+   {
+      this.desiredMotorVelocity.set(desiredMotorVelocity);
    }
 
 
