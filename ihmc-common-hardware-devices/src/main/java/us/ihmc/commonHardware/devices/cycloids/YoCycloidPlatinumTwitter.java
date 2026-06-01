@@ -1284,6 +1284,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       return etherCATState.getEnumValue();
    }
 
+   public boolean hasPersistantEncoderError()
+   {
+      return inputEncoderStatusManager.hasPersistentError() || outputEncoderStatusManager.hasPersistentError();
+   }
+
    public CycloidPhysicalParameters getPhysicalParameters()
    {
       return physicalParameters;

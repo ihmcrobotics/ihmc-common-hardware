@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware;
 
 import org.ejml.data.DMatrixRMaj;
+import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
 import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
 import us.ihmc.commonHardware.devices.YoSensorInterface;
@@ -39,6 +40,7 @@ public abstract class AbstractHardwareManager
 
    protected final EtherSnacksBoardInterface[] etherSnacksBoards;
    protected final YoSensorInterface[] yoEtherSnacksSensors;
+   protected final YoCycloidPlatinumTwitter[] platinumTwitters;
 
    protected final Slave[] etherCATDevices;
 
@@ -102,6 +104,7 @@ public abstract class AbstractHardwareManager
       etherCATDevices = hardwareMap.getEtherCATDevices();
       etherSnacksBoards = hardwareMap.getEtherSnacksBoards();
       yoEtherSnacksSensors = hardwareMap.getYoEtherSnacksSensors();
+      platinumTwitters = hardwareMap.getCycloidTwitters();
       hardwareStatusManager = hardwareMap.getHardwareStatusManager();
 
       imuReadTime = new YoLong("imuReadTime", registry);
@@ -421,6 +424,15 @@ public abstract class AbstractHardwareManager
    public YoBoolean getAreMotorsFaulted()
    {
       return areMotorsFaulted;
+   }
+
+   public boolean isThereAPersistentEncoderError()
+   {
+      for (YoCycloidPlatinumTwitter platinumTwitter : platinumTwitters)
+         if (platinumTwitter.hasPersistantEncoderError())
+            return true;
+
+      return false;
    }
 
    /**
