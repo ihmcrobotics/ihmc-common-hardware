@@ -99,11 +99,10 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
-   // URDF stuff
+   // Robot model resource stuff
+   protected static final String XML_SUB_DIRECTORY = "hardware";
    protected static final String URDF_SUB_DIRECTORY = "urdf";
    protected static final String MESH_SUB_DIRECTORY = "meshes";
-   private final List<String> urdfResourceDirectories = new ArrayList<>();
-   private final List<String> urdfResources = new ArrayList<>();
 
    /**
     * Construct the hardware map for the robot
@@ -124,7 +123,7 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + XML_SUB_DIRECTORY + '/', xmlFiles),
            List.of(robotModelResourcesDirectory,
                    robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
                    robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
