@@ -38,4 +38,9 @@ public class YoSILDesiredCurrents
       sil_feedForwardCurrent.set(platinumTwitter.getSILDesiredFeedForwardCurrent());
       sil_totalDesiredCurrent.set(platinumTwitter.getSILDesiredTotalCurrent());
    }
+
+   public double getFeedbackCurrent()
+   {
+      return sil_impedanceControlMotorFeedbackCurrent.getDoubleValue();
+   }
 }

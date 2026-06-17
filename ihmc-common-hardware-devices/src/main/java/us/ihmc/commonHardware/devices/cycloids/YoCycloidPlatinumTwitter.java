@@ -1366,4 +1366,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    {
       softwareBasedUnderVoltThreshold = threshold;
    }
+
+   public double getSILFeedbackCurrent()
+   {
+      return platinumTwitter.getSILDesiredPDControlFeedbackCurrent();
+   }
 }
