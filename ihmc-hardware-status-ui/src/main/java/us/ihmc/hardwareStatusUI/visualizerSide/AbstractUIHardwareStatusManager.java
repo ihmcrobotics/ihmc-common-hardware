@@ -58,7 +58,13 @@ public abstract class AbstractUIHardwareStatusManager
                                                              deviceDataHolders.clear();
 
                                                              if (newSession != null)
-                                                                createDevices(xmlDevices);
+                                                             {
+                                                                if (hasHardwareStatusVariables(xmlDevices))
+                                                                   createDevices(xmlDevices);
+                                                                else
+                                                                   LogTools.info(
+                                                                         "Skipping Hardware Status UI setup: connected session has no device status YoVariables.");
+                                                             }
                                                           });
    }
 
@@ -242,16 +248,26 @@ public abstract class AbstractUIHardwareStatusManager
     */
    protected <T extends YoVariable> boolean doesVariableExist(Class<T> type, String variableName)
    {
+      return findVariable(type, variableName) != null;
+   }
+
+   private <T extends YoVariable> T findVariable(Class<T> type, String variableName)
+   {
       int separatorIndex = variableName.lastIndexOf(YoTools.NAMESPACE_SEPERATOR_STRING);
 
       String namespaceEnding = separatorIndex == -1 ? null : variableName.substring(0, separatorIndex);
       String name = separatorIndex == -1 ? variableName : variableName.substring(separatorIndex + 1);
-      T variable = (T) YoSearchTools.findFirstVariable(namespaceEnding, name, type::isInstance, toolkit.getYoManager().getRootRegistry());
-      boolean doesVariableExist = variable != null;
+      return (T) YoSearchTools.findFirstVariable(namespaceEnding, name, type::isInstance, toolkit.getYoManager().getRootRegistry());
+   }
 
-      if (!doesVariableExist)
-         LogTools.warn("Could not create Hardware Status UI Data Holder for a device. Variable " + variableName + " not found in registry");
-      return doesVariableExist;
+   private boolean hasHardwareStatusVariables(List<AbstractXmlDevice> xmlDevices)
+   {
+      for (AbstractXmlDevice xmlDevice : xmlDevices)
+      {
+         if (xmlDevice.isPresent() && doesVariableExist(YoBoolean.class, xmlDevice.getName() + DeviceStatusHolder.IS_RESPONDING_SUFFIX))
+            return true;
+      }
+      return false;
    }
 
    public ArrayList<UIDeviceStatusHolder> getDeviceDataHolders()
