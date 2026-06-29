@@ -10,7 +10,7 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:ihmc-sensor-processing:source")
+   api("us.ihmc:ihmc-sensor-processing:20251002")
    api("us.ihmc:ihmc-hardware-status-ui:source")
 }
 
