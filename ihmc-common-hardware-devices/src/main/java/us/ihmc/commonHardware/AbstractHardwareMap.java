@@ -142,6 +142,17 @@ public abstract class AbstractHardwareMap
            parentRegistry);
    }
 
+   public AbstractHardwareMap(String robotModelResourcesDirectory,
+                              List<String> xmlFiles,
+                              List<String> urdfFiles,
+                              MasterInterface etherCATMaster,
+                              double dt,
+                              YoDouble yoTime,
+                              YoRegistry parentRegistry)
+   {
+
+   }
+
    /**
     * Construct the hardware map for the robot
     *
