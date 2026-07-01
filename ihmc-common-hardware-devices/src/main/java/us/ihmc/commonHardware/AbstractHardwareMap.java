@@ -116,7 +116,8 @@ public abstract class AbstractHardwareMap
     * @param yoTime                       YoDouble that holds the current time of the robot
     * @param parentRegistry               Parent YoRegistry
     */
-   public AbstractHardwareMap(String robotModelResourcesDirectory,
+   public AbstractHardwareMap(String xmlResourceDirectory,
+                              String urdfResourceDirectory,
                               List<String> xmlFiles,
                               List<String> urdfFiles,
                               MasterInterface etherCATMaster,
@@ -124,33 +125,22 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
-           List.of(robotModelResourcesDirectory,
-                   robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
-                   robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(xmlResourceDirectory, xmlFiles),
+           List.of(urdfResourceDirectory,
+                   urdfResourceDirectory + URDF_SUB_DIRECTORY + '/',
+                   urdfResourceDirectory + MESH_SUB_DIRECTORY + '/'),
            urdfFiles.stream().map(file ->
                                   {
                                      if (file.contains("ezGripper/") || file.contains("abilityHand/"))
                                         return file;
                                      else
-                                        return robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file;
+                                        return urdfResourceDirectory + URDF_SUB_DIRECTORY + '/' + file;
                                   }).toList(),
            etherCATMaster,
            null,
            dt,
            yoTime,
            parentRegistry);
-   }
-
-   public AbstractHardwareMap(String robotModelResourcesDirectory,
-                              List<String> xmlFiles,
-                              List<String> urdfFiles,
-                              MasterInterface etherCATMaster,
-                              double dt,
-                              YoDouble yoTime,
-                              YoRegistry parentRegistry)
-   {
-
    }
 
    /**
