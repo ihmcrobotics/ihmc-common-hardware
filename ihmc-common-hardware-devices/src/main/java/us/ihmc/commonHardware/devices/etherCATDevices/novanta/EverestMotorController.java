@@ -24,7 +24,7 @@ public class EverestMotorController extends DSP402Slave
          super(0x1600);
       }
 
-      Unsigned16 desiredControlWord = new Unsigned16(); //0x2010 or 0x6040
+      Unsigned16 controlWord = new Unsigned16(); //0x2010 or 0x6040
       Signed8 desiredOperationMode = new Signed8(); //0x6060 (0x2014 holds a more complex version)
       Float32 quadratureCurrentSetPoint = new Float32(); //0x201A
       Signed32 positionSetPoint = new Signed32();
@@ -57,7 +57,6 @@ public class EverestMotorController extends DSP402Slave
       Unsigned16 statusWord = new Unsigned16(); //0x2011 0, 2 bytes
       Signed8 currentOperationMode = new Signed8(); //0x6061 0, 1 byte
       Signed32 lastError = new Signed32(); //0x200F or 0x580F, 4 bytes
-//      Unsigned16 currentControlWord = new Unsigned16();
    }
 
    private void configureTPDO_1()
@@ -176,11 +175,6 @@ public class EverestMotorController extends DSP402Slave
       return ((index & 0xFFFF) << 16) + ((subindex & 0xFF) << 8) + (bitLength & 0xFF);
    }
 
-   public void setControlWord(int controlWord)
-   {
-      rpdo.desiredControlWord.set(controlWord);
-   }
-
    @Override
    protected Unsigned16 getStatusWordPDOEntry()
    {
@@ -190,17 +184,12 @@ public class EverestMotorController extends DSP402Slave
    @Override
    protected Unsigned16 getControlWordPDOEntry()
    {
-      return rpdo.desiredControlWord;
+      return rpdo.controlWord;
    }
 
    public void setOperationMode(byte operationMode)
    {
       rpdo.desiredOperationMode.set(operationMode);
-   }
-
-   public int getCurrentControlWord()
-   {
-      return 0; // tpdo_1.currentControlWord.get();
    }
 
    public void setDesiredCurrent(double desiredCurrent)

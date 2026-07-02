@@ -51,7 +51,6 @@ public class YoEverestMotorController
    private final YoInteger errorCode;
    private final YoEnum<EverestErrorCodes> errorMessage;
    private final YoEnum<EverestOperationModes> currentOperationMode;
-   private final YoEnum<ControlWord> currentControlWord;
 
    private final YoBoolean enableDrive;
    private final YoBoolean clearFaults;
@@ -103,7 +102,6 @@ public class YoEverestMotorController
       statusWord = new YoEnum<>(prefix + "StatusWord", registry, StatusWord.class);
       errorCode = new YoInteger(prefix + "ErrorCode", registry);
       errorMessage = new YoEnum<>(prefix + "ErrorMessage", registry, EverestErrorCodes.class);
-      currentControlWord = new YoEnum<>(prefix + "CurrentControlWord", registry, ControlWord.class);
       currentOperationMode = new YoEnum<>(prefix + "CurrentOperationMode", registry, EverestOperationModes.class);
 
       enableDrive = new YoBoolean(prefix + "EnableDrive", registry);
@@ -118,7 +116,6 @@ public class YoEverestMotorController
    public void read()
    {
       requestedControlWord.set(motorController.getCurrentControlword());
-      currentControlWord.set(motorController.getCurrentControlWord());
       statusWord.set(motorController.getStatus());
       currentOperationMode.set(EverestOperationModes.fromByte(motorController.getCurrentOperationMode()));
       errorCode.set(motorController.getErrorCode());
