@@ -69,7 +69,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final YoDouble wakeUpDuration;
    private final YoDouble wakeUpPosition;
    private final YoDouble statorTemperature;
-   private final YoBoolean isRampingDown;
 
    private final YoBoolean zeroAgainstLowerLimit;
    private final YoBoolean zeroAgainstUpperLimit;
@@ -207,8 +206,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       wakeUpDuration = new YoDouble(jointName + "_WakeUpDuration", registry);
       wakeUpDuration.set(5.0);
       wakeUpPosition = new YoDouble(jointName + "_WakeUpPosition", registry);
-
-      isRampingDown = new YoBoolean(jointName + "_IsRampingDown", registry);
 
       statorTemperature = new YoDouble(jointName + "_statorTemperature", registry);
       isStatorAboveShutDownTemperature = new YoBoolean(jointName + "_isStatorAboveShutDownTemperature", registry);
@@ -355,31 +352,29 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       qd_d = desiredJointData.hasDesiredVelocity() ? desiredJointData.getDesiredVelocity() : 0.0;
       tau_d = desiredJointData.hasDesiredTorque() ? desiredJointData.getDesiredTorque() : 0.0;
 
-      // clamping
-      q_d = desiredJointData.hasPositionFeedbackMaxError() ? getClampedDesiredPosition(q_d, measuredActuatorData.getPosition(), maxPositionFeedbackError) : q_d;
-      qd_d = desiredJointData.hasVelocityFeedbackMaxError() ? desiredJointData.getClampedDesiredVelocity(measuredActuatorData.getVelocity()) : qd_d;
+      // Apply clamping on desired position
+      // TODO figure out how to switch this off and on for different controllers
+      // q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
+      // Scale based on master gain
       double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
-
       tau_d *= masterGain;
       stiffness *= masterGain;
       damping *= masterGain;
 
+      // TODO (stefanfasano 202605) we may want to get rid of this, I think this is handled by servo and master gain
       double timeSinceWakeUp = Math.max(0.0, time.getValue() - wakeUpTime.getValue());
-
       if (timeSinceWakeUp <= wakeUpDuration.getValue())
       {
          double alpha = MathTools.clamp(timeSinceWakeUp / wakeUpDuration.getValue(), 0.0, 1.0);
          q_d = EuclidCoreTools.interpolate(wakeUpPosition.getValue(), q_d, alpha);
       }
 
-      // TODO figure out how to switch this off and on for different controllers
-//      q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
-
       // Can scale the desired velocity towards zero so velocity feedback is more like viscous damping
       double velocityFeedbackAlpha = MathTools.clamp(velocityFeedbackAlphaVariable.getDoubleValue(), 0.0, 1.0);
       qd_d = InterpolationTools.linearInterpolate(0.0, qd_d, velocityFeedbackAlpha);
 
+      // Do feedback control here if need be
       if (!(masterDoPDControlOnTwitter.getValue() || doPDControlOnTwitter.getBooleanValue()))
       {
          double jointPosition = computeJointPosition(useFilteredJointStates.getBooleanValue() ?
@@ -387,8 +382,10 @@ public class CycloidMechanismManager implements MechanismManagerInterface
                                                            platinumTwitter.getMeasuredOutputPosition(), yoJointOffset.getValue());
          double jointVelocity = useFilteredJointStates.getBooleanValue() ? platinumTwitter.getFilteredOutputVelocity() : platinumTwitter.getMeasuredOutputVelocity();
 
-         positionError.set(AngleTools.computeAngleDifferenceMinusPiToPi(q_d, jointPosition));
-         velocityError.set(qd_d - jointVelocity);
+         double clampedPositionError = MathTools.clamp(q_d - jointPosition, maxPositionFeedbackError);
+         double clampedVelocityError = MathTools.clamp(qd_d - jointVelocity, maxVelocityFeedbackError);
+         positionError.set(clampedPositionError);
+         velocityError.set(clampedVelocityError);
          positionFeedback.set(stiffness * positionError.getDoubleValue());
          velocityFeedback.set(damping * velocityError.getDoubleValue());
          feedback.set(positionFeedback.getDoubleValue() + velocityFeedback.getDoubleValue());
@@ -407,13 +404,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
          velocityFeedback.setToNaN();
          feedback.setToNaN();
       }
-      if (isRampingDown.getValue()) //TODO(sfasano 20250601) this needs to be fixed (if we even want to keep it)
-      {
-         double alphaPositionRampDown = 0.05;
-         q_d = alphaPositionRampDown * measuredActuatorData.getPosition() + (1.0 - alphaPositionRampDown) * this.desiredActuatorData.getPosition();
-         qd_d = 0.0;
-      }
 
+      // Limit and clamp torque
       if (INCLUDE_TORQUE_LIMITER && jointLimitTorqueLimiter.isTorqueLimitedNearJointLimits())
       {
          tau_d = jointLimitTorqueLimiter.limitDesiredTorques(tau_d, measuredActuatorData.getPosition());
@@ -451,21 +443,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       platinumTwitter.write();
 
       writeTime.set(System.nanoTime() - startTime);
-   }
-
-   private static double getClampedDesiredPosition(double desiredPosition, double currentPosition, double maxFeedbackError)
-   {
-      double error = AngleTools.computeAngleDifferenceMinusPiToPi(desiredPosition, currentPosition);
-
-      if (Math.abs(error) > maxFeedbackError)
-      {
-         double errorClamped = MathTools.clamp(error, maxFeedbackError);
-         return AngleTools.trimAngleMinusPiToPi(currentPosition + errorClamped);
-      }
-      else
-      {
-         return desiredPosition;
-      }
    }
 
    /**
