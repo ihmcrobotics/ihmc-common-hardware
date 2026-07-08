@@ -1,10 +1,8 @@
 package us.ihmc.hardwareXMLToolkit.devices;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -22,6 +20,14 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
 
    @XmlElement(defaultValue = "268448003") //268448003 in decimal = 0x10003103 in hex
    protected int productCode = 0x10003103;
+
+   @XmlElementWrapper(name = "pdoList")
+   @XmlElement(name = "XmlPDOType")
+   protected List<XmlPDOType> pdoList;
+
+   @XmlElementWrapper(name = "sdoList")
+   @XmlElement(name = "XmlSDOType")
+   protected List<XmlSDOType> sdoList;
 
    public List<AbstractXmlDevice> getDaughterDevices()
    {
@@ -41,5 +47,19 @@ public class XmlEtherSnacksBoard extends AbstractXmlEtherCATDevice
    public int getProductCode()
    {
       return productCode;
+   }
+
+   public List<XmlPDOType> getPDOList()
+   {
+      if (pdoList == null)
+         pdoList = new ArrayList<>();
+      return pdoList;
+   }
+
+   public List<XmlSDOType> getSDOList()
+   {
+      if (sdoList == null)
+         sdoList = new ArrayList<>();
+      return sdoList;
    }
 }

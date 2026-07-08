@@ -56,6 +56,30 @@ public class XmlHardwareDescriptionLoader
    }
 
    /**
+    * Get the hardware description of the robot from xml files on the local filesystem.
+    *
+    * @param absoluteDirectory Absolute path to the directory containing the xml files
+    * @param names             Collection of names of the xml files to load
+    * @return A list of {@code XmlHardwareDescription} objects representing each xml file provided
+    */
+   public static List<XmlHardwareDescription> getHardwareDescriptionFromFilesystem(String absoluteDirectory, Collection<String> names)
+   {
+      List<XmlHardwareDescription> hardwareDescriptions = new ArrayList<>();
+      for (String name : names)
+      {
+         try
+         {
+            hardwareDescriptions.add(getHardwareDescription(new FileInputStream(new File(absoluteDirectory, name))));
+         }
+         catch (FileNotFoundException e)
+         {
+            throw new RuntimeException("Unable to load hardware description from filesystem: " + absoluteDirectory + name, e);
+         }
+      }
+      return hardwareDescriptions;
+   }
+
+   /**
     * @param descriptionFile xml file to be read
     * @return An {@code XmlHardwareDescription} object based on the information in the xml file provided
     */

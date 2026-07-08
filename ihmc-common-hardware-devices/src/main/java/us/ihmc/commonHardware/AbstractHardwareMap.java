@@ -1,5 +1,8 @@
 package us.ihmc.commonHardware;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import org.ejml.data.DMatrixRMaj;
 import us.ihmc.commonHardware.devices.genericSensor.ForceSensorManagerInterface;
 import us.ihmc.commonHardware.mechanisms.MechanismManagerInterface;
@@ -24,6 +27,7 @@ import us.ihmc.commonHardware.devices.genericSensor.YoGenericLoadCell;
 import us.ihmc.hardwareStatusUI.controllerSide.HardwareStatusManager;
 import us.ihmc.hardwareXMLToolkit.XmlHardwareDescription;
 import us.ihmc.hardwareXMLToolkit.XmlHardwareDescriptionLoader;
+import us.ihmc.hardwareXMLToolkit.devices.AbstractXmlDevice;
 import us.ihmc.hardwareXMLToolkit.devices.XmlDevices;
 import us.ihmc.hardwareXMLToolkit.devices.XmlEncoder;
 import us.ihmc.hardwareXMLToolkit.devices.XmlH4EtherCATJunctionPort;
@@ -69,7 +73,7 @@ public abstract class AbstractHardwareMap
    protected final double dt;
    protected final YoDouble yoTime;
 
-   protected final Collection<XmlHardwareDescription> xmlHardwareDescriptions;
+   protected final List<XmlHardwareDescription> xmlHardwareDescriptions;
    protected final StateEstimatorSensorDefinitions stateEstimatorSensorDefinitions;
 
    protected final ArrayList<Slave> etherCATDevices = new ArrayList<>();
@@ -99,11 +103,10 @@ public abstract class AbstractHardwareMap
 
    protected final HardwareStatusManager hardwareStatusManager = new HardwareStatusManager(registry);
 
-   // URDF stuff
+   // Robot model resource stuff
+   protected static final String XML_SUB_DIRECTORY = "hardware";
    protected static final String URDF_SUB_DIRECTORY = "urdf";
    protected static final String MESH_SUB_DIRECTORY = "meshes";
-   private final List<String> urdfResourceDirectories = new ArrayList<>();
-   private final List<String> urdfResources = new ArrayList<>();
 
    /**
     * Construct the hardware map for the robot
@@ -124,7 +127,7 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + XML_SUB_DIRECTORY + '/', xmlFiles),
            List.of(robotModelResourcesDirectory,
                    robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
                    robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
@@ -145,6 +148,46 @@ public abstract class AbstractHardwareMap
    /**
     * Construct the hardware map for the robot
     *
+    * @param absoluteFilesystemBase   Absolute path to the root of the resource tree (e.g. ~/alex/ihmc-alex-sdk/alex-models/)
+    * @param robotModelResourcesDirectory Directory containing robot model urdf and xml resources
+    * @param xmlFiles                     xml files that make up xml description of the robot
+    * @param urdfFiles                    urdf files that make up urdf description of the robot
+    * @param etherCATMaster               Main ethercat device used to register all EtherCAT devices in the robot
+    * @param dt                           desired control timesteo
+    * @param yoTime                       YoDouble that holds the current time of the robot
+    * @param parentRegistry               Parent YoRegistry
+    */
+   public AbstractHardwareMap(String absoluteFilesystemBase,
+                              String robotModelResourcesDirectory,
+                              List<String> xmlFiles,
+                              List<String> urdfFiles,
+                              MasterInterface etherCATMaster,
+                              double dt,
+                              YoDouble yoTime,
+                              YoRegistry parentRegistry)
+   {
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromFilesystem(absoluteFilesystemBase + robotModelResourcesDirectory + XML_SUB_DIRECTORY + '/', xmlFiles),
+           List.of(absoluteFilesystemBase + robotModelResourcesDirectory,
+                   absoluteFilesystemBase + robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
+                   absoluteFilesystemBase + robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
+           urdfFiles.stream().map(file ->
+                                  {
+                                     // Special hand URDF files are not in the SDK source; fall back to classpath for those.
+                                     if (file.contains("ezGripper/") || file.contains("abilityHand/"))
+                                        return file;
+                                     else
+                                        return absoluteFilesystemBase + robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file;
+                                  }).toList(),
+           etherCATMaster,
+           null,
+           dt,
+           yoTime,
+           parentRegistry);
+   }
+
+   /**
+    * Construct the hardware map for the robot
+    *
     * @param xmlHardwareDescriptions         Collection of XmlHardwareDescriptions that contain the necessary devices, joints, and transmissions
     * @param etherCATMaster                  Main ethercat device used to register all EtherCAT devices in the robot
     * @param stateEstimatorSensorDefinitions Sensor definitions for the state estimator. If there is no state estimator, then leave as null
@@ -152,7 +195,7 @@ public abstract class AbstractHardwareMap
     * @param yoTime                          YoDouble that holds the current time of the robot
     * @param parentRegistry                  Parent YoRegistry
     */
-   public AbstractHardwareMap(Collection<XmlHardwareDescription> xmlHardwareDescriptions,
+   public AbstractHardwareMap(List<XmlHardwareDescription> xmlHardwareDescriptions,
                               List<String> urdfResourceDirectories,
                               List<String> urdfResources,
                               MasterInterface etherCATMaster,

@@ -76,12 +76,12 @@ public class XmlPlatinumTwitter extends AbstractXmlEtherCATDevice
       this.reversePositiveMotorDirection = reversePositiveMotorDirection;
    }
 
-   public void setMotorOffset(int motorOffset)
+   public void setMotorOffset(double motorOffset)
    {
       this.motorOffset = motorOffset;
    }
 
-   public void setOutputOffset(int outputOffset)
+   public void setOutputOffset(double outputOffset)
    {
       this.outputOffset = outputOffset;
    }

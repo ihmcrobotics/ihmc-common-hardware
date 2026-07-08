@@ -1322,6 +1322,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       return dynamicBrakingEnabled.getBooleanValue();
    }
 
+   public double getMotorPositionOffset()
+   {
+      return motorPositionOffset.getDoubleValue();
+   }
+
+   public double getOutputPositionOffset()
+   {
+      return outputPositionOffset.getDoubleValue();
+   }
+
    public String getActuatorPackage()
    {
       return actuatorPackage;
