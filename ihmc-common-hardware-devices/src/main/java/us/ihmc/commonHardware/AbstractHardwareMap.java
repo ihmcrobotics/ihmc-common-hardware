@@ -108,7 +108,8 @@ public abstract class AbstractHardwareMap
    /**
     * Construct the hardware map for the robot
     *
-    * @param robotModelResourcesDirectory Directory containing robot model urdf and xml resources
+    * @param hardwareDescriptionDirectory Directory containing the XML resources of the robot
+    * @param virtualDescriptionDirectory  Directory containing the URDF, mesh, and mjcf resources of the robot
     * @param xmlFiles                     xml files that make up xml description of the robot
     * @param urdfFiles                    urdf files that make up urdf description of the robot
     * @param etherCATMaster               Main ethercat device used to register all EtherCAT devices in the robot
@@ -116,7 +117,8 @@ public abstract class AbstractHardwareMap
     * @param yoTime                       YoDouble that holds the current time of the robot
     * @param parentRegistry               Parent YoRegistry
     */
-   public AbstractHardwareMap(String robotModelResourcesDirectory,
+   public AbstractHardwareMap(String hardwareDescriptionDirectory,
+                              String virtualDescriptionDirectory,
                               List<String> xmlFiles,
                               List<String> urdfFiles,
                               MasterInterface etherCATMaster,
@@ -124,16 +126,16 @@ public abstract class AbstractHardwareMap
                               YoDouble yoTime,
                               YoRegistry parentRegistry)
    {
-      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(robotModelResourcesDirectory + "hardware/", xmlFiles),
-           List.of(robotModelResourcesDirectory,
-                   robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/',
-                   robotModelResourcesDirectory + MESH_SUB_DIRECTORY + '/'),
+      this(XmlHardwareDescriptionLoader.getHardwareDescriptionFromAlternateResources(hardwareDescriptionDirectory, xmlFiles),
+           List.of(virtualDescriptionDirectory,
+                   virtualDescriptionDirectory + URDF_SUB_DIRECTORY + '/',
+                   virtualDescriptionDirectory + MESH_SUB_DIRECTORY + '/'),
            urdfFiles.stream().map(file ->
                                   {
                                      if (file.contains("ezGripper/") || file.contains("abilityHand/"))
                                         return file;
                                      else
-                                        return robotModelResourcesDirectory + URDF_SUB_DIRECTORY + '/' + file;
+                                        return virtualDescriptionDirectory + URDF_SUB_DIRECTORY + '/' + file;
                                   }).toList(),
            etherCATMaster,
            null,
