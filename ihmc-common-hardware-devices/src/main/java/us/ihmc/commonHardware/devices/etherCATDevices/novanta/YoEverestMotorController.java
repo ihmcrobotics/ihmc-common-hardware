@@ -44,6 +44,7 @@ public class YoEverestMotorController
    private final YoBoolean findOffset;
 
    private final YoDouble measuredMotorCurrent;
+   private final YoDouble commandedMotorCurrent;
    private final YoDouble busVoltage;
    private final YoDouble motorTemperature;
 
@@ -96,6 +97,7 @@ public class YoEverestMotorController
       });
 
       measuredMotorCurrent = new YoDouble(prefix + "MeasuredMotorCurrent", registry);
+      commandedMotorCurrent = new YoDouble(prefix + "commandedMotorCurrent", registry);
       busVoltage = new YoDouble(prefix + "BusVoltage", registry);
       motorTemperature = new YoDouble(prefix + "MotorTemperature", registry);
 
@@ -132,6 +134,7 @@ public class YoEverestMotorController
       measuredActuatorVelocity.set(rawMeasuredActuatorVelocity.getValue() * FULL_ROTATION);
 
       measuredMotorCurrent.set(motorController.getQuadratureCurrent());
+      commandedMotorCurrent.set(motorController.getCommandedCurrent());
       busVoltage.set(motorController.getBusVoltage());
       motorTemperature.set(motorController.getMotorTemperature());
    }
@@ -147,6 +150,7 @@ public class YoEverestMotorController
          else
          {
             motorController.setEnableDrive(false);
+            enableDrive.set(false);
             return;
          }
       }
@@ -165,6 +169,8 @@ public class YoEverestMotorController
       motorController.setDesiredCurrent(desiredMotorCurrent.getValue());
       motorController.setDesiredPosition(rawDesiredMotorPosition.getValue());
       motorController.setDesiredVelocity(rawDesiredMotorVelocity.getValue());
+
+      motorController.doStateControl();
    }
 
    public void setRequestedOperationMode(EverestOperationModes operationMode)

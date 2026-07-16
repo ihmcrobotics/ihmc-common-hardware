@@ -37,7 +37,7 @@ public class EverestMotorController extends DSP402Slave
    {
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
 
-      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(CONTROL_WORD.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x2010");
+      verifyWorkingCounter(writeSDO(0x1600, 1, computePdoMapValue(CIA_CONTROL_WORD.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x2010");
       verifyWorkingCounter(writeSDO(0x1600, 2, computePdoMapValue(MODES_OF_OPERATION.getAddress(), 0, 8)), "failed to write to 0x1600 - 0x6060");
       verifyWorkingCounter(writeSDO(0x1600, 3, computePdoMapValue(CURRENT_QUADRATURE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201A");
       verifyWorkingCounter(writeSDO(0x1600, 4, computePdoMapValue(POSITION_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2020");
@@ -63,7 +63,7 @@ public class EverestMotorController extends DSP402Slave
    {
       verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 0), "failed to write to 0x1A00 - 0x0"); // disable 0x1600 while we write
 
-      verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(STATUS_WORD.getAddress(), 0, 16)), "failed to write to 0x1A00 - 0x2011");
+      verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(CIA_STATUS_WORD.getAddress(), 0, 16)), "failed to write to 0x1A00 - 0x2011");
       verifyWorkingCounter(writeSDO(0x1A00, 2, computePdoMapValue(MODES_OF_OPERATION_DISPLAY.getAddress(), 0, 8)), "failed to write to 0x1A00 - 0x6061");
       verifyWorkingCounter(writeSDO(0x1A00, 3, computePdoMapValue(LAST_ERROR_580F.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x580F");
 //      verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(CONTROL_WORD.getAddress(), 0, 16)), "failed to write to 0x1A00 - 0x6040");
@@ -85,6 +85,7 @@ public class EverestMotorController extends DSP402Slave
 //      Float32 actuatorVelocity = new Float32(); //0x2034 0, 4 bytes
 
       Float32 quadratureCurrent = new Float32(); //0x203B 0, 4 bytes
+      Float32 commandedCurrent = new Float32();
       Float32 busVoltage = new Float32(); //0x2060 0, 4 bytes
       //      Float32 motorTemperature = new Float32(); //0x2063, 4 bytes
    }
@@ -98,10 +99,11 @@ public class EverestMotorController extends DSP402Slave
       verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x2033, 0, 32)), "failed to write to 0x1A00 - 0x2033");
 //      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
       verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x203B, 0, 32)), "failed to write to 0x1A00 - 0x203B");
-      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2072, 0, 32)), "failed to write to 0x1A00 - 0x203B");
+      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
 
 
-      verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 5), "failed to write to 0x1A01 - 0x3");
+      verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 6), "failed to write to 0x1A01 - 0x3");
    }
 
    public EverestMotorController(int aliasAddress, int position)
@@ -197,6 +199,11 @@ public class EverestMotorController extends DSP402Slave
       rpdo.quadratureCurrentSetPoint.set((float) desiredCurrent);
    }
 
+   public double getCommandedCurrent()
+   {
+      return tpdo_2.commandedCurrent.get();
+   }
+
    public void setDesiredPosition(int desiredPosition)
    {
       rpdo.positionSetPoint.set(desiredPosition);
@@ -250,12 +257,6 @@ public class EverestMotorController extends DSP402Slave
    public int getErrorCode()
    {
       return tpdo_1.lastError.get();
-   }
-
-   @Override
-   public void doStateControl()
-   {
-      super.doStateControl();
    }
 
    @Override
