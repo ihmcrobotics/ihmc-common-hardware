@@ -11,7 +11,7 @@ ihmc {
 
 mainDependencies {
    api("us.ihmc:ihmc-ethercat-master:0.16.1")
-   api("us.ihmc:scs2-simulation-construction-set:17-0.32.1")
+   api("us.ihmc:scs2-simulation-construction-set:17-0.33.1")
    api("us.ihmc:ihmc-hardware-xml-toolkit:source")
 }
 
