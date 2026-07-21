@@ -16,7 +16,7 @@ public class EverestMotorController extends DSP402Slave
    private RPDO rpdo = new RPDO();
    private TPDO_1 tpdo_1 = new TPDO_1();
    private TPDO_2 tpdo_2 = new TPDO_2();
-
+   private boolean maxConfig = false;
    public class RPDO extends RxPDO
    {
       public RPDO()
@@ -45,6 +45,7 @@ public class EverestMotorController extends DSP402Slave
 
 
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 5), "failed to write to 0x1600 - 0x5");
+      if(maxConfig){}
    }
 
    public class TPDO_1 extends TxPDO
@@ -70,6 +71,7 @@ public class EverestMotorController extends DSP402Slave
 //      verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(0x2063, 0, 32)), "failed to write to 0x1A00 - 0x2063");
 
       verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 3), "failed to write to 0x1A00 - 0x8");
+      if(maxConfig){}
    }
 
    public class TPDO_2 extends TxPDO
@@ -104,6 +106,7 @@ public class EverestMotorController extends DSP402Slave
 
 
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 6), "failed to write to 0x1A01 - 0x3");
+      if(maxConfig){}
    }
 
    public EverestMotorController(int aliasAddress, int position)
@@ -121,7 +124,21 @@ public class EverestMotorController extends DSP402Slave
       registerSyncManager(syncManager3);
    }
 
-   @Override
+   public EverestMotorController(int aliasAddress, int position, boolean maxConfig)
+   {
+      super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
+      maxConfig = maxConfig;
+      SyncManager syncManager2 = new SyncManager(2, false);
+      syncManager2.registerPDO(rpdo);
+
+      SyncManager syncManager3 = new SyncManager(3, false);
+      syncManager3.registerPDO(tpdo_1);
+      syncManager3.registerPDO(tpdo_2);
+
+      registerSyncManager(syncManager2);
+      registerSyncManager(syncManager3);
+   }
+
    protected void configure(boolean dcEnabled, long cycleTimeInNs)
    {
       configurePDOs();
