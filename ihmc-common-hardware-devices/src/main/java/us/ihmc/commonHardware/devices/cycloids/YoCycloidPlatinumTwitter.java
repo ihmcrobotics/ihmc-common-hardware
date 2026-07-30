@@ -16,6 +16,7 @@ import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.RateLimitedYoVariable;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -138,6 +139,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 1.0;
    private final YoDouble statorTemperatureBreakFrequency;
    private final AlphaFilteredYoVariable filteredStatorTemp;
+
+   // Slew-rate limit applied on top of the low-pass filtered stator temp, in degrees Celsius per second
+   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 5.0;
+   private final YoDouble statorTemperatureMaxRate;
+   private final RateLimitedYoVariable rateLimitedFilteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
@@ -356,6 +362,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       filteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
                                                         registry,
                                                         new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+
+      statorTemperatureMaxRate = new YoDouble(prefix + "statorTemperatureMaxRate", registry);
+      statorTemperatureMaxRate.set(DEFAULT_STATOR_TEMPERATURE_MAX_RATE);
+      rateLimitedFilteredStatorTemp = new RateLimitedYoVariable(prefix + "rateLimitedFilteredStatorTemp", registry, statorTemperatureMaxRate, dt);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -628,6 +638,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemp.set(getStatorTemperature());
       filteredStatorTemp.update(statorTemp.getDoubleValue());
+      rateLimitedFilteredStatorTemp.update(filteredStatorTemp.getDoubleValue());
 
       if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
