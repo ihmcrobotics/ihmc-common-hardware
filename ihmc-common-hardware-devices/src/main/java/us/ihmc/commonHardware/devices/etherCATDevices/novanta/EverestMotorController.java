@@ -12,7 +12,7 @@ public class EverestMotorController extends DSP402Slave
 {
    private static final int VENDOR_ID = 0x0000029C;
    private static final int PRODUCT_CODE = 0x03B31001;
-
+   private float tc;
    private RPDO rpdo = new RPDO();
    private TPDO_1 tpdo_1 = new TPDO_1();
    private TPDO_2 tpdo_2 = new TPDO_2();
@@ -111,6 +111,8 @@ public class EverestMotorController extends DSP402Slave
       Float32 commandedCurrent = new Float32();
       Float32 busVoltage = new Float32(); //0x2060 0, 4 bytes
       //      Float32 motorTemperature = new Float32(); //0x2063, 4 bytes
+      Float32 actualTorque = new Float32();
+      Float32 temperature = new Float32();
    }
 
    private void configureTPDO_2()
@@ -122,19 +124,18 @@ public class EverestMotorController extends DSP402Slave
       verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x2033, 0, 32)), "failed to write to 0x1A00 - 0x2033");
 //      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
       verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x203B, 0, 32)), "failed to write to 0x1A00 - 0x203B");
-      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2072, 0, 32)), "failed to write to 0x1A00 - 0x203B");
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2072, 0, 32)), "failed to write to 0x1A00 - 0x2072");
       verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
-
-
+      verifyWorkingCounter(writeSDO(0x1A01, 7, computePdoMapValue(ACTUAL_TORQUE.getAddress(), 0, 32)), "failed to write to 0x1A01 - 0x2029");
+      verifyWorkingCounter(writeSDO(0x1A01, 8, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A01 - 0x2061");
 
       if(maxConfig){
-         verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
-         verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x203C, 0, 32)), "failed to write to 0x1A00 - 0x203C");
-         verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x2029, 0, 32)), "failed to write to 0x1A00 - 0x2029");
-         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 9), "failed to write to 0x1A01 - 0x3");
+         verifyWorkingCounter(writeSDO(0x1A01, 10, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
+         verifyWorkingCounter(writeSDO(0x1A01, 11, computePdoMapValue(0x203C, 0, 32)), "failed to write to 0x1A00 - 0x203C");
+         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 10), "failed to write to 0x1A01 - 0x3");
       }
       else{
-         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 6), "failed to write to 0x1A01 - 0x3");
+         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 8), "failed to write to 0x1A01 - 0x3");
       }
    }
 
@@ -171,7 +172,7 @@ public class EverestMotorController extends DSP402Slave
    protected void configure(boolean dcEnabled, long cycleTimeInNs)
    {
       configurePDOs();
-
+      readTorqueConstant();
       super.configure(dcEnabled, cycleTimeInNs);
    }
 
@@ -221,6 +222,14 @@ public class EverestMotorController extends DSP402Slave
    {
 //      System.out.println(((index & 0xFFFF) << 16) + ((subindex & 0xFF) << 8) + (bitLength & 0xFF));
       return ((index & 0xFFFF) << 16) + ((subindex & 0xFF) << 8) + (bitLength & 0xFF);
+   }
+
+   public void readTorqueConstant(){
+      tc = readSDOFloat(TORQUE_CONSTANT.getAddress(), 0);
+   }
+
+   public double getTorqueConstant(){
+      return tc;
    }
 
    @Override
@@ -303,6 +312,14 @@ public class EverestMotorController extends DSP402Slave
    public int getErrorCode()
    {
       return tpdo_1.lastError.get();
+   }
+
+   public double getActualTorque() {
+      return tpdo_2.actualTorque.get(); // Nm
+   }
+
+   public double getTemperature(){
+      return tpdo_2.temperature.get();
    }
 
    @Override

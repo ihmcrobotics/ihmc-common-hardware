@@ -38,6 +38,8 @@ public class YoEverestMotorController
    private final YoDouble measuredMotorVelocity;
    private final YoDouble measuredActuatorPosition;
    private final YoDouble measuredActuatorVelocity;
+   private final YoDouble measuredTorque;
+   private final YoDouble measuredTemperature;
 
    private final YoDouble motorPositionOffset;
    private final YoDouble actuatorPositionOffset;
@@ -56,6 +58,9 @@ public class YoEverestMotorController
    private final YoBoolean enableDrive;
    private final YoBoolean clearFaults;
    private final YoBoolean stayDisabled;
+
+   private final YoDouble torqueConstant;
+   private final YoDouble estimatedMotorTorque;
 
    private final String name;
 
@@ -83,6 +88,11 @@ public class YoEverestMotorController
       measuredMotorVelocity = new YoDouble(prefix + "MotorVelocity_rad_s", registry);
       measuredActuatorPosition = new YoDouble(prefix + "ActuatorPosition_rad", registry);
       measuredActuatorVelocity = new YoDouble(prefix + "ActuatorVelocity_rad_s", registry);
+      measuredTorque = new YoDouble(prefix + "Torque", registry);
+      measuredTemperature = new YoDouble(prefix + "Temperature", registry);
+
+      torqueConstant = new YoDouble(prefix + "TorqueConstant", registry);
+      estimatedMotorTorque = new YoDouble(prefix + "EstimatedMotorTorque", registry);
 
       motorPositionOffset = new YoDouble(prefix + "MotorPositionOffset", registry);
       actuatorPositionOffset = new YoDouble(prefix + "ActuatorPositionOffset", registry);
@@ -113,6 +123,8 @@ public class YoEverestMotorController
       stayDisabled.set(false);
 
       parentRegistry.addChild(registry);
+
+      torqueConstant.set(motorController.getTorqueConstant());
    }
 
    public void read()
@@ -132,11 +144,16 @@ public class YoEverestMotorController
       measuredMotorVelocity.set(rawMeasuredMotorVelocity.getValue() * FULL_ROTATION);
       measuredActuatorPosition.set(rawMeasuredActuatorPosition.getValue() / ENCODER_CONVERSION * FULL_ROTATION - actuatorPositionOffset.getValue());
       measuredActuatorVelocity.set(rawMeasuredActuatorVelocity.getValue() * FULL_ROTATION);
+      measuredTorque.set(motorController.getActualTorque());
+      measuredTemperature.set(motorController.getTemperature());
 
       measuredMotorCurrent.set(motorController.getQuadratureCurrent());
       commandedMotorCurrent.set(motorController.getCommandedCurrent());
       busVoltage.set(motorController.getBusVoltage());
       motorTemperature.set(motorController.getMotorTemperature());
+
+      estimatedMotorTorque.set(measuredMotorCurrent.getValue()*torqueConstant.getValue());
+      torqueConstant.set(motorController.getTorqueConstant());
    }
 
    public void write()
