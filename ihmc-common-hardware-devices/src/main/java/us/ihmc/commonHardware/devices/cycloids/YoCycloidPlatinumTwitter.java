@@ -29,7 +29,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 {
    public static boolean DEBUG_VARIABLES_SIL = true;
    public static boolean DEBUG_ELMO_STATUS_REGISTER = false;
-   public static boolean DEBUG_MOTOR_VARIABLES = false;
+   public static boolean DEBUG_MOTOR_VARIABLES = true;
 
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
