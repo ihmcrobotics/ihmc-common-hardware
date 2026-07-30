@@ -146,6 +146,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static YoDouble statorTemperatureMaxRate;
 
    private final AlphaFilteredYoVariable filteredStatorTemp;
+   private final AlphaFilteredYoVariable secondOrderFilteredStatorTemp;
    private final RateLimitedYoVariable rateLimitedFilteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
@@ -366,6 +367,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       filteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
                                                         registry,
                                                         new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+      secondOrderFilteredStatorTemp = new AlphaFilteredYoVariable(prefix + "secondOrderFilteredStatorTemp",
+                                                       registry,
+                                                       new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
       rateLimitedFilteredStatorTemp = new RateLimitedYoVariable(prefix + "rateLimitedFilteredStatorTemp", registry, statorTemperatureMaxRate, dt);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
@@ -657,7 +661,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemp.set(getStatorTemperature());
       filteredStatorTemp.update(statorTemp.getDoubleValue());
-      rateLimitedFilteredStatorTemp.update(filteredStatorTemp.getDoubleValue());
+      secondOrderFilteredStatorTemp.update(filteredStatorTemp.getDoubleValue());
+      rateLimitedFilteredStatorTemp.update(secondOrderFilteredStatorTemp.getDoubleValue());
 
       if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
@@ -1338,16 +1343,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          return convertAnalogInputInVoltsToTemperatureInDegreeCelsius(measuredAnalogInput1InVolts.getValue());
       else
          return convertAnalogInputInVoltsToTemperatureInDegreeCelsius(measuredAnalogInput2InVolts.getValue());
-   }
-
-   public double getFilteredStatorTemperature()
-   {
-      return filteredStatorTemp.getDoubleValue();
-   }
-
-   public void setStatorTemperatureBreakFrequency(double breakFrequency)
-   {
-      statorTemperatureBreakFrequency.set(breakFrequency);
    }
 
    public int getMaxAllowableStatorTemperature()
