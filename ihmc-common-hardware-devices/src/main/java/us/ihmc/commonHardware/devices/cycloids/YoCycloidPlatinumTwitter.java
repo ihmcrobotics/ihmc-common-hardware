@@ -136,13 +136,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    private final YoDouble statorTemp;
 
+   // Stator temp filter tuning is shared (static) across every YoCycloidPlatinumTwitter instance, so tuning one motor's
+   // break frequency/max rate tunes them all instead of each motor drifting independently.
+   private static final String SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME = "StatorTemperatureFilterParameters";
    private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 1.0;
-   private final YoDouble statorTemperatureBreakFrequency;
-   private final AlphaFilteredYoVariable filteredStatorTemp;
+   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 5.0; // degrees Celsius per second
+   private static YoRegistry sharedStatorTemperatureFilterRegistry;
+   private static YoDouble statorTemperatureBreakFrequency;
+   private static YoDouble statorTemperatureMaxRate;
 
-   // Slew-rate limit applied on top of the low-pass filtered stator temp, in degrees Celsius per second
-   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 5.0;
-   private final YoDouble statorTemperatureMaxRate;
+   private final AlphaFilteredYoVariable filteredStatorTemp;
    private final RateLimitedYoVariable rateLimitedFilteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
@@ -357,14 +360,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemp = new YoDouble("StatorTemp", registry);
 
-      statorTemperatureBreakFrequency = new YoDouble(prefix + "statorTemperatureBreakFrequency", registry);
-      statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
+      ensureSharedStatorTemperatureFilterParametersExist(parentRegistry);
+      // statorTemperatureBreakFrequency/statorTemperatureMaxRate are shared across all instances, but the filter state itself
+      // (filteredStatorTemp/rateLimitedFilteredStatorTemp) is per-motor, so each motor is still filtered using its own dt and history.
       filteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
                                                         registry,
                                                         new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
-
-      statorTemperatureMaxRate = new YoDouble(prefix + "statorTemperatureMaxRate", registry);
-      statorTemperatureMaxRate.set(DEFAULT_STATOR_TEMPERATURE_MAX_RATE);
       rateLimitedFilteredStatorTemp = new RateLimitedYoVariable(prefix + "rateLimitedFilteredStatorTemp", registry, statorTemperatureMaxRate, dt);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
@@ -590,6 +591,24 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       parentRegistry.addChild(registry);
       if (DEBUG_MOTOR_VARIABLES)
          parentRegistry.addChild(motorRegistry);
+   }
+
+   /**
+    * Lazily creates the stator temperature filter tuning variables the first time any {@code YoCycloidPlatinumTwitter} is constructed, and adds them to
+    * {@code parentRegistry}. Every subsequent instance reuses the same {@code YoDouble}s, so tuning the break frequency or max rate on one motor tunes
+    * it for all of them instead of each motor drifting independently.
+    */
+   private static synchronized void ensureSharedStatorTemperatureFilterParametersExist(YoRegistry parentRegistry)
+   {
+      if (sharedStatorTemperatureFilterRegistry != null)
+         return;
+
+      sharedStatorTemperatureFilterRegistry = new YoRegistry(SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME);
+      statorTemperatureBreakFrequency = new YoDouble("statorTemperatureBreakFrequency", sharedStatorTemperatureFilterRegistry);
+      statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
+      statorTemperatureMaxRate = new YoDouble("statorTemperatureMaxRate", sharedStatorTemperatureFilterRegistry);
+      statorTemperatureMaxRate.set(DEFAULT_STATOR_TEMPERATURE_MAX_RATE);
+      parentRegistry.addChild(sharedStatorTemperatureFilterRegistry);
    }
 
    @Override
