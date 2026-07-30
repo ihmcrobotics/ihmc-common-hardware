@@ -139,8 +139,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    // Stator temp filter tuning is shared (static) across every YoCycloidPlatinumTwitter instance, so tuning one motor's
    // break frequency/max rate tunes them all instead of each motor drifting independently.
    private static final String SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME = "StatorTemperatureFilterParameters";
-   private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 1.0;
-   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 5.0; // degrees Celsius per second
+   private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 0.2;
+   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 1.0; // degrees Celsius per second
    private static YoRegistry sharedStatorTemperatureFilterRegistry;
    private static YoDouble statorTemperatureBreakFrequency;
    private static YoDouble statorTemperatureMaxRate;
