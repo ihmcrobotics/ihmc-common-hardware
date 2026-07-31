@@ -172,7 +172,6 @@ public class EverestMotorController extends DSP402Slave
    protected void configure(boolean dcEnabled, long cycleTimeInNs)
    {
       configurePDOs();
-      readTorqueConstant();
       super.configure(dcEnabled, cycleTimeInNs);
    }
 
@@ -230,6 +229,10 @@ public class EverestMotorController extends DSP402Slave
 
    public double getTorqueConstant(){
       return tc;
+   }
+
+   public void setTorqueConstant(float constant){
+      writeSDO(TORQUE_CONSTANT.getAddress(), 0, constant);
    }
 
    @Override

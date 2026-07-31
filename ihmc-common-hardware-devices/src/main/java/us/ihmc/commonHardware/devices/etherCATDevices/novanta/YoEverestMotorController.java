@@ -124,7 +124,10 @@ public class YoEverestMotorController
 
       parentRegistry.addChild(registry);
 
-      torqueConstant.set(motorController.getTorqueConstant());
+      torqueConstant.set(0.1579);
+//      motorController.setTorqueConstant((float) torqueConstant.getValue());
+
+//      torqueConstant.addListener(s -> motorController.setTorqueConstant((float) torqueConstant.getValue()));
    }
 
    public void read()
@@ -153,7 +156,7 @@ public class YoEverestMotorController
       motorTemperature.set(motorController.getMotorTemperature());
 
       estimatedMotorTorque.set(measuredMotorCurrent.getValue()*torqueConstant.getValue());
-      torqueConstant.set(motorController.getTorqueConstant());
+     // torqueConstant.set(motorController.getTorqueConstant());
    }
 
    public void write()
@@ -186,7 +189,7 @@ public class YoEverestMotorController
       motorController.setDesiredCurrent(desiredMotorCurrent.getValue());
       motorController.setDesiredPosition(rawDesiredMotorPosition.getValue());
       motorController.setDesiredVelocity(rawDesiredMotorVelocity.getValue());
-
+//      motorController.setTorqueConstant((float) torqueConstant.getValue());
       motorController.doStateControl();
    }
 
@@ -208,6 +211,11 @@ public class YoEverestMotorController
    public void setDesiredMotorVelocity(double desiredMotorVelocity)
    {
       this.desiredMotorVelocity.set(desiredMotorVelocity);
+   }
+
+   public double getTorqueConstant()
+   {
+      return torqueConstant.getDoubleValue();
    }
 
 
