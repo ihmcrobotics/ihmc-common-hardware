@@ -1332,6 +1332,16 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       return platinumTwitter;
    }
 
+   public boolean hasPersistentInputEncoderError()
+   {
+      return inputEncoderStatusManager.hasPersistentError();
+   }
+
+   public boolean hasPersistentOutputEncoderError()
+   {
+      return outputEncoderStatusManager.hasPersistentError();
+   }
+
    public void setMotorPositionBreakFrequency(double breakFrequency)
    {
       motorPositionBreakFrequency.set(breakFrequency);
