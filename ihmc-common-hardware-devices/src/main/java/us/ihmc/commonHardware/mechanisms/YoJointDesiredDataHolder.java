@@ -19,27 +19,13 @@ public class YoJointDesiredDataHolder
    private final YoDouble velocity;
    private final YoDouble acceleration;
 
-   private final YoEnum<JointDesiredControlMode> controlMode;
-   private final YoEnum<JointDesiredLoadMode> loadMode;
-
-
    private final YoDouble stiffness;
    private final YoDouble damping;
    private final YoDouble masterGain;
    private final YoDouble velocityScaling;
-   private final YoDouble velocityIntegrationBreakFrequency;
-   private final YoDouble positionIntegrationBreakFrequency;
-   private final YoDouble maxPositionIntegrationError;
-   private final YoDouble maxVelocityIntegrationError;
    private final YoDouble maxPositionError;
    private final YoDouble maxVelocityError;
    private final YoDouble maxTorque;
-
-
-
-
-
-
 
    public YoJointDesiredDataHolder(String prefix, JointDesiredOutputReadOnly jointDesireds, YoRegistry parentRegistry)
    {
@@ -56,15 +42,8 @@ public class YoJointDesiredDataHolder
       damping = new YoDouble(prefix + "damping", registry);
       maxPositionError = new YoDouble(prefix + "maxPositionError", registry);
       maxVelocityError = new YoDouble(prefix + "maxVelocityError", registry);
-      maxPositionIntegrationError = new YoDouble(prefix + "maxPositionIntegrationError", registry);
-      maxVelocityIntegrationError = new YoDouble(prefix + "maxVelocityIntegrationError", registry);
       maxTorque = new YoDouble(prefix + "maxTorque", registry);
       velocityScaling = new YoDouble(prefix + "velocityScaling", registry);
-      velocityIntegrationBreakFrequency= new YoDouble(prefix + "velocityIntegrationBreakFrequency", registry);
-      positionIntegrationBreakFrequency= new YoDouble(prefix + "positionIntegrationBreakFrequency", registry);
-
-      controlMode = new YoEnum<>(prefix + "_controlMode", registry, JointDesiredControlMode.class, true);
-      loadMode = new YoEnum<>(prefix + "_loadMode", registry, JointDesiredLoadMode.class, true);
 
       parentRegistry.addChild(registry);
    }
@@ -87,13 +66,5 @@ public class YoJointDesiredDataHolder
       maxVelocityError.set(jointDesireds.getVelocityFeedbackMaxError());
       maxTorque.set(jointDesireds.getMaxTorque());
       velocityScaling.set(jointDesireds.getVelocityScaling());
-      velocityIntegrationBreakFrequency.set(jointDesireds.getVelocityIntegrationBreakFrequency());
-      positionIntegrationBreakFrequency.set(jointDesireds.getPositionIntegrationBreakFrequency());
-      maxPositionIntegrationError.set(jointDesireds.getPositionIntegrationMaxError());
-      maxVelocityIntegrationError.set(jointDesireds.getVelocityIntegrationMaxError());
-
-
-      controlMode.set(jointDesireds.getControlMode());
-      loadMode.set(jointDesireds.getLoadMode());
    }
 }

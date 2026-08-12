@@ -1,7 +1,5 @@
 package us.ihmc.commonHardware.mechanisms;
 
-import us.ihmc.robotics.outputData.JointDesiredLoadMode;
-
 public interface JointDataReadOnly
 {
    double getPosition();
@@ -16,8 +14,6 @@ public interface JointDataReadOnly
 
    double getDamping();
 
-   JointDesiredLoadMode getLoadMode();
-
    default boolean hasStiffness()
    {
       return !Double.isNaN(getStiffness());
@@ -26,10 +22,5 @@ public interface JointDataReadOnly
    default boolean hasDamping()
    {
       return !Double.isNaN(getDamping());
-   }
-   
-   default boolean hasLoadMode()
-   {
-      return getLoadMode() != null;
    }
 }
