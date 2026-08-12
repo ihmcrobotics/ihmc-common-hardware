@@ -45,15 +45,15 @@ public class EverestMotorController extends DSP402Slave
 
       if(maxConfig){
          verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(CURRENT_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201B");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(TORQUE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2022");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(VOLTAGE_QUADRATURE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2018");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(VOLTAGE_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2019");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(CURRENT_A_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201C");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(CURRENT_B_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201D");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(TARGET_TORQUE.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x6071");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(TORQUE_OFFSET.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x60B2");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(DIGITAL_OUTPUTS_SET_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2602");
-         verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(ANALOG_OUTPUT_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x208D");
+         verifyWorkingCounter(writeSDO(0x1600, 7, computePdoMapValue(TORQUE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2022");
+         verifyWorkingCounter(writeSDO(0x1600, 8, computePdoMapValue(VOLTAGE_QUADRATURE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2018");
+         verifyWorkingCounter(writeSDO(0x1600, 9, computePdoMapValue(VOLTAGE_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2019");
+         verifyWorkingCounter(writeSDO(0x1600, 10, computePdoMapValue(CURRENT_A_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201C");
+         verifyWorkingCounter(writeSDO(0x1600, 11, computePdoMapValue(CURRENT_B_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201D");
+         verifyWorkingCounter(writeSDO(0x1600, 12, computePdoMapValue(TARGET_TORQUE.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x6071");
+         verifyWorkingCounter(writeSDO(0x1600, 13, computePdoMapValue(TORQUE_OFFSET.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x60B2");
+         verifyWorkingCounter(writeSDO(0x1600, 14, computePdoMapValue(DIGITAL_OUTPUTS_SET_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2602");
+         verifyWorkingCounter(writeSDO(0x1600, 15, computePdoMapValue(ANALOG_OUTPUT_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x208D");
          verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 15), "failed to write to 0x1600 - 0x5");
       }
       else{
@@ -85,9 +85,9 @@ public class EverestMotorController extends DSP402Slave
 
 
       if(maxConfig){
-         verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(MOTOR_TEMPERATURE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2063");
-         verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2061");
-         verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(FOLLOWING_ERROR.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x21EE");
+         verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(MOTOR_TEMPERATURE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2063");
+         verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2061");
+         verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(FOLLOWING_ERROR.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x21EE");
          verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 6), "failed to write to 0x1A00 - 0x8");
       }
       else{
@@ -130,8 +130,8 @@ public class EverestMotorController extends DSP402Slave
       verifyWorkingCounter(writeSDO(0x1A01, 8, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A01 - 0x2061");
 
       if(maxConfig){
-         verifyWorkingCounter(writeSDO(0x1A01, 10, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
-         verifyWorkingCounter(writeSDO(0x1A01, 11, computePdoMapValue(0x203C, 0, 32)), "failed to write to 0x1A00 - 0x203C");
+         verifyWorkingCounter(writeSDO(0x1A01, 9, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
+         verifyWorkingCounter(writeSDO(0x1A01, 10, computePdoMapValue(0x203C, 0, 32)), "failed to write to 0x1A00 - 0x203C");
          verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 10), "failed to write to 0x1A01 - 0x3");
       }
       else{
