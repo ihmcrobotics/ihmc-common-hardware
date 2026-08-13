@@ -16,7 +16,6 @@ import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
-import us.ihmc.yoVariables.filters.RateLimitedYoVariable;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -32,7 +31,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 {
    public static boolean DEBUG_VARIABLES_SIL = true;
    public static boolean DEBUG_ELMO_STATUS_REGISTER = false;
-   public static boolean DEBUG_MOTOR_VARIABLES = true;
+   public static boolean DEBUG_MOTOR_VARIABLES = false;
 
    //The controller will try to reenable the drive if this is true, this can be scary on real hardware
    private static final boolean CLEAR_FAULTS = true;
@@ -140,14 +139,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    // break frequency/max rate tunes them all instead of each motor drifting independently.
    private static final String SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME = "StatorTemperatureFilterParameters";
    private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 0.2;
-   private static final double DEFAULT_STATOR_TEMPERATURE_MAX_RATE = 1.0; // degrees Celsius per second
    private static YoRegistry sharedStatorTemperatureFilterRegistry;
    private static YoDouble statorTemperatureBreakFrequency;
-   private static YoDouble statorTemperatureMaxRate;
 
    private final AlphaFilteredYoVariable filteredStatorTemp;
    private final AlphaFilteredYoVariable secondOrderFilteredStatorTemp;
-   private final RateLimitedYoVariable rateLimitedFilteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
@@ -370,7 +366,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       secondOrderFilteredStatorTemp = new AlphaFilteredYoVariable(prefix + "secondOrderFilteredStatorTemp",
                                                        registry,
                                                        new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
-      rateLimitedFilteredStatorTemp = new RateLimitedYoVariable(prefix + "rateLimitedFilteredStatorTemp", registry, statorTemperatureMaxRate, dt);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -610,8 +605,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       sharedStatorTemperatureFilterRegistry = new YoRegistry(SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME);
       statorTemperatureBreakFrequency = new YoDouble("statorTemperatureBreakFrequency", sharedStatorTemperatureFilterRegistry);
       statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
-      statorTemperatureMaxRate = new YoDouble("statorTemperatureMaxRate", sharedStatorTemperatureFilterRegistry);
-      statorTemperatureMaxRate.set(DEFAULT_STATOR_TEMPERATURE_MAX_RATE);
       parentRegistry.addChild(sharedStatorTemperatureFilterRegistry);
    }
 
@@ -662,7 +655,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       statorTemp.set(getStatorTemperature());
       filteredStatorTemp.update(statorTemp.getDoubleValue());
       secondOrderFilteredStatorTemp.update(filteredStatorTemp.getDoubleValue());
-      rateLimitedFilteredStatorTemp.update(secondOrderFilteredStatorTemp.getDoubleValue());
 
       if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
