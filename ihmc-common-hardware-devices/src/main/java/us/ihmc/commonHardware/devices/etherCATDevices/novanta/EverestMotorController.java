@@ -13,13 +13,15 @@ public class EverestMotorController extends DSP402Slave
    private static final int VENDOR_ID = 0x0000029C;
    private static final int PRODUCT_CODE = 0x03B31001;
    private float tc;
-   private RPDO rpdo = new RPDO();
+   private RPDO_1 rpdo_1 = new RPDO_1();
+   private RPDO_2 rpdo_2 = new RPDO_2();
    private TPDO_1 tpdo_1 = new TPDO_1();
    private TPDO_2 tpdo_2 = new TPDO_2();
+   private TPDO_3 tpdo_3 = new TPDO_3();
    private boolean maxConfig = false;
-   public class RPDO extends RxPDO
+   public class RPDO_1 extends RxPDO
    {
-      public RPDO()
+      public RPDO_1()
       {
          super(0x1600);
       }
@@ -29,11 +31,12 @@ public class EverestMotorController extends DSP402Slave
       Float32 quadratureCurrentSetPoint = new Float32(); //0x201A
       Signed32 positionSetPoint = new Signed32();
       Float32 velocitySetPoint = new Float32();
-
-
+      Float32 currentDirectSetPoint = new Float32();
+      Float32 torqueSetPoint = new Float32();
+      Float32 voltageQuadratureSetPoint = new Float32();
    }
 
-   private void configureRPDO()
+   private void configureRPDO_1()
    {
       verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 0), "failed to write to 0x1600 - 0x0"); // disable 0x1600 while we write
 
@@ -47,18 +50,38 @@ public class EverestMotorController extends DSP402Slave
          verifyWorkingCounter(writeSDO(0x1600, 6, computePdoMapValue(CURRENT_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201B");
          verifyWorkingCounter(writeSDO(0x1600, 7, computePdoMapValue(TORQUE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2022");
          verifyWorkingCounter(writeSDO(0x1600, 8, computePdoMapValue(VOLTAGE_QUADRATURE_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2018");
-         verifyWorkingCounter(writeSDO(0x1600, 9, computePdoMapValue(VOLTAGE_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2019");
-         verifyWorkingCounter(writeSDO(0x1600, 10, computePdoMapValue(CURRENT_A_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201C");
-         verifyWorkingCounter(writeSDO(0x1600, 11, computePdoMapValue(CURRENT_B_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201D");
-         verifyWorkingCounter(writeSDO(0x1600, 12, computePdoMapValue(TARGET_TORQUE.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x6071");
-         verifyWorkingCounter(writeSDO(0x1600, 13, computePdoMapValue(TORQUE_OFFSET.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x60B2");
-         verifyWorkingCounter(writeSDO(0x1600, 14, computePdoMapValue(DIGITAL_OUTPUTS_SET_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2602");
-         verifyWorkingCounter(writeSDO(0x1600, 15, computePdoMapValue(ANALOG_OUTPUT_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x208D");
-         verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 15), "failed to write to 0x1600 - 0x5");
+         verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 8), "failed to write to 0x1600 - 0x5");
       }
       else{
          verifyWorkingCounter(writeSDO(0x1600, 0, (byte) 5), "failed to write to 0x1600 - 0x5");
       }
+   }
+
+   public class RPDO_2 extends RxPDO{
+      public RPDO_2()
+      {
+         super(0x1601);
+      }
+
+      Float32 voltageDirectSetPoint = new Float32();
+      Float32 currentASetPoint = new Float32();
+      Float32 currentBSetPoint = new Float32();
+      Unsigned16 targetTorque = new Unsigned16();
+      Unsigned16 torqueOffset = new Unsigned16();
+      Float32 digitalOutputsSetValue = new Float32();
+      Float32 analogOutputValue = new Float32();
+   }
+
+   private void configureRPDO_2()
+   {     verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 0), "failed to write to 0x1601 - 0x0");
+         verifyWorkingCounter(writeSDO(0x1601, 1, computePdoMapValue(VOLTAGE_DIRECT_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2019");
+         verifyWorkingCounter(writeSDO(0x1601, 2, computePdoMapValue(CURRENT_A_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201C");
+         verifyWorkingCounter(writeSDO(0x1601, 3, computePdoMapValue(CURRENT_B_SET_POINT.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x201D");
+         verifyWorkingCounter(writeSDO(0x1601, 4, computePdoMapValue(TARGET_TORQUE.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x6071");
+         verifyWorkingCounter(writeSDO(0x1601, 5, computePdoMapValue(TORQUE_OFFSET.getAddress(), 0, 16)), "failed to write to 0x1600 - 0x60B2");
+         verifyWorkingCounter(writeSDO(0x1601, 6, computePdoMapValue(DIGITAL_OUTPUTS_SET_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x2602");
+         verifyWorkingCounter(writeSDO(0x1601, 7, computePdoMapValue(ANALOG_OUTPUT_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1600 - 0x208D");
+         verifyWorkingCounter(writeSDO(0x1601, 0, (byte) 7), "failed to write to 0x1600 - 0x5");
    }
 
    public class TPDO_1 extends TxPDO
@@ -80,26 +103,14 @@ public class EverestMotorController extends DSP402Slave
       verifyWorkingCounter(writeSDO(0x1A00, 1, computePdoMapValue(CIA_STATUS_WORD.getAddress(), 0, 16)), "failed to write to 0x1A00 - 0x2011");
       verifyWorkingCounter(writeSDO(0x1A00, 2, computePdoMapValue(MODES_OF_OPERATION_DISPLAY.getAddress(), 0, 8)), "failed to write to 0x1A00 - 0x6061");
       verifyWorkingCounter(writeSDO(0x1A00, 3, computePdoMapValue(LAST_ERROR_580F.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x580F");
-//      verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(CONTROL_WORD.getAddress(), 0, 16)), "failed to write to 0x1A00 - 0x6040");
-//      verifyWorkingCounter(writeSDO(0x1A00, 7, computePdoMapValue(0x2063, 0, 32)), "failed to write to 0x1A00 - 0x2063");
-
-
-      if(maxConfig){
-         verifyWorkingCounter(writeSDO(0x1A00, 4, computePdoMapValue(MOTOR_TEMPERATURE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2063");
-         verifyWorkingCounter(writeSDO(0x1A00, 5, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2061");
-         verifyWorkingCounter(writeSDO(0x1A00, 6, computePdoMapValue(FOLLOWING_ERROR.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x21EE");
-         verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 6), "failed to write to 0x1A00 - 0x8");
-      }
-      else{
-         verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 3), "failed to write to 0x1A00 - 0x8");
-      }
+      verifyWorkingCounter(writeSDO(0x1A00, 0, (byte) 3), "failed to write to 0x1A00 - 0x8");
    }
 
    public class TPDO_2 extends TxPDO
    {
       public TPDO_2()
       {
-         super(0x1A00);
+         super(0x1A01);
       }
 
       Signed32 motorPosition = new Signed32(); //0x6064 0, 4 bytes Tied to position actual, which is the motor position
@@ -119,24 +130,37 @@ public class EverestMotorController extends DSP402Slave
    {
       verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 0), "failed to write to 0x1A01 - 0x0"); // disable 0x1600 while we write
 
-      verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(0x6064, 0, 32)), "failed to write to 0x1A00 - 0x6064");
-      verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(0x2031, 0, 32)), "failed to write to 0x1A00 - 0x2031");
+      verifyWorkingCounter(writeSDO(0x1A01, 1, computePdoMapValue(POSITION_ACTUAL_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x6064");
+      verifyWorkingCounter(writeSDO(0x1A01, 2, computePdoMapValue(ACTUAL_VELOCITY.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2031");
       verifyWorkingCounter(writeSDO(0x1A01, 3, computePdoMapValue(0x2033, 0, 32)), "failed to write to 0x1A00 - 0x2033");
-//      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
-      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(0x203B, 0, 32)), "failed to write to 0x1A00 - 0x203B");
-      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(0x2072, 0, 32)), "failed to write to 0x1A00 - 0x2072");
-      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(0x2060, 0, 32)), "failed to write to 0x1A00 - 0x2060");
+      verifyWorkingCounter(writeSDO(0x1A01, 4, computePdoMapValue(CURRENT_QUADRATURE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x203B");
+      verifyWorkingCounter(writeSDO(0x1A01, 5, computePdoMapValue(CURRENT_QUADRATURE_DEMAND.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2072");
+      verifyWorkingCounter(writeSDO(0x1A01, 6, computePdoMapValue(BUS_VOLTAGE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2060");
       verifyWorkingCounter(writeSDO(0x1A01, 7, computePdoMapValue(ACTUAL_TORQUE.getAddress(), 0, 32)), "failed to write to 0x1A01 - 0x2029");
       verifyWorkingCounter(writeSDO(0x1A01, 8, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A01 - 0x2061");
+      verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 8), "failed to write to 0x1A01 - 0x3");
+   }
 
-      if(maxConfig){
-         verifyWorkingCounter(writeSDO(0x1A01, 9, computePdoMapValue(0x2034, 0, 32)), "failed to write to 0x1A00 - 0x2034");
-         verifyWorkingCounter(writeSDO(0x1A01, 10, computePdoMapValue(0x203C, 0, 32)), "failed to write to 0x1A00 - 0x203C");
-         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 10), "failed to write to 0x1A01 - 0x3");
+   public class TPDO_3 extends TxPDO{
+      public TPDO_3()
+      {
+         super(0x1A02);
       }
-      else{
-         verifyWorkingCounter(writeSDO(0x1A01, 0, (byte) 8), "failed to write to 0x1A01 - 0x3");
-      }
+      Float32 auxiliaryFeedbackValue = new Float32();
+      Float32 currentDirectValue = new Float32();
+      Float32 motorTempValue = new Float32();
+      Float32 powerStageTemp1Value = new Float32();
+      Float32 followingError = new Float32();
+   }
+
+   private void configureTPDO_3(){
+      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 0), "failed to write to 0x1A01 - 0x0");
+      verifyWorkingCounter(writeSDO(0x1A02, 1, computePdoMapValue(AUXILIARY_FEEDBACK_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2034");
+      verifyWorkingCounter(writeSDO(0x1A02, 2, computePdoMapValue(CURRENT_DIRECT_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x203C");
+      verifyWorkingCounter(writeSDO(0x1A02, 3, computePdoMapValue(MOTOR_TEMPERATURE_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2063");
+      verifyWorkingCounter(writeSDO(0x1A02, 4, computePdoMapValue(POWER_STAGE_TEMPERATURE_1_VALUE.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x2061");
+      verifyWorkingCounter(writeSDO(0x1A02, 5, computePdoMapValue(FOLLOWING_ERROR.getAddress(), 0, 32)), "failed to write to 0x1A00 - 0x21EE");
+      verifyWorkingCounter(writeSDO(0x1A02, 0, (byte) 5), "failed to write to 0x1A01 - 0x3");
    }
 
    public EverestMotorController(int aliasAddress, int position)
@@ -144,11 +168,17 @@ public class EverestMotorController extends DSP402Slave
       super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
 
       SyncManager syncManager2 = new SyncManager(2, false);
-      syncManager2.registerPDO(rpdo);
-
+      syncManager2.registerPDO(rpdo_1);
+      if(maxConfig){
+         syncManager2.registerPDO(rpdo_2);
+      }
       SyncManager syncManager3 = new SyncManager(3, false);
       syncManager3.registerPDO(tpdo_1);
       syncManager3.registerPDO(tpdo_2);
+      if(maxConfig){
+         syncManager3.registerPDO(tpdo_3);
+      }
+
 
       registerSyncManager(syncManager2);
       registerSyncManager(syncManager3);
@@ -159,12 +189,16 @@ public class EverestMotorController extends DSP402Slave
       super(VENDOR_ID, PRODUCT_CODE, aliasAddress, position);
       this.maxConfig = maxConfig;
       SyncManager syncManager2 = new SyncManager(2, false);
-      syncManager2.registerPDO(rpdo);
-
+      syncManager2.registerPDO(rpdo_1);
+      if(maxConfig){
+         syncManager2.registerPDO(rpdo_2);
+      }
       SyncManager syncManager3 = new SyncManager(3, false);
       syncManager3.registerPDO(tpdo_1);
       syncManager3.registerPDO(tpdo_2);
-
+      if(maxConfig){
+         syncManager3.registerPDO(tpdo_3);
+      }
       registerSyncManager(syncManager2);
       registerSyncManager(syncManager3);
    }
@@ -180,7 +214,11 @@ public class EverestMotorController extends DSP402Slave
       // Configure RPDOs
       verifyWorkingCounter(writeSDO(0x1C12, 0, (byte) 0), "failed to write to 0x1C12");
 
-      configureRPDO();
+      configureRPDO_1();
+
+      if(maxConfig){
+         configureRPDO_2();
+      }
 
       verifyWorkingCounter(writeSDO(0x1C12, 1, (short) 0x1600), "failed to write to 0x1C12 -- 0x1600");
 
@@ -191,7 +229,9 @@ public class EverestMotorController extends DSP402Slave
 
       configureTPDO_1();
       configureTPDO_2();
-
+      if(maxConfig){
+         configureTPDO_3();
+      }
       verifyWorkingCounter(writeSDO(0x1C13, 1, (short) 0x1A00), "failed to write to 0x1C13 -- 0x1A00");
       verifyWorkingCounter(writeSDO(0x1C13, 2, (short) 0x1A01), "failed to write to 0x1C13 -- 0x1A01");
       verifyWorkingCounter(writeSDO(0x1C13, 0, (byte) 2), "failed to write to 0x1C13 -- 0x2");
@@ -244,17 +284,17 @@ public class EverestMotorController extends DSP402Slave
    @Override
    protected Unsigned16 getControlWordPDOEntry()
    {
-      return rpdo.controlWord;
+      return rpdo_1.controlWord;
    }
 
    public void setOperationMode(byte operationMode)
    {
-      rpdo.desiredOperationMode.set(operationMode);
+      rpdo_1.desiredOperationMode.set(operationMode);
    }
 
    public void setDesiredCurrent(double desiredCurrent)
    {
-      rpdo.quadratureCurrentSetPoint.set((float) desiredCurrent);
+      rpdo_1.quadratureCurrentSetPoint.set((float) desiredCurrent);
    }
 
    public double getCommandedCurrent()
@@ -264,12 +304,12 @@ public class EverestMotorController extends DSP402Slave
 
    public void setDesiredPosition(int desiredPosition)
    {
-      rpdo.positionSetPoint.set(desiredPosition);
+      rpdo_1.positionSetPoint.set(desiredPosition);
    }
 
    public void setDesiredVelocity(double desiredVelocity)
    {
-      rpdo.velocitySetPoint.set((float) desiredVelocity);
+      rpdo_1.velocitySetPoint.set((float) desiredVelocity);
    }
 
    public int getMotorPosition()
