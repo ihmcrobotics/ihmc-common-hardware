@@ -1,6 +1,5 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import org.jline.utils.Log;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -138,7 +137,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 1.0;
    private final YoDouble statorTemperatureBreakFrequency;
 
-   private final AlphaFilteredYoVariable filteredStatorTemp;
+   private final AlphaFilteredYoVariable firstOrderFilteredStatorTemp;
    private final AlphaFilteredYoVariable secondOrderFilteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
@@ -355,12 +354,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemperatureBreakFrequency = new YoDouble(prefix + "statorTemperatureBreakFrequency", registry);
       statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
-      filteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
-              registry,
-              new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+      firstOrderFilteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
+                                                                 registry,
+                                                                 new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
       secondOrderFilteredStatorTemp = new AlphaFilteredYoVariable(prefix + "secondOrderFilteredStatorTemp",
-              registry,
-              new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+                                                                  registry,
+                                                                  new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -632,8 +631,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       currentModeOfOperation.set(mode);
 
       statorTemp.set(getStatorTemperature());
-      filteredStatorTemp.update(statorTemp.getDoubleValue());
-      secondOrderFilteredStatorTemp.update(filteredStatorTemp.getDoubleValue());
+      firstOrderFilteredStatorTemp.update(statorTemp.getDoubleValue());
+      secondOrderFilteredStatorTemp.update(firstOrderFilteredStatorTemp.getDoubleValue());
 
       if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
@@ -1306,6 +1305,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    public CycloidPhysicalParameters getPhysicalParameters()
    {
       return physicalParameters;
+   }
+
+   public double getSecondOrderFilteredStatorTemp()
+   {
+      return secondOrderFilteredStatorTemp.getDoubleValue();
    }
 
    public double getStatorTemperature()
