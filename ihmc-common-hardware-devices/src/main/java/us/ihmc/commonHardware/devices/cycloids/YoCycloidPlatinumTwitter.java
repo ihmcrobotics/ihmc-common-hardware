@@ -135,7 +135,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    private final YoDouble statorTemp;
 
-   private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 0.2;
+   private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 1.0;
    private final YoDouble statorTemperatureBreakFrequency;
 
    private final AlphaFilteredYoVariable filteredStatorTemp;
