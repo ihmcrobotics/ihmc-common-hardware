@@ -135,12 +135,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    private final YoDouble statorTemp;
 
-   // Stator temp filter tuning is shared (static) across every YoCycloidPlatinumTwitter instance, so tuning one motor's
-   // break frequency/max rate tunes them all instead of each motor drifting independently.
-   private static final String SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME = "StatorTemperatureFilterParameters";
    private static final double DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY = 0.2;
-   private static YoRegistry sharedStatorTemperatureFilterRegistry;
-   private static YoDouble statorTemperatureBreakFrequency;
+   private final YoDouble statorTemperatureBreakFrequency;
 
    private final AlphaFilteredYoVariable filteredStatorTemp;
    private final AlphaFilteredYoVariable secondOrderFilteredStatorTemp;
@@ -357,15 +353,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       statorTemp = new YoDouble("StatorTemp", registry);
 
-      ensureSharedStatorTemperatureFilterParametersExist(parentRegistry);
-      // statorTemperatureBreakFrequency/statorTemperatureMaxRate are shared across all instances, but the filter state itself
-      // (filteredStatorTemp/rateLimitedFilteredStatorTemp) is per-motor, so each motor is still filtered using its own dt and history.
+      statorTemperatureBreakFrequency = new YoDouble(prefix + "statorTemperatureBreakFrequency", registry);
+      statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
       filteredStatorTemp = new AlphaFilteredYoVariable(prefix + "filteredStatorTemp",
-                                                        registry,
-                                                        new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+              registry,
+              new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
       secondOrderFilteredStatorTemp = new AlphaFilteredYoVariable(prefix + "secondOrderFilteredStatorTemp",
-                                                       registry,
-                                                       new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
+              registry,
+              new AlphaBasedOnBreakFrequencyProvider(statorTemperatureBreakFrequency, dt));
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -590,22 +585,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       parentRegistry.addChild(registry);
       if (DEBUG_MOTOR_VARIABLES)
          parentRegistry.addChild(motorRegistry);
-   }
-
-   /**
-    * Lazily creates the stator temperature filter tuning variables the first time any {@code YoCycloidPlatinumTwitter} is constructed, and adds them to
-    * {@code parentRegistry}. Every subsequent instance reuses the same {@code YoDouble}s, so tuning the break frequency or max rate on one motor tunes
-    * it for all of them instead of each motor drifting independently.
-    */
-   private static synchronized void ensureSharedStatorTemperatureFilterParametersExist(YoRegistry parentRegistry)
-   {
-      if (sharedStatorTemperatureFilterRegistry != null)
-         return;
-
-      sharedStatorTemperatureFilterRegistry = new YoRegistry(SHARED_STATOR_TEMPERATURE_FILTER_REGISTRY_NAME);
-      statorTemperatureBreakFrequency = new YoDouble("statorTemperatureBreakFrequency", sharedStatorTemperatureFilterRegistry);
-      statorTemperatureBreakFrequency.set(DEFAULT_STATOR_TEMPERATURE_BREAK_FREQUENCY);
-      parentRegistry.addChild(sharedStatorTemperatureFilterRegistry);
    }
 
    @Override
