@@ -59,7 +59,7 @@ public class EverestMotorController extends DSP402Slave
       Unsigned16 targetTorque = new Unsigned16();
       Unsigned16 torqueOffset = new Unsigned16();
       Float32 digitalOutputsSetValue = new Float32();
-      Float32 analogOutputValue = new Float32();
+      Float32 positionLoopKd = new Float32();
    }
 
    private void configureRPDO_2()
@@ -379,15 +379,15 @@ public class EverestMotorController extends DSP402Slave
    }
 
    public double getCurrentDirectSetPoint(){
-      return rpdo_1.currentDirectSetPoint.get();
+      return rpdo_3.currentDirectSetPoint.get();
    }
 
    public double getTorqueSetPoint(){
-      return rpdo_1.torqueSetPoint.get();
+      return rpdo_3.torqueSetPoint.get();
    }
 
    public double getVoltageQuadratureSetPoint(){
-      return rpdo_1.voltageQuadratureSetPoint.get();
+      return rpdo_3.voltageQuadratureSetPoint.get();
    }
 
    public double getVoltageDirectSetPoint(){
@@ -414,13 +414,13 @@ public class EverestMotorController extends DSP402Slave
       return rpdo_2.digitalOutputsSetValue.get();
    }
 
-   public double getAnalogOutputValue(){
-      return rpdo_2.analogOutputValue.get();
+   public double getPositionLoopKd(){
+      return rpdo_2.positionLoopKd.get();
    }
 
-   public double getAuxiliaryFeedbackValue(){
-      return tpdo_3.auxiliaryFeedbackValue.get();
-   }
+//   public double getAuxiliaryFeedbackValue(){
+//      return tpdo_3.auxiliaryFeedbackValue.get();
+//   }
 
    public double getCurrentDirectValue(){
       return tpdo_3.currentDirectValue.get();

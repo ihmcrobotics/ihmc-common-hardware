@@ -74,7 +74,7 @@ public class YoEverestMotorController
    private final YoInteger torqueOffset;
    private final YoDouble digitalOutputSetValue;
    private final YoDouble analogOutputSetValue;
-   private final YoDouble auxiliaryFeedbackValue;
+   //private final YoDouble auxiliaryFeedbackValue;
    private final YoDouble currentDirectValue;
    private final YoDouble motorTempValue;
    private final YoDouble powerStageTemp1Value;
@@ -160,7 +160,7 @@ public class YoEverestMotorController
       torqueOffset = new YoInteger(name + "TorqueOffset", registry);
       digitalOutputSetValue = new YoDouble(name + "DigitalOutputSetValue", registry);
       analogOutputSetValue = new YoDouble(name + "AnalogOutputSetValue", registry);
-      auxiliaryFeedbackValue = new YoDouble(name + "AuxiliaryFeedbackSetValue", registry);
+      //auxiliaryFeedbackValue = new YoDouble(name + "AuxiliaryFeedbackSetValue", registry);
       currentDirectValue = new YoDouble(name + "CurrentDirectValue", registry);
       motorTempValue = new YoDouble(name + "MotorTempValue", registry);
       powerStageTemp1Value = new YoDouble(name + "PowerStageTemp1Value", registry);
@@ -205,8 +205,8 @@ public class YoEverestMotorController
          targetTorque.set(motorController.getTargetTorque());
          torqueOffset.set(motorController.getTorqueOffset());
          digitalOutputSetValue.set(motorController.getDigitalOutputSetValue());
-         analogOutputSetValue.set(motorController.getAnalogOutputValue());
-         auxiliaryFeedbackValue.set(motorController.getAuxiliaryFeedbackValue());
+         analogOutputSetValue.set(motorController.getPositionLoopKd());
+         //auxiliaryFeedbackValue.set(motorController.getAuxiliaryFeedbackValue());
          currentDirectValue.set(motorController.getCurrentDirectValue());
          motorTempValue.set(motorController.getMotorTemperature());
          powerStageTemp1Value.set(motorController.getPowerStageTemp1Value());
