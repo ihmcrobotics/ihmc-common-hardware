@@ -58,9 +58,9 @@ public class GenericIMUManager implements IMUManagerInterface
    private final YoFrameVector3D angularVelocityInIMUFrame;
    private final YoFrameVector3D linearAccelerationInIMUFrame;
 
-   private final Optional<YoFrameQuaternion> orientationInCorrectedIMUFrame;
-   private final Optional<YoFrameVector3D> angularVelocityInCorrectedIMUFrame;
-   private final Optional<YoFrameVector3D> linearAccelerationInCorrectedIMUFrame;
+   private final YoFrameQuaternion orientationInCorrectedIMUFrame;
+   private final YoFrameVector3D angularVelocityInCorrectedIMUFrame;
+   private final YoFrameVector3D linearAccelerationInCorrectedIMUFrame;
 
    private final YoIMUMahonyFilter mahonyFilter;
 
@@ -118,13 +118,9 @@ public class GenericIMUManager implements IMUManagerInterface
             }
          });
 
-         orientationInCorrectedIMUFrame = Optional.of(new YoFrameQuaternion(prefix + "OrientationInCorrectedIMUFrame", correctedIMUFrame.get(), registry));
-         angularVelocityInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame",
-                                                                              correctedIMUFrame.get(),
-                                                                              registry));
-         linearAccelerationInCorrectedIMUFrame = Optional.of(new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame",
-                                                                                 correctedIMUFrame.get(),
-                                                                                 registry));
+         orientationInCorrectedIMUFrame = new YoFrameQuaternion(prefix + "OrientationInCorrectedIMUFrame", correctedIMUFrame.get(), registry);
+         angularVelocityInCorrectedIMUFrame = new YoFrameVector3D(prefix + "AngularVelocityInCorrectedIMUFrame", correctedIMUFrame.get(), registry);
+         linearAccelerationInCorrectedIMUFrame = new YoFrameVector3D(prefix + "LinearAccelerationInCorrectedIMUFrame", correctedIMUFrame.get(), registry);
 
          imuFrame = correctedIMUFrame.get();
       }
@@ -132,9 +128,9 @@ public class GenericIMUManager implements IMUManagerInterface
       {
          imuCorrectionOffset = Optional.empty();
          correctedIMUFrame = Optional.empty();
-         orientationInCorrectedIMUFrame = Optional.empty();
-         angularVelocityInCorrectedIMUFrame = Optional.empty();
-         linearAccelerationInCorrectedIMUFrame = Optional.empty();
+         orientationInCorrectedIMUFrame = null;
+         angularVelocityInCorrectedIMUFrame = null;
+         linearAccelerationInCorrectedIMUFrame = null;
          imuFrame = originalIMUFrame;
       }
 
@@ -232,9 +228,18 @@ public class GenericIMUManager implements IMUManagerInterface
       linearAccelerationInIMUFrame.setMatchingFrame(imuFrame, linearAcceleration);
 
       // Set the imu signals in the corrected IMU frames that we hand tuned
-      orientationInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, orientation));
-      angularVelocityInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, angularVelocity));
-      linearAccelerationInCorrectedIMUFrame.ifPresent(value -> value.setMatchingFrame(imuFrame, linearAcceleration));
+      if (orientationInCorrectedIMUFrame != null)
+      {
+         orientationInCorrectedIMUFrame.setMatchingFrame(imuFrame, orientation);
+      }
+      if (angularVelocityInCorrectedIMUFrame != null)
+      {
+         angularVelocityInCorrectedIMUFrame.setMatchingFrame(imuFrame, angularVelocity);
+      }
+      if (linearAccelerationInCorrectedIMUFrame != null)
+      {
+         linearAccelerationInCorrectedIMUFrame.setMatchingFrame(imuFrame, linearAcceleration);
+      }
 
       // These are useful for debugging and seeing if the measured gravity vector is in the right place
       linearAccelerationInWorld.setMatchingFrame(imuFrame, yoIMU.getUnbiasedLinearAcceleration());
