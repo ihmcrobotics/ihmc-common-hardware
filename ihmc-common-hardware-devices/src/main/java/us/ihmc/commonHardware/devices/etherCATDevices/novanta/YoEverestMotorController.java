@@ -150,21 +150,21 @@ public class YoEverestMotorController
 //      torqueConstant.addListener(s -> motorController.setTorqueConstant((float) torqueConstant.getValue()));
 
 
-      currentDirectSetPoint = new YoDouble(name + "CurrentDirectSetPoint", registry);
-      torqueSetPoint = new YoDouble(name + "TorqueSetPoint", registry);
-      voltageQuadratureSetPoint = new YoDouble(name + "VoltageQuadratureSetPoint", registry);
-      voltageDirectSetPoint = new YoDouble(name + "VoltageDirectSetPoint", registry);
-      currentASetPoint = new YoDouble(name + "CurrentASetPoint", registry);
-      currentBSetPoint = new YoDouble(name + "CurrentBSetPoint", registry);
-      targetTorque = new YoInteger(name + "TargetTorque", registry);
-      torqueOffset = new YoInteger(name + "TorqueOffset", registry);
-      digitalOutputSetValue = new YoDouble(name + "DigitalOutputSetValue", registry);
-      analogOutputSetValue = new YoDouble(name + "AnalogOutputSetValue", registry);
+      currentDirectSetPoint = new YoDouble(name + "CurrentDirectSetPoint", maxConfigRegistery);
+      torqueSetPoint = new YoDouble(name + "TorqueSetPoint", maxConfigRegistery);
+      voltageQuadratureSetPoint = new YoDouble(name + "VoltageQuadratureSetPoint", maxConfigRegistery);
+      voltageDirectSetPoint = new YoDouble(name + "VoltageDirectSetPoint", maxConfigRegistery);
+      currentASetPoint = new YoDouble(name + "CurrentASetPoint", maxConfigRegistery);
+      currentBSetPoint = new YoDouble(name + "CurrentBSetPoint", maxConfigRegistery);
+      targetTorque = new YoInteger(name + "TargetTorque", maxConfigRegistery);
+      torqueOffset = new YoInteger(name + "TorqueOffset", maxConfigRegistery);
+      digitalOutputSetValue = new YoDouble(name + "DigitalOutputSetValue", maxConfigRegistery);
+      analogOutputSetValue = new YoDouble(name + "AnalogOutputSetValue", maxConfigRegistery);
       //auxiliaryFeedbackValue = new YoDouble(name + "AuxiliaryFeedbackSetValue", registry);
-      currentDirectValue = new YoDouble(name + "CurrentDirectValue", registry);
-      motorTempValue = new YoDouble(name + "MotorTempValue", registry);
-      powerStageTemp1Value = new YoDouble(name + "PowerStageTemp1Value", registry);
-      followingError = new YoDouble(name + "FollowingError", registry);
+      currentDirectValue = new YoDouble(name + "CurrentDirectValue", maxConfigRegistery);
+      motorTempValue = new YoDouble(name + "MotorTempValue", maxConfigRegistery);
+      powerStageTemp1Value = new YoDouble(name + "PowerStageTemp1Value", maxConfigRegistery);
+      followingError = new YoDouble(name + "FollowingError", maxConfigRegistery);
 
    }
 
