@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import org.jline.utils.Log;
+import us.ihmc.commonHardware.thermal.ActuatorThermalParameters;
+import us.ihmc.commonHardware.thermal.YoActuatorThermalModel;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -13,6 +14,7 @@ import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
@@ -196,6 +198,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final TwitterEncoderStatusManager outputEncoderStatusManager;
    private final YoDouble errorPersistenceThreshold;
 
+   // Thermal model (estimate motor thermals from measured current)
+   private final YoActuatorThermalModel thermalModel;
+
    private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
@@ -292,6 +297,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
+      XmlMotorParameters motorParameters = cycloidParameters.getMotor();
+      thermalModel = new YoActuatorThermalModel(prefix + motorParameters.getManufacturer() + "_" + motorParameters.getModel(), constructMotorThermalParameters(motorParameters), registry);
+
       this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
       this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
 
@@ -349,7 +357,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       silDT = new YoDouble(prefix + "SILDT", registry);
 
       this.kt = new YoDouble(prefix + "kt", registry);
-      this.kt.set(physicalParameters.getKt());
+      this.kt.set(motorParameters.getKt());
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
       setMaxAllowableStatorTemperature(90);
@@ -687,6 +695,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       measuredAnalogInput2InADCCounts.set(platinumTwitter.getMeasuredAnalogInput2());
       measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
 
+      // Update thermal model to estimate motor temps from measured current
+      thermalModel.update(measuredMotorCurrent.getDoubleValue(), dt);
+
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
       if (zeroEncoders.getBooleanValue())
       {
@@ -982,6 +993,54 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          motorDirection.set(-1.0);
       else
          motorDirection.set(1.0);
+   }
+
+   private ActuatorThermalParameters constructMotorThermalParameters(XmlMotorParameters motorParameters)
+   {
+      return new ActuatorThermalParameters()
+      {
+         @Override
+         public double getHousingThermalCapacitance()
+         {
+            return motorParameters.getHousingThermalCapacitance();
+         }
+
+         @Override
+         public double getWindingThermalCapacitance()
+         {
+            return motorParameters.getWindingThermalCapacitance();
+         }
+
+         @Override
+         public double getWindingResistanceAtReferenceTemperature()
+         {
+            return motorParameters.getWindingResistanceAtReferenceTemperature();
+         }
+
+         @Override
+         public double getReferenceTemperature()
+         {
+            return motorParameters.getReferenceTemperature();
+         }
+
+         @Override
+         public double getMaxWindingTemperature()
+         {
+            return motorParameters.getMaxWindingTemperature();
+         }
+
+         @Override
+         public double getHousingToAmbientThermalResistance()
+         {
+            return motorParameters.getHousingToAmbientThermalResistance();
+         }
+
+         @Override
+         public double getWindingToHousingThermalResistance()
+         {
+            return motorParameters.getWindingToHousingThermalResistance();
+         }
+      };
    }
 
    public void setEnableCompensationCurrents(boolean enableCompensationCurrents)
