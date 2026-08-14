@@ -12,11 +12,13 @@ import us.ihmc.yoVariables.variable.YoLong;
 
 public class YoEverestMotorController
 {
+   private static boolean maxConfig = false;
    private static final boolean CLEAR_FAULTS = true;
    private static final int ENCODER_RESOLUTION = 17;
    private static final double ENCODER_CONVERSION = MathTools.pow(2.0, ENCODER_RESOLUTION);
    private static final double FULL_ROTATION = 2.0 * Math.PI;
    private final YoRegistry registry;
+   private final YoRegistry maxConfigRegistery;
    private final EverestMotorController motorController;
 
    // YoVariables to write to the drive
@@ -62,13 +64,31 @@ public class YoEverestMotorController
    private final YoDouble torqueConstant;
    private final YoDouble estimatedMotorTorque;
 
+   private final YoDouble currentDirectSetPoint;
+   private final YoDouble torqueSetPoint;
+   private final YoDouble voltageQuadratureSetPoint;
+   private final YoDouble voltageDirectSetPoint;
+   private final YoDouble currentASetPoint;
+   private final YoDouble currentBSetPoint;
+   private final YoInteger targetTorque;
+   private final YoInteger torqueOffset;
+   private final YoDouble digitalOutputSetValue;
+   private final YoDouble analogOutputSetValue;
+   private final YoDouble auxiliaryFeedbackValue;
+   private final YoDouble currentDirectValue;
+   private final YoDouble motorTempValue;
+   private final YoDouble powerStageTemp1Value;
+   private final YoDouble followingError;
+
    private final String name;
 
-   public YoEverestMotorController(String prefix, EverestMotorController motorController, YoRegistry parentRegistry)
+   public YoEverestMotorController(String prefix, EverestMotorController motorController, YoRegistry parentRegistry, boolean maxConfig)
    {
+      this.maxConfig = maxConfig;
       this.motorController = motorController;
       name = prefix + "EverestMC";
       registry = new YoRegistry(name);
+      maxConfigRegistery = new YoRegistry("MaxConfigRegistery");
 
       requestedControlWord = new YoEnum<>(prefix + "RequestedControlWord", registry, ControlWord.class, true);
       requestedOperationMode = new YoEnum<>(prefix + "RequestedOperationMode", registry, EverestOperationModes.class);
@@ -128,6 +148,24 @@ public class YoEverestMotorController
 //      motorController.setTorqueConstant((float) torqueConstant.getValue());
 
 //      torqueConstant.addListener(s -> motorController.setTorqueConstant((float) torqueConstant.getValue()));
+
+
+      currentDirectSetPoint = new YoDouble(name + "CurrentDirectSetPoint", registry);
+      torqueSetPoint = new YoDouble(name + "TorqueSetPoint", registry);
+      voltageQuadratureSetPoint = new YoDouble(name + "VoltageQuadratureSetPoint", registry);
+      voltageDirectSetPoint = new YoDouble(name + "VoltageDirectSetPoint", registry);
+      currentASetPoint = new YoDouble(name + "CurrentASetPoint", registry);
+      currentBSetPoint = new YoDouble(name + "CurrentBSetPoint", registry);
+      targetTorque = new YoInteger(name + "TargetTorque", registry);
+      torqueOffset = new YoInteger(name + "TorqueOffset", registry);
+      digitalOutputSetValue = new YoDouble(name + "DigitalOutputSetValue", registry);
+      analogOutputSetValue = new YoDouble(name + "AnalogOutputSetValue", registry);
+      auxiliaryFeedbackValue = new YoDouble(name + "AuxiliaryFeedbackSetValue", registry);
+      currentDirectValue = new YoDouble(name + "CurrentDirectValue", registry);
+      motorTempValue = new YoDouble(name + "MotorTempValue", registry);
+      powerStageTemp1Value = new YoDouble(name + "PowerStageTemp1Value", registry);
+      followingError = new YoDouble(name + "FollowingError", registry);
+
    }
 
    public void read()
@@ -157,6 +195,23 @@ public class YoEverestMotorController
 
       estimatedMotorTorque.set(measuredMotorCurrent.getValue()*torqueConstant.getValue());
      // torqueConstant.set(motorController.getTorqueConstant());
+      if(maxConfig){
+         currentDirectSetPoint.set(motorController.getCurrentDirectSetPoint());
+         torqueSetPoint.set(motorController.getTorqueSetPoint());
+         voltageQuadratureSetPoint.set(motorController.getVoltageQuadratureSetPoint());
+         voltageDirectSetPoint.set(motorController.getVoltageDirectSetPoint());
+         currentASetPoint.set(motorController.getCurrentASetPoint());
+         currentBSetPoint.set(motorController.getCurrentBSetPoint());
+         targetTorque.set(motorController.getTargetTorque());
+         torqueOffset.set(motorController.getTorqueOffset());
+         digitalOutputSetValue.set(motorController.getDigitalOutputSetValue());
+         analogOutputSetValue.set(motorController.getAnalogOutputValue());
+         auxiliaryFeedbackValue.set(motorController.getAuxiliaryFeedbackValue());
+         currentDirectValue.set(motorController.getCurrentDirectValue());
+         motorTempValue.set(motorController.getMotorTemperature());
+         powerStageTemp1Value.set(motorController.getPowerStageTemp1Value());
+         followingError.set(motorController.getFollowingError());
+      }
    }
 
    public void write()

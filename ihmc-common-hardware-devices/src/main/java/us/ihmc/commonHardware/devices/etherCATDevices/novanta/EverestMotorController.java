@@ -365,6 +365,66 @@ public class EverestMotorController extends DSP402Slave
       return tpdo_2.temperature.get();
    }
 
+   public double getCurrentDirectSetPoint(){
+      return rpdo_1.currentDirectSetPoint.get();
+   }
+
+   public double getTorqueSetPoint(){
+      return rpdo_1.torqueSetPoint.get();
+   }
+
+   public double getVoltageQuadratureSetPoint(){
+      return rpdo_1.voltageQuadratureSetPoint.get();
+   }
+
+   public double getVoltageDirectSetPoint(){
+      return rpdo_2.voltageDirectSetPoint.get();
+   }
+
+   public double getCurrentASetPoint(){
+      return rpdo_2.currentASetPoint.get();
+   }
+
+   public double getCurrentBSetPoint(){
+      return  rpdo_2.currentBSetPoint.get();
+   }
+
+   public int getTargetTorque(){
+      return rpdo_2.targetTorque.get();
+   }
+
+   public int getTorqueOffset(){
+      return rpdo_2.torqueOffset.get();
+   }
+
+   public double getDigitalOutputSetValue(){
+      return rpdo_2.digitalOutputsSetValue.get();
+   }
+
+   public double getAnalogOutputValue(){
+      return rpdo_2.analogOutputValue.get();
+   }
+
+   public double getAuxiliaryFeedbackValue(){
+      return tpdo_3.auxiliaryFeedbackValue.get();
+   }
+
+   public double getCurrentDirectValue(){
+      return tpdo_3.currentDirectValue.get();
+   }
+
+   public double getMotorTempValue(){
+      return tpdo_3.motorTempValue.get();
+   }
+
+   public double getPowerStageTemp1Value(){
+      return tpdo_3.powerStageTemp1Value.get();
+   }
+
+   public double getFollowingError(){
+      return tpdo_3.followingError.get();
+   }
+
    @Override
    public final boolean supportsCA()
    {
