@@ -229,17 +229,11 @@ public class GenericIMUManager implements IMUManagerInterface
 
       // Set the imu signals in the corrected IMU frames that we hand tuned
       if (orientationInCorrectedIMUFrame != null)
-      {
          orientationInCorrectedIMUFrame.setMatchingFrame(imuFrame, orientation);
-      }
       if (angularVelocityInCorrectedIMUFrame != null)
-      {
          angularVelocityInCorrectedIMUFrame.setMatchingFrame(imuFrame, angularVelocity);
-      }
       if (linearAccelerationInCorrectedIMUFrame != null)
-      {
          linearAccelerationInCorrectedIMUFrame.setMatchingFrame(imuFrame, linearAcceleration);
-      }
 
       // These are useful for debugging and seeing if the measured gravity vector is in the right place
       linearAccelerationInWorld.setMatchingFrame(imuFrame, yoIMU.getUnbiasedLinearAcceleration());
