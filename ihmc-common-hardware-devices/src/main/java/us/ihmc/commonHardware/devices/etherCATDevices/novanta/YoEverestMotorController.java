@@ -143,6 +143,9 @@ public class YoEverestMotorController
       stayDisabled.set(false);
 
       parentRegistry.addChild(registry);
+      if(maxConfig){
+         parentRegistry.addChild(maxConfigRegistery);
+      }
 
       torqueConstant.set(0.1579);
 //      motorController.setTorqueConstant((float) torqueConstant.getValue());
