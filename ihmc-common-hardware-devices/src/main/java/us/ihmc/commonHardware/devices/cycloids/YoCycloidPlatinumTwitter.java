@@ -12,9 +12,10 @@ import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlActuatorParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorParameters;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorThermalParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
@@ -291,14 +292,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       motorRegistry = new YoRegistry(name + "_Motor");
       XmlCycloidParameters cycloidParameters;
       if (actuatorDirectory != null)
-         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
+         cycloidParameters = XmlActuatorParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
       else
-         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
+         cycloidParameters = XmlActuatorParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
-      XmlMotorParameters motorParameters = cycloidParameters.getMotor();
-      thermalModel = new YoActuatorThermalModel(prefix + motorParameters.getManufacturer() + "_" + motorParameters.getModel(), constructMotorThermalParameters(motorParameters), registry);
+
+      // Parse motor params from XML and set up thermal model if needed
+      XmlMotorParameters motorParameters = XmlActuatorParameterLoader.getMotorParametersFromMotorName(cycloidParameters.getMotor());
+      XmlMotorThermalParameters motorThermalParameters = motorParameters.getMotorThermalParameters();
+      if (motorThermalParameters != null)
+         thermalModel = new YoActuatorThermalModel(prefix + "_" + motorParameters.getManufacturer() + "-" + motorParameters.getModel(), constructMotorThermalParameters(motorThermalParameters), registry);
+      else
+         thermalModel = null;
 
       this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
       this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
@@ -356,8 +363,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
 
+      // If a specific Kt is defined for a given actuator package (say it is found on via test stand) use that, otherwise use motor data sheet value
+      double ktToUse = Double.isNaN(cycloidParameters.getPhysicalParameters().getKt()) ? motorParameters.getKt() : cycloidParameters.getPhysicalParameters().getKt();
       this.kt = new YoDouble(prefix + "kt", registry);
-      this.kt.set(motorParameters.getKt());
+      this.kt.set(ktToUse);
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
       setMaxAllowableStatorTemperature(90);
@@ -696,7 +705,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
 
       // Update thermal model to estimate motor temps from measured current
-      thermalModel.update(measuredMotorCurrent.getDoubleValue(), dt);
+      if (thermalModel != null)
+         thermalModel.update(measuredMotorCurrent.getDoubleValue(), dt);
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
       if (zeroEncoders.getBooleanValue())
@@ -995,50 +1005,50 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          motorDirection.set(1.0);
    }
 
-   private ActuatorThermalParameters constructMotorThermalParameters(XmlMotorParameters motorParameters)
+   private ActuatorThermalParameters constructMotorThermalParameters(XmlMotorThermalParameters motorThermalParameters)
    {
       return new ActuatorThermalParameters()
       {
          @Override
          public double getHousingThermalCapacitance()
          {
-            return motorParameters.getHousingThermalCapacitance();
+            return motorThermalParameters.getHousingThermalCapacitance();
          }
 
          @Override
          public double getWindingThermalCapacitance()
          {
-            return motorParameters.getWindingThermalCapacitance();
+            return motorThermalParameters.getWindingThermalCapacitance();
          }
 
          @Override
          public double getWindingResistanceAtReferenceTemperature()
          {
-            return motorParameters.getWindingResistanceAtReferenceTemperature();
+            return motorThermalParameters.getWindingResistanceAtReferenceTemperature();
          }
 
          @Override
          public double getReferenceTemperature()
          {
-            return motorParameters.getReferenceTemperature();
+            return motorThermalParameters.getReferenceTemperature();
          }
 
          @Override
          public double getMaxWindingTemperature()
          {
-            return motorParameters.getMaxWindingTemperature();
+            return motorThermalParameters.getMaxWindingTemperature();
          }
 
          @Override
          public double getHousingToAmbientThermalResistance()
          {
-            return motorParameters.getHousingToAmbientThermalResistance();
+            return motorThermalParameters.getHousingToAmbientThermalResistance();
          }
 
          @Override
          public double getWindingToHousingThermalResistance()
          {
-            return motorParameters.getWindingToHousingThermalResistance();
+            return motorThermalParameters.getWindingToHousingThermalResistance();
          }
       };
    }

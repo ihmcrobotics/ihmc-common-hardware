@@ -16,7 +16,7 @@ public class XmlCycloidParameters
    private XmlCycloidSILParameters silParameters;
 
    @XmlElement(required = true)
-   private XmlMotorParameters motor;
+   private String motor;
 
    public XmlCycloidPhysicalParameters getPhysicalParameters()
    {
@@ -28,7 +28,7 @@ public class XmlCycloidParameters
       return silParameters;
    }
 
-   public XmlMotorParameters getMotor()
+   public String getMotor()
    {
       return motor;
    }

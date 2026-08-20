@@ -15,7 +15,7 @@ public class XmlMotorParameters
    @XmlElement(required = true)
    private String model;
 
-   //Electrical Parms
+   // Electrical Parms
    @XmlElement(defaultValue = "0.0")
    private double kt;
    @XmlElement(defaultValue = "0.0")
@@ -27,7 +27,7 @@ public class XmlMotorParameters
    @XmlElement(defaultValue = "0.0")
    private double maxCurrentPeak;
 
-   //Mechanical Params
+   // Mechanical Params
    @XmlElement(defaultValue = "0.0")
    private double maxTorqueContinuous;
    @XmlElement(defaultValue = "0.0")
@@ -39,21 +39,9 @@ public class XmlMotorParameters
    @XmlElement(defaultValue = "0.0")
    private double mass;
 
-   //Thermal params
-   @XmlElement(defaultValue = "0.0")
-   private double housingThermalCapacitance; // J/K
-   @XmlElement(defaultValue = "0.0")
-   private double windingThermalCapacitance; // J/K
-   @XmlElement(defaultValue = "0.0")
-   private double windingResistanceAtReferenceTemperature; // Ω
-   @XmlElement(defaultValue = "0.0")
-   private double referenceTemperature; // °C
-   @XmlElement(defaultValue = "0.0")
-   private double maxWindingTemperature; // °C
-   @XmlElement(defaultValue = "0.0")
-   private double housingToAmbientThermalResistance; // K/W
-   @XmlElement(defaultValue = "0.0")
-   private double windingToHousingThermalResistance; // K/W
+   // Thermal params
+   @XmlElement(defaultValue = "null")
+   private XmlMotorThermalParameters motorThermalParameters;
 
    public String getManufacturer()
    {
@@ -115,38 +103,8 @@ public class XmlMotorParameters
       return mass;
    }
 
-   public double getHousingThermalCapacitance()
+   public XmlMotorThermalParameters getMotorThermalParameters()
    {
-      return housingThermalCapacitance;
-   }
-
-   public double getWindingThermalCapacitance()
-   {
-      return windingThermalCapacitance;
-   }
-
-   public double getWindingResistanceAtReferenceTemperature()
-   {
-      return windingResistanceAtReferenceTemperature;
-   }
-
-   public double getReferenceTemperature()
-   {
-      return referenceTemperature;
-   }
-
-   public double getMaxWindingTemperature()
-   {
-      return maxWindingTemperature;
-   }
-
-   public double getHousingToAmbientThermalResistance()
-   {
-      return housingToAmbientThermalResistance;
-   }
-
-   public double getWindingToHousingThermalResistance()
-   {
-      return windingToHousingThermalResistance;
+      return motorThermalParameters;
    }
 }
