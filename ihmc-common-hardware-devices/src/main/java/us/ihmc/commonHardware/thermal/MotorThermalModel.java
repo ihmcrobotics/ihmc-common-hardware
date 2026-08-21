@@ -16,9 +16,9 @@ package us.ihmc.commonHardware.thermal;
  * <p>The winding resistance's temperature dependence is linearized around the operating point,
  * yielding a 2×2 linear ODE with closed-form solution via matrix exponential.
  */
-public class ActuatorThermalModel
+public class MotorThermalModel
 {
-   private final ActuatorThermalParameters parameters;
+   private final MotorThermalParameters parameters;
 
    /** Current winding temperature T_w [°C]. */
    private double windingTemperature;
@@ -32,9 +32,9 @@ public class ActuatorThermalModel
     * @param initialTemperature initial temperature of both winding and housing nodes [°C]
     * @param ambientTemperature ambient environment temperature [°C]
     */
-   public ActuatorThermalModel(ActuatorThermalParameters parameters,
-                               double initialTemperature,
-                               double ambientTemperature)
+   public MotorThermalModel(MotorThermalParameters parameters,
+                            double initialTemperature,
+                            double ambientTemperature)
    {
       this.parameters = parameters;
       this.windingTemperature = initialTemperature;
@@ -99,7 +99,7 @@ public class ActuatorThermalModel
 
    /**
     * Whether the winding temperature currently exceeds
-    * {@link ActuatorThermalParameters#getMaxWindingTemperature()}.
+    * {@link MotorThermalParameters#getMaxWindingTemperature()}.
     */
    public boolean isWindingOverTemperature()
    {

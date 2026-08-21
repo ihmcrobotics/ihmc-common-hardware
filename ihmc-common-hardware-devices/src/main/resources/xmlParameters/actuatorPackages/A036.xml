@@ -12,4 +12,5 @@
         <dampingGain>0.0005</dampingGain>
         <dampingScalar>0.0</dampingScalar>
     </silParameters>
+    <motor>tq_ILM115x25</motor>
 </CycloidParameters>

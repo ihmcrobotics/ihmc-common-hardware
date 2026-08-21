@@ -11,4 +11,5 @@
         <frictionSlope>0.0</frictionSlope>
         <dampingGain>0.0</dampingGain>
     </silParameters>
+    <motor>kollmorgen_TBM2G_06008A</motor>
 </CycloidParameters>

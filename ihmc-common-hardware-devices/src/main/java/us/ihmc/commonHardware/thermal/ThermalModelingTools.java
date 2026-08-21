@@ -32,19 +32,19 @@ public class ThermalModelingTools
    // -------------------------------------------------------------------------
 
    /** a₁₂ = 1 / (C_w · R_wh) */
-   public static double computeA12(ActuatorThermalParameters p)
+   public static double computeA12(MotorThermalParameters p)
    {
       return 1.0 / (p.getWindingThermalCapacitance() * p.getWindingToHousingThermalResistance());
    }
 
    /** a₂₁ = 1 / (C_h · R_wh) */
-   public static double computeA21(ActuatorThermalParameters p)
+   public static double computeA21(MotorThermalParameters p)
    {
       return 1.0 / (p.getHousingThermalCapacitance() * p.getWindingToHousingThermalResistance());
    }
 
    /** a₂₂ = −(R_ha + R_wh) / (C_h · R_wh · R_ha) */
-   public static double computeA22(ActuatorThermalParameters p)
+   public static double computeA22(MotorThermalParameters p)
    {
       double Ch  = p.getHousingThermalCapacitance();
       double Rwh = p.getWindingToHousingThermalResistance();
@@ -58,9 +58,9 @@ public class ThermalModelingTools
 
    /**
     * Maximum RMS current [A] that can be sustained indefinitely without exceeding
-    * {@link ActuatorThermalParameters#getMaxWindingTemperature()}.
+    * {@link MotorThermalParameters#getMaxWindingTemperature()}.
     */
-   public static double computeSteadyStateMaxCurrent(ActuatorThermalParameters p, double ambientTemp)
+   public static double computeSteadyStateMaxCurrent(MotorThermalParameters p, double ambientTemp)
    {
       double R0   = p.getWindingResistanceAtReferenceTemperature();
       double T0   = p.getReferenceTemperature();
@@ -73,7 +73,7 @@ public class ThermalModelingTools
    /**
     * Steady-state winding temperature [°C] under a constant current and ambient temperature.
     */
-   public static double computeSteadyStateWindingTemp(ActuatorThermalParameters p, double current, double ambientTemp)
+   public static double computeSteadyStateWindingTemp(MotorThermalParameters p, double current, double ambientTemp)
    {
       double R0  = p.getWindingResistanceAtReferenceTemperature();
       double T0  = p.getReferenceTemperature();
@@ -87,7 +87,7 @@ public class ThermalModelingTools
    /**
     * Steady-state housing temperature [°C] under a constant current and ambient temperature.
     */
-   public static double computeSteadyStateHousingTemp(ActuatorThermalParameters p, double current, double ambientTemp)
+   public static double computeSteadyStateHousingTemp(MotorThermalParameters p, double current, double ambientTemp)
    {
       double R0  = p.getWindingResistanceAtReferenceTemperature();
       double T0  = p.getReferenceTemperature();
@@ -101,7 +101,7 @@ public class ThermalModelingTools
    /**
     * Larger eigenvalue λ₁ of the linearized system matrix for the given current.
     */
-   public static double computeLambda1(ActuatorThermalParameters p, double current)
+   public static double computeLambda1(MotorThermalParameters p, double current)
    {
       double[] ab = computeLambdaAB(p, current);
       return ab[0] + ab[1];
@@ -110,7 +110,7 @@ public class ThermalModelingTools
    /**
     * Smaller eigenvalue λ₂ of the linearized system matrix for the given current.
     */
-   public static double computeLambda2(ActuatorThermalParameters p, double current)
+   public static double computeLambda2(MotorThermalParameters p, double current)
    {
       double[] ab = computeLambdaAB(p, current);
       return ab[0] - ab[1];
@@ -119,7 +119,7 @@ public class ThermalModelingTools
    /**
     * Returns [lambdaA, lambdaB] where λ₁ = lambdaA + lambdaB, λ₂ = lambdaA − lambdaB.
     */
-   public static double[] computeLambdaAB(ActuatorThermalParameters p, double current)
+   public static double[] computeLambdaAB(MotorThermalParameters p, double current)
    {
       double R0  = p.getWindingResistanceAtReferenceTemperature();
       double Ch  = p.getHousingThermalCapacitance();
@@ -153,7 +153,7 @@ public class ThermalModelingTools
     * @param t          elapsed time [s]
     * @return winding temperature at time t [°C]
     */
-   public static double evaluateWindingTemperature(ActuatorThermalParameters p, double current,
+   public static double evaluateWindingTemperature(MotorThermalParameters p, double current,
                                                    double ambientTemp, double Tw0, double Th0, double t)
    {
       double[] coefficients = computeExponentialCoefficients(p, current, ambientTemp, Tw0, Th0);
@@ -170,7 +170,7 @@ public class ThermalModelingTools
     * Housing temperature [°C] at time {@code t} seconds after applying {@code current} A, given
     * initial conditions.
     */
-   public static double evaluateHousingTemperature(ActuatorThermalParameters p, double current,
+   public static double evaluateHousingTemperature(MotorThermalParameters p, double current,
                                                    double ambientTemp, double Tw0, double Th0, double t)
    {
       double[] coefficients = computeExponentialCoefficients(p, current, ambientTemp, Tw0, Th0);
@@ -193,7 +193,7 @@ public class ThermalModelingTools
     *   T_h(t) = c1*a₂₁*exp(λ₁·t)       + c2*a₂₁*exp(λ₂·t)       + Tssh
     * </pre>
     */
-   public static double[] computeExponentialCoefficients(ActuatorThermalParameters p, double current,
+   public static double[] computeExponentialCoefficients(MotorThermalParameters p, double current,
                                                          double ambientTemp, double Tw0, double Th0)
    {
       double Tssw    = computeSteadyStateWindingTemp(p, current, ambientTemp);
@@ -221,7 +221,7 @@ public class ThermalModelingTools
 
    /**
     * Computes the maximum duration [s] a constant {@code current} can be applied before the
-    * winding temperature reaches {@link ActuatorThermalParameters#getMaxWindingTemperature()},
+    * winding temperature reaches {@link MotorThermalParameters#getMaxWindingTemperature()},
     * assuming both nodes start at ambient temperature.
     *
     * @param p           actuator thermal parameters
@@ -229,7 +229,7 @@ public class ThermalModelingTools
     * @param ambientTemp ambient (initial) temperature [°C]
     * @return time-to-failure [s]
     */
-   public static double computeMaxPeakDuration(ActuatorThermalParameters p, double current, double ambientTemp)
+   public static double computeMaxPeakDuration(MotorThermalParameters p, double current, double ambientTemp)
    {
       double Tmax = p.getMaxWindingTemperature();
       double[] coefficients = computeExponentialCoefficients(p, current, ambientTemp, ambientTemp, ambientTemp);
@@ -252,7 +252,7 @@ public class ThermalModelingTools
     * @param minPeakDuration iteration stops when time-to-failure falls below this [s]
     * @return 2D array where each row is {@code [current [A], maxPeakDuration [s]]}
     */
-   public static double[][] computeFuseCurve(ActuatorThermalParameters p, double ambientTemp, double minPeakDuration)
+   public static double[][] computeFuseCurve(MotorThermalParameters p, double ambientTemp, double minPeakDuration)
    {
       int iStart = (int) Math.ceil(computeSteadyStateMaxCurrent(p, ambientTemp));
       List<double[]> fuseCurve = new ArrayList<>();

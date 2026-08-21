@@ -3,19 +3,19 @@ package us.ihmc.commonHardware.thermal;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 
-public class YoActuatorThermalModel
+public class YoMotorThermalModel
 {
    private static final double DEFAULT_TEMPERATURE = 25.0;
 
-   private final ActuatorThermalModel thermalModel;
+   private final MotorThermalModel thermalModel;
    private final YoDouble windingTemperature;
    private final YoDouble housingTemperature;
 
-   public YoActuatorThermalModel(String prefix, ActuatorThermalParameters parameters, YoRegistry parentRegistry)
+   public YoMotorThermalModel(String prefix, MotorThermalParameters parameters, YoRegistry parentRegistry)
    {
       YoRegistry registry = new YoRegistry(prefix + getClass().getSimpleName());
 
-      thermalModel = new ActuatorThermalModel(parameters, DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
+      thermalModel = new MotorThermalModel(parameters, DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
       windingTemperature = new YoDouble(prefix + "_WindingTemperature", registry);
       housingTemperature = new YoDouble(prefix + "_HousingTemperature", registry);
 

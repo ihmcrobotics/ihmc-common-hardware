@@ -15,7 +15,7 @@ package us.ihmc.commonHardware.thermal;
  * <p>Winding resistance varies with temperature via the copper temperature coefficient:
  * {@code R(T) = R_0 * (1 + alpha_Cu * (T - T_0))}
  */
-public interface ActuatorThermalParameters
+public interface MotorThermalParameters
 {
    /**
     * Housing thermal capacitance C_h [J/K].

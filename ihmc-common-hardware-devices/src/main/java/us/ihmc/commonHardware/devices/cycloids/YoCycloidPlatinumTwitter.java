@@ -1,7 +1,7 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
-import us.ihmc.commonHardware.thermal.ActuatorThermalParameters;
-import us.ihmc.commonHardware.thermal.YoActuatorThermalModel;
+import us.ihmc.commonHardware.thermal.MotorThermalParameters;
+import us.ihmc.commonHardware.thermal.YoMotorThermalModel;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -200,7 +200,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoDouble errorPersistenceThreshold;
 
    // Thermal model (estimate motor thermals from measured current)
-   private final YoActuatorThermalModel thermalModel;
+   private final YoMotorThermalModel thermalModel;
 
    private final String actuatorPackage;
 
@@ -300,12 +300,17 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
 
       // Parse motor params from XML and set up thermal model if needed
-      XmlMotorParameters motorParameters = XmlActuatorParameterLoader.getMotorParametersFromMotorName(cycloidParameters.getMotor());
-      XmlMotorThermalParameters motorThermalParameters = motorParameters.getMotorThermalParameters();
-      if (motorThermalParameters != null)
-         thermalModel = new YoActuatorThermalModel(prefix + "_" + motorParameters.getManufacturer() + "-" + motorParameters.getModel(), constructMotorThermalParameters(motorThermalParameters), registry);
-      else
-         thermalModel = null;
+      XmlMotorParameters motorParameters = null;
+      YoMotorThermalModel thermalModel = null;
+
+      if (cycloidParameters.getMotor() != null)
+         motorParameters = XmlActuatorParameterLoader.getMotorParametersFromMotorName(cycloidParameters.getMotor());
+
+      if (motorParameters != null && motorParameters.getMotorThermalParameters() != null)
+         thermalModel = new YoMotorThermalModel(prefix + "_" + motorParameters.getManufacturer() + "-" + motorParameters.getModel(),
+                                                constructMotorThermalParameters(motorParameters.getMotorThermalParameters()),
+                                                registry);
+      this.thermalModel = thermalModel;
 
       this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
       this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
@@ -364,9 +369,13 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       silDT = new YoDouble(prefix + "SILDT", registry);
 
       // If a specific Kt is defined for a given actuator package (say it is found on via test stand) use that, otherwise use motor data sheet value
-      double ktToUse = Double.isNaN(cycloidParameters.getPhysicalParameters().getKt()) ? motorParameters.getKt() : cycloidParameters.getPhysicalParameters().getKt();
       this.kt = new YoDouble(prefix + "kt", registry);
-      this.kt.set(ktToUse);
+      if (!Double.isNaN(cycloidParameters.getPhysicalParameters().getKt()))
+         this.kt.set(cycloidParameters.getPhysicalParameters().getKt());
+      else if (motorParameters != null)
+         this.kt.set(motorParameters.getKt());
+      else
+         throw new RuntimeException("No Kt provided for " + prefix);
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
       setMaxAllowableStatorTemperature(90);
@@ -1005,9 +1014,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          motorDirection.set(1.0);
    }
 
-   private ActuatorThermalParameters constructMotorThermalParameters(XmlMotorThermalParameters motorThermalParameters)
+   private MotorThermalParameters constructMotorThermalParameters(XmlMotorThermalParameters motorThermalParameters)
    {
-      return new ActuatorThermalParameters()
+      return new MotorThermalParameters()
       {
          @Override
          public double getHousingThermalCapacitance()

@@ -4,21 +4,21 @@ package us.ihmc.commonHardware.thermal;
  * Computes the fuse curve (maximum peak-current duration vs. current) for a specific actuator.
  *
  * <p>This is a convenience wrapper around {@link ThermalModelingTools} that binds
- * {@link ActuatorThermalParameters} at construction time. All computation is delegated to
+ * {@link MotorThermalParameters} at construction time. All computation is delegated to
  * {@link ThermalModelingTools}.
  */
-public class ActuatorFuseCurveCalculator
+public class MotorFuseCurveCalculator
 {
-   private final ActuatorThermalParameters parameters;
+   private final MotorThermalParameters parameters;
 
-   public ActuatorFuseCurveCalculator(ActuatorThermalParameters parameters)
+   public MotorFuseCurveCalculator(MotorThermalParameters parameters)
    {
       this.parameters = parameters;
    }
 
    /**
     * Maximum RMS current [A] that can be sustained indefinitely at the given ambient temperature
-    * without exceeding {@link ActuatorThermalParameters#getMaxWindingTemperature()}.
+    * without exceeding {@link MotorThermalParameters#getMaxWindingTemperature()}.
     */
    public double computeSteadyStateMaxCurrent(double ambientTemp)
    {
@@ -27,7 +27,7 @@ public class ActuatorFuseCurveCalculator
 
    /**
     * Maximum duration [s] a constant {@code current} can be applied before the winding temperature
-    * reaches {@link ActuatorThermalParameters#getMaxWindingTemperature()}, assuming both nodes
+    * reaches {@link MotorThermalParameters#getMaxWindingTemperature()}, assuming both nodes
     * start at ambient temperature.
     *
     * @param current     applied current [A]; must exceed the steady-state maximum
