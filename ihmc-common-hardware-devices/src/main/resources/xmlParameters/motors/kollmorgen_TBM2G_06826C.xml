@@ -15,7 +15,7 @@
     <polePairs>10</polePairs>
     <mass>0.462</mass>
 
-    <MotorThermalParameters>
+    <motorThermalParameters>
         <housingThermalCapacitance>557.702088375483</housingThermalCapacitance>
         <windingThermalCapacitance>24.2272716001963</windingThermalCapacitance>
         <windingResistanceAtReferenceTemperature>0.651</windingResistanceAtReferenceTemperature>
@@ -23,5 +23,5 @@
         <maxWindingTemperature>125.0</maxWindingTemperature>
         <housingToAmbientThermalResistance>1.5347695708307</housingToAmbientThermalResistance>
         <windingToHousingThermalResistance>0.364305635159693</windingToHousingThermalResistance>
-    </MotorThermalParameters>
+    </motorThermalParameters>
 </MotorParameters>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <MotorParameters>
-    <manufacturer>TQ Robodrive</manufacturer>
+    <manufacturer>TQRobodrive</manufacturer>
     <model>ILM115x25</model>
 
     <kt>0.281</kt>
@@ -15,7 +15,7 @@
     <polePairs>15</polePairs>
     <mass>1.070</mass>
 
-    <MotorThermalParameters>
+    <motorThermalParameters>
         <housingThermalCapacitance>100.05153970371</housingThermalCapacitance>
         <windingThermalCapacitance>1061.96388275945</windingThermalCapacitance>
         <windingResistanceAtReferenceTemperature>0.140</windingResistanceAtReferenceTemperature>
@@ -23,5 +23,5 @@
         <maxWindingTemperature>125.0</maxWindingTemperature>
         <housingToAmbientThermalResistance>0.418283667825815</housingToAmbientThermalResistance>
         <windingToHousingThermalResistance>0.507862723154025</windingToHousingThermalResistance>
-    </MotorThermalParameters>
+    </motorThermalParameters>
 </MotorParameters>
