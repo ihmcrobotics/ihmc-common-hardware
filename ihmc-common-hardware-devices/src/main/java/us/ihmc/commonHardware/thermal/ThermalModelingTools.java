@@ -1,5 +1,7 @@
 package us.ihmc.commonHardware.thermal;
 
+import us.ihmc.commons.MathTools;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -164,6 +166,80 @@ public class ThermalModelingTools
       double c2      = coefficients[4];
       double a22     = computeA22(p);
       return c1 * (lambda1 - a22) * Math.exp(lambda1 * t) + c2 * (lambda2 - a22) * Math.exp(lambda2 * t) + Tssw;
+   }
+
+   public static double evaluateWindingTemperatureSimple(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double t)
+   {
+      double[] b = calculateB(p, current, ambientTemp);
+      double[][] A = calculateA(p, current);
+      double[][] invA = calculate2x2Inverse(A);
+      double invAb = invA[0][0] * b[0] + invA[0][1] * b[1];
+
+      double expA = 0.0;
+
+      return expA * (Tw0 + invAb) - invAb;
+   }
+
+   public static double evaluateHousingTemperatureSimple(MotorThermalParameters p, double current, double ambientTemp, double Th0, double t)
+   {
+      double[] b = calculateB(p, current, ambientTemp);
+      double[][] A = calculateA(p, current);
+      double[][] invA = calculate2x2Inverse(A);
+      double invAb = invA[1][0] * b[0] + invA[1][1] * b[1];
+
+      double expA = 0.0;
+
+      return expA * (Th0 + invAb) - invAb;
+   }
+
+   private static double[] calculateB(MotorThermalParameters p, double current, double ambientTemp)
+   {
+      double rr = p.getWindingResistanceAtReferenceTemperature();
+      double tr = p.getReferenceTemperature();
+      double cw = p.getWindingThermalCapacitance();
+      double ch = p.getHousingThermalCapacitance();
+      double ta = ambientTemp;
+      double rha = p.getHousingToAmbientThermalResistance();
+      double ii = MathTools.square(current);
+
+      double b1 =  ii * rr * (1 - ALPHA_CU * tr) / cw;
+      double b2 = ta / (rha * ch);
+
+      return new double[] {b1, b2};
+   }
+
+   private static double[][] calculateA(MotorThermalParameters p, double current)
+   {
+      double rr = p.getWindingResistanceAtReferenceTemperature();
+      double cw = p.getWindingThermalCapacitance();
+      double ch = p.getHousingThermalCapacitance();
+      double rha = p.getHousingToAmbientThermalResistance();
+      double ii = MathTools.square(current);
+      double rwh = p.getWindingToHousingThermalResistance();
+
+      double a11 = (ii * rr * rwh * ALPHA_CU - 1) / (cw * rwh);
+      double a12 = 1 / (cw * rwh);
+      double a21 = 1 / (ch * rwh);
+      double a22 = -(rha + rwh) / (ch * rwh * rha);
+
+      return new double[][] {{a11, a12}, {a21, a22}};
+   }
+
+   private static double[][] calculate2x2Inverse(double[][] matrix)
+   {
+      double m11 = matrix[0][0];
+      double m12 = matrix[0][1];
+      double m21 = matrix[1][0];
+      double m22 = matrix[1][1];
+
+      double determinant = 1.0 / (m11 * m22 - m12 * m21);
+
+      double inv11 = m22 * determinant;
+      double inv12 = -m12 * determinant;
+      double inv21 = -m21 * determinant;
+      double inv22 = m11 * determinant;
+
+      return new double[][] {{inv11, inv12}, {inv21, inv22}};
    }
 
    /**

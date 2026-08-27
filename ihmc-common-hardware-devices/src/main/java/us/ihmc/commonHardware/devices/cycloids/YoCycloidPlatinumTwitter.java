@@ -17,6 +17,8 @@ import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorParameters;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorThermalParameters;
 import us.ihmc.log.LogTools;
+import us.ihmc.yoVariables.filters.AlphaFilterTools;
+import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -135,6 +137,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoBoolean outputEncoderInverted;
 
    private final YoDouble statorTemp;
+   private final AlphaFilteredYoVariable filteredStatorTemp;
 
    // RTD 1000 temperature sensor function coefficients, these convert from volts to degrees celsius
    // These were found via thermal analysis performed by Liam Gluck during his summer 2025 internship
@@ -364,6 +367,12 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       estimatedDt.setToNaN();
 
       statorTemp = new YoDouble("StatorTemp", registry);
+      YoDouble filteredStatorTempBreakFrequency = new YoDouble("filteredStatorTempBreakFrequency", registry);
+      filteredStatorTempBreakFrequency.set(200.0);
+      filteredStatorTemp = new AlphaFilteredYoVariable("filteredStatorTemp",
+                                                       registry,
+                                                       () -> AlphaFilterTools.computeAlphaGivenBreakFrequencyProperly(filteredStatorTempBreakFrequency.getValue(), dt),
+                                                       statorTemp);
 
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
@@ -641,6 +650,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       currentModeOfOperation.set(mode);
 
       statorTemp.set(getStatorTemperature());
+      filteredStatorTemp.update();
 
       if (silDesiredCurrents != null)
          silDesiredCurrents.update(platinumTwitter);
