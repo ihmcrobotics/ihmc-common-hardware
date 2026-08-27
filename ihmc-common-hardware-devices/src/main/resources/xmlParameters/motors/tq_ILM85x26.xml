@@ -18,7 +18,7 @@
     <motorThermalParameters>
         <housingThermalCapacitance>467.859628062775</housingThermalCapacitance>
         <windingThermalCapacitance>121.607575559668</windingThermalCapacitance>
-        <windingResistanceAtReferenceTemperature>0.320</windingResistanceAtReferenceTemperature>
+        <windingResistanceAtReferenceTemperature>0.16</windingResistanceAtReferenceTemperature>
         <referenceTemperature>22.4915937430372</referenceTemperature>
         <maxWindingTemperature>125.0</maxWindingTemperature>
         <housingToAmbientThermalResistance>0.910279698549021</housingToAmbientThermalResistance>
