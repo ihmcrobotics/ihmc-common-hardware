@@ -605,7 +605,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       double prevSILTime = silTime.getDoubleValue();
       //      silTime.set(platinumTwitter.getSILControlTime());
       silDT.set(silTime.getDoubleValue() - prevSILTime);
-
+      driveTemperature.set(platinumTwitter.getSILTemperature());
       /*
        * Get drive status
        */
