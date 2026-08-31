@@ -1,7 +1,6 @@
 package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import us.ihmc.commons.AngleTools;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
@@ -11,8 +10,10 @@ import us.ihmc.robotics.outputData.JointDesiredLoadMode;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.robotics.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
+import us.ihmc.tools.logic.OrderedLogicalSequence;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.RateLimitedYoVariable;
 import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -74,6 +75,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final YoBoolean zeroAgainstUpperLimit;
 
    private final YoDouble masterGain;
+   private final RateLimitedYoVariable masterGainRateLimited;
+   private final OrderedLogicalSequence actuatorRebootSequence = new OrderedLogicalSequence();
+   private final YoBoolean rebootActuator;
 
    private DoubleProvider temperatureProvider = this::getTwitterAnalogTemperatureReading;
    private final YoBoolean isStatorAboveShutDownTemperature;
@@ -212,6 +216,32 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       isStatorAboveRecommendedTemperature = new YoBoolean(jointName + "_isStatorAboveRecommendedTemperature", registry);
 
       masterGain = new YoDouble(jointName + "_MasterGain", registry);
+      masterGainRateLimited = new RateLimitedYoVariable(jointName + "_MasterGainRateLimited", registry, 0.25, masterGain, estimatorDT);
+      actuatorRebootSequence.addLogicalElement(() ->
+                                               {
+                                                  masterGain.set(0.0);
+                                                  masterGainRateLimited.set(0.0);
+                                                  platinumTwitter.enableDrive(false);
+                                               },
+                                               null,
+                                               () -> !platinumTwitter.isDriveEnabled());
+
+      actuatorRebootSequence.addLogicalElement(() ->
+                                               {
+                                                  platinumTwitter.clearFaults();
+                                                  platinumTwitter.enableDrive(true);
+                                                  masterGain.set(1.0);
+                                               },
+                                               () -> !platinumTwitter.isDriveEnabled(),
+                                               () -> platinumTwitter.isDriveEnabled() && masterGainRateLimited.getDoubleValue() == 1.0);
+      rebootActuator = new YoBoolean(jointName + "_RebootActuator", registry);
+      rebootActuator.addListener(change ->
+                                 {
+                                    if (rebootActuator.getBooleanValue())
+                                       actuatorRebootSequence.start();
+                                    else
+                                       actuatorRebootSequence.reset();
+                                 });
 
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
@@ -318,6 +348,14 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       measuredJointDataToPack.setVelocity(this.measuredActuatorData.getVelocity());
       measuredJointDataToPack.setEffort(this.measuredActuatorData.getTorque());
 
+      if (platinumTwitter.isMotorFaulted())
+         rebootActuator.set(true);
+
+      if (actuatorRebootSequence.hasStarted() && !actuatorRebootSequence.hasFinished())
+         actuatorRebootSequence.update();
+      else if (actuatorRebootSequence.hasFinished())
+         rebootActuator.set(false);
+
       readTime.set(System.nanoTime() - startTime);
    }
 
@@ -325,7 +363,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void write(Map<String, JointDesiredOutputBasics> desiredJointData)
    {
       JointDesiredOutputBasics desiredData = desiredJointData.get(jointName);
-      desiredData.setMasterGain(masterGain.getDoubleValue());
+      desiredData.setMasterGain(masterGainRateLimited.getDoubleValue());
       write(desiredData);
    }
 
@@ -357,7 +395,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       // q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Scale based on master gain
-      double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
+      masterGainRateLimited.update();
+      double masterGain = MathTools.clamp(this.masterGainRateLimited.getDoubleValue(), 0.0, 1.0);
       tau_d *= masterGain;
       stiffness *= masterGain;
       damping *= masterGain;
@@ -521,9 +560,11 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setMasterGain(double masterGain)
+   public void setMasterGain(double desiredMsterGain)
    {
-      this.masterGain.set(masterGain);
+      double masterGainToSet = MathTools.clamp(desiredMsterGain, 0.0, 1.0);
+      this.masterGain.set(masterGainToSet);
+      this.masterGainRateLimited.set(masterGainToSet);
    }
 
    @Override
