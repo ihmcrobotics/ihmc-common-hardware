@@ -52,6 +52,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +169,8 @@ public abstract class AbstractHardwareMap
       this.yoTime = yoTime;
       this.dt = dt;
       this.etherCATMaster = etherCATMaster;
+      this.urdfResourceDirectories.addAll(urdfResourceDirectories);
+      this.urdfResources.addAll(urdfResources);
 
       createSensorDefinitions(stateEstimatorSensorDefinitions, urdfResources, urdfResourceDirectories);
 
@@ -527,6 +530,24 @@ public abstract class AbstractHardwareMap
    public IMUManagerInterface[] getImuManagers()
    {
       return imuManagers.toArray(new IMUManagerInterface[0]);
+   }
+
+   /**
+    * @return the resource directories the robot's URDF/mesh files were loaded from, suitable for
+    *         reuse with e.g. {@link #getURDFAsInputStream(List, List)}-style loading elsewhere.
+    */
+   public List<String> getUrdfResourceDirectories()
+   {
+      return Collections.unmodifiableList(urdfResourceDirectories);
+   }
+
+   /**
+    * @return the individual URDF resource paths that were merged together to build this robot's
+    *         model.
+    */
+   public List<String> getUrdfResources()
+   {
+      return Collections.unmodifiableList(urdfResources);
    }
 
    /**
