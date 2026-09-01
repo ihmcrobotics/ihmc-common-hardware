@@ -10,7 +10,6 @@ import us.ihmc.robotics.outputData.JointDesiredLoadMode;
 import us.ihmc.robotics.outputData.JointDesiredOutputBasics;
 import us.ihmc.robotics.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
-import us.ihmc.tools.logic.OrderedLogicalSequence;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.filters.RateLimitedYoVariable;
@@ -35,6 +34,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
    private static final boolean INCLUDE_TORQUE_LIMITER = false;
+   public static final double MASTER_GAIN_MAX_RATE = 0.25; // Max rate of change of master gain (1/s)
 
    private final String jointName;
    private final YoRegistry registry;
@@ -74,10 +74,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final YoBoolean zeroAgainstLowerLimit;
    private final YoBoolean zeroAgainstUpperLimit;
 
-   private final YoDouble masterGain;
-   private final RateLimitedYoVariable masterGainRateLimited;
-   private final OrderedLogicalSequence actuatorRebootSequence = new OrderedLogicalSequence();
-   private final YoBoolean rebootActuator;
+   private double externallyRequestedMasterGain = 0.0;
+   private final RateLimitedYoVariable masterGain;
 
    private DoubleProvider temperatureProvider = this::getTwitterAnalogTemperatureReading;
    private final YoBoolean isStatorAboveShutDownTemperature;
@@ -215,33 +213,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       isStatorAboveShutDownTemperature = new YoBoolean(jointName + "_isStatorAboveShutDownTemperature", registry);
       isStatorAboveRecommendedTemperature = new YoBoolean(jointName + "_isStatorAboveRecommendedTemperature", registry);
 
-      masterGain = new YoDouble(jointName + "_MasterGain", registry);
-      masterGainRateLimited = new RateLimitedYoVariable(jointName + "_MasterGainRateLimited", registry, 0.25, masterGain, estimatorDT);
-      actuatorRebootSequence.addLogicalElement(() ->
-                                               {
-                                                  masterGain.set(0.0);
-                                                  masterGainRateLimited.set(0.0);
-                                                  platinumTwitter.enableDrive(false);
-                                               },
-                                               null,
-                                               () -> !platinumTwitter.isDriveEnabled());
-
-      actuatorRebootSequence.addLogicalElement(() ->
-                                               {
-                                                  platinumTwitter.clearFaults();
-                                                  platinumTwitter.enableDrive(true);
-                                                  masterGain.set(1.0);
-                                               },
-                                               () -> !platinumTwitter.isDriveEnabled(),
-                                               () -> platinumTwitter.isDriveEnabled() && masterGainRateLimited.getDoubleValue() == 1.0);
-      rebootActuator = new YoBoolean(jointName + "_RebootActuator", registry);
-      rebootActuator.addListener(change ->
-                                 {
-                                    if (rebootActuator.getBooleanValue())
-                                       actuatorRebootSequence.start();
-                                    else
-                                       actuatorRebootSequence.reset();
-                                 });
+      masterGain = new RateLimitedYoVariable(jointName + "_MasterGain", registry, MASTER_GAIN_MAX_RATE, estimatorDT);
 
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
@@ -348,14 +320,6 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       measuredJointDataToPack.setVelocity(this.measuredActuatorData.getVelocity());
       measuredJointDataToPack.setEffort(this.measuredActuatorData.getTorque());
 
-      if (platinumTwitter.isMotorFaulted())
-         rebootActuator.set(true);
-
-      if (actuatorRebootSequence.hasStarted() && !actuatorRebootSequence.hasFinished())
-         actuatorRebootSequence.update();
-      else if (actuatorRebootSequence.hasFinished())
-         rebootActuator.set(false);
-
       readTime.set(System.nanoTime() - startTime);
    }
 
@@ -363,7 +327,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    public void write(Map<String, JointDesiredOutputBasics> desiredJointData)
    {
       JointDesiredOutputBasics desiredData = desiredJointData.get(jointName);
-      desiredData.setMasterGain(masterGainRateLimited.getDoubleValue());
+      desiredData.setMasterGain(masterGain.getDoubleValue());
       write(desiredData);
    }
 
@@ -395,11 +359,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       // q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Scale based on master gain
-      masterGainRateLimited.update();
-      double masterGain = MathTools.clamp(this.masterGainRateLimited.getDoubleValue(), 0.0, 1.0);
-      tau_d *= masterGain;
-      stiffness *= masterGain;
-      damping *= masterGain;
+      if (platinumTwitter.isMotorFaulted() || !platinumTwitter.isDriveEnabled())
+         masterGain.set(0.0);
+      else
+         masterGain.update(externallyRequestedMasterGain);
+
+      double masterGainClamped = MathTools.clamp(masterGain.getDoubleValue(), 0.0, 1.0);
+      tau_d *= masterGainClamped;
+      stiffness *= masterGainClamped;
+      damping *= masterGainClamped;
 
       // TODO (stefanfasano 202605) we may want to get rid of this, I think this is handled by servo and master gain
       double timeSinceWakeUp = Math.max(0.0, time.getValue() - wakeUpTime.getValue());
@@ -560,11 +528,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setMasterGain(double desiredMsterGain)
+   public void setMasterGain(double desiredMasterGain)
    {
-      double masterGainToSet = MathTools.clamp(desiredMsterGain, 0.0, 1.0);
-      this.masterGain.set(masterGainToSet);
-      this.masterGainRateLimited.set(masterGainToSet);
+      externallyRequestedMasterGain = MathTools.clamp(desiredMasterGain, 0.0, 1.0);
    }
 
    @Override
