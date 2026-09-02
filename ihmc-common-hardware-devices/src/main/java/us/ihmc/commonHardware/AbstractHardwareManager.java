@@ -220,7 +220,7 @@ public abstract class AbstractHardwareManager
       {
          mechanismManager.read(measuredJointData);
 
-         areMotorsFaulted.set(areMotorsFaulted.getBooleanValue() || mechanismManager.isMotorFaulted());
+         areMotorsFaulted.set(areMotorsFaulted.getBooleanValue() || mechanismManager.isMotorFaulted(), !areMotorsFaulted.getBooleanValue());
 
          //Checking if any motors have over-heated on robot side
          totalMeasuredMotorCurrent.add(mechanismManager.getTotalMeasuredMotorCurrent());
