@@ -15,6 +15,7 @@ import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.GlitchFilteredYoBoolean;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.providers.DoubleProvider;
@@ -47,8 +48,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private static final double DEFAULT_OUTPUT_VELOCITY_BREAK_FREQUENCY = 10000.0;
 
    // Default under/over volt threshold limits, set to infinity so we use firmware-based limits by default
-   public static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = Double.POSITIVE_INFINITY;
-   public static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = Double.NEGATIVE_INFINITY;
+   public static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = Double.POSITIVE_INFINITY; // Volts
+   public static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = 5.0;  // Volts
+
+   public static final double FAULT_DURATION_THRESHOLD = 5.0; // How many seconds consecutively we need to be faulted
 
    private final double dt;
    private final String name;
@@ -156,13 +159,15 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    // error variables
    private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
-   private final YoBoolean DRIVE_FAULTED;
+//   private final YoBoolean DRIVE_FAULTED;
    private final YoBoolean UNDER_VOLTAGE;
    private final YoBoolean OVER_VOLTAGE;
    private final YoBoolean STO_DISABLED;
    private final YoBoolean CURRENT_SHORT;
    private final YoBoolean OVER_TEMPERATURE;
-   private final YoBoolean MOTOR_FAULT;
+//   private final YoBoolean MOTOR_FAULT;
+   private final YoBoolean singularMotorFault;
+   private final GlitchFilteredYoBoolean MOTOR_FAULT;
 
    private final YoDouble dahlFrictionForce; // Dahl Friction Force
    private final YoDouble dahlSlope; // Dahl Slope (offset by + 1.0)
@@ -176,6 +181,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoDouble impedanceControlMaxVelocityError;
 
    // Control variables
+   private boolean externalEnableDriveRequest = false;
    private final YoBoolean enableDrive;
    private final YoBoolean enableCompensation;
    private final YoBoolean clearFaults;
@@ -546,13 +552,20 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       else
          statusRegisterProcessor = null;
 
-      DRIVE_FAULTED = new YoBoolean(prefix + "_DRIVE_FAULTED", registry);
       UNDER_VOLTAGE = new YoBoolean(prefix + "_UNDER_VOLTAGE", registry);
       OVER_VOLTAGE = new YoBoolean(prefix + "_OVER_VOLTAGE", registry);
       STO_DISABLED = new YoBoolean(prefix + "_STO_DISABLED", registry);
       CURRENT_SHORT = new YoBoolean(prefix + "_CURRENT_SHORT", registry);
       OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
-      MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
+      singularMotorFault = new YoBoolean(prefix + "_singularMotorFault", registry);
+      MOTOR_FAULT = new GlitchFilteredYoBoolean(prefix + "_MOTOR_FAULT", registry, (int) (FAULT_DURATION_THRESHOLD / dt));
+      MOTOR_FAULT.addListener(source ->
+                              {
+                                 if (MOTOR_FAULT.getBooleanValue())
+                                    enableDrive.set(false);
+                                 else
+                                    enableDrive.set(externalEnableDriveRequest);
+                              });
 
       etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
 
@@ -650,13 +663,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       STO_DISABLED.set(platinumTwitter.isSTODisabled());
       CURRENT_SHORT.set(platinumTwitter.isCurrentShorted());
       OVER_TEMPERATURE.set(platinumTwitter.isOverTemperature());
-      boolean isFaulted = UNDER_VOLTAGE.getBooleanValue() || OVER_VOLTAGE.getBooleanValue() ||
-                          STO_DISABLED.getBooleanValue() || CURRENT_SHORT.getBooleanValue()
-                          || OVER_TEMPERATURE.getBooleanValue() ||
+      boolean isFaulted = UNDER_VOLTAGE.getBooleanValue() ||
+                          OVER_VOLTAGE.getBooleanValue() ||
+                          STO_DISABLED.getBooleanValue() ||
+                          CURRENT_SHORT.getBooleanValue() ||
+                          OVER_TEMPERATURE.getBooleanValue() ||
                           inputEncoderStatusManager.hasPersistentError() || // If input encoder has persistent error, then you need to fault
                           // If output encoder has persistent error and is being used in feedback, then you need to fault
-                          (outputEncoderStatusManager.hasPersistentError() && !useOutputPositionFromMotor.getBooleanValue());
-      DRIVE_FAULTED.set(isFaulted || platinumTwitter.isFaulted() || !platinumTwitter.isOperational());
+                          (outputEncoderStatusManager.hasPersistentError() && !useOutputPositionFromMotor.getBooleanValue()) ||
+                          platinumTwitter.isFaulted() ||
+                          !platinumTwitter.isOperational();
+
+      singularMotorFault.set(isFaulted);
+      MOTOR_FAULT.update(isFaulted && externalEnableDriveRequest);
 
       /** Motor Space Encoders **/
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
@@ -830,14 +849,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    private void initializeFaultDiagnostics()
    {
-      DRIVE_FAULTED.addListener(source ->
-                                {
-                                   if (DRIVE_FAULTED.getBooleanValue() && isDriveEnabled())
-                                   {
-                                      LogTools.error(getName() + " just faulted");
-                                      MOTOR_FAULT.set(true);
-                                   }
-                                });
+      MOTOR_FAULT.addListener(source ->
+                              {
+                                 if (MOTOR_FAULT.getBooleanValue())
+                                    LogTools.error(getName() + " just faulted");
+                              });
 
       etherCATState.addListener(source ->
                                 {
@@ -849,31 +865,31 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       UNDER_VOLTAGE.addListener(s ->
                                 {
-                                   if (UNDER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
+                                   if (UNDER_VOLTAGE.getBooleanValue() && !singularMotorFault.getBooleanValue() && isDriveEnabled())
                                       LogTools.error(getName() + " faulted due to under voltage, bus voltage dropped to " + measuredBusVoltage.getValue());
                                 });
 
       OVER_VOLTAGE.addListener(s ->
                                {
-                                  if (OVER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
+                                  if (OVER_VOLTAGE.getBooleanValue() && !singularMotorFault.getBooleanValue() && isDriveEnabled())
                                      LogTools.error(getName() + " faulted due to over voltage, bus voltage rose to " + measuredBusVoltage.getValue());
                                });
 
       CURRENT_SHORT.addListener(s ->
                                 {
-                                   if (CURRENT_SHORT.getBooleanValue() && !isMotorFaulted())
+                                   if (CURRENT_SHORT.getBooleanValue() && !singularMotorFault.getBooleanValue())
                                       LogTools.error(getName() + " faulted due to current short");
                                 });
 
       OVER_TEMPERATURE.addListener(s ->
                                    {
-                                      if (OVER_TEMPERATURE.getBooleanValue() && !isMotorFaulted())
+                                      if (OVER_TEMPERATURE.getBooleanValue() && !singularMotorFault.getBooleanValue())
                                          LogTools.error(getName() + " faulted due to twitter overheating at " + driveTemperature.getValue());
                                    });
 
       STO_DISABLED.addListener(s ->
                                {
-                                  if (STO_DISABLED.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+                                  if (STO_DISABLED.getBooleanValue() && !singularMotorFault.getBooleanValue())
                                      LogTools.error(getName() + " faulted due to STO being disabled");
                                });
    }
@@ -881,7 +897,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    @Override
    public void enableDrive(boolean enable)
    {
-      this.enableDrive.set(enable);
+      externalEnableDriveRequest = enable;
+      if (!MOTOR_FAULT.getBooleanValue())
+         this.enableDrive.set(enable);
    }
 
    /**
@@ -891,7 +909,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    {
       clearFaults.set(true);
       MOTOR_FAULT.set(false);
-      DRIVE_FAULTED.set(false);
+      singularMotorFault.set(false);
       UNDER_VOLTAGE.set(false);
       OVER_VOLTAGE.set(false);
       STO_DISABLED.set(false);
@@ -1245,7 +1263,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    @Override
    public boolean isFaulted()
    {
-      return MOTOR_FAULT.getBooleanValue();
+      return isMotorFaulted();
    }
 
    @Override

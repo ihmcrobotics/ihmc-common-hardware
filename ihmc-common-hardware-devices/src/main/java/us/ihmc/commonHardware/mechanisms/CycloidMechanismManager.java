@@ -1,7 +1,6 @@
 package us.ihmc.commonHardware.mechanisms;
 
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import us.ihmc.commons.AngleTools;
 import us.ihmc.commons.InterpolationTools;
 import us.ihmc.commonHardware.devices.cycloids.YoCycloidPlatinumTwitter;
 import us.ihmc.commons.MathTools;
@@ -13,6 +12,7 @@ import us.ihmc.robotics.outputData.JointDesiredOutputReadOnly;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
+import us.ihmc.yoVariables.filters.RateLimitedYoVariable;
 import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
@@ -34,6 +34,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private static final boolean DEFAULT_PUBLISH_FILTERED_JOINT_STATES = true;
    private static final boolean DEFAULT_USE_FILTERED_JOINT_STATES = false;
    private static final boolean INCLUDE_TORQUE_LIMITER = false;
+   public static final double MASTER_GAIN_MAX_RATE = 0.25; // Max rate of change of master gain (1/s)
 
    private final String jointName;
    private final YoRegistry registry;
@@ -73,7 +74,8 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    private final YoBoolean zeroAgainstLowerLimit;
    private final YoBoolean zeroAgainstUpperLimit;
 
-   private final YoDouble masterGain;
+   private double externallyRequestedMasterGain = 0.0;
+   private final RateLimitedYoVariable masterGain;
 
    private DoubleProvider temperatureProvider = this::getTwitterAnalogTemperatureReading;
    private final YoBoolean isStatorAboveShutDownTemperature;
@@ -211,7 +213,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       isStatorAboveShutDownTemperature = new YoBoolean(jointName + "_isStatorAboveShutDownTemperature", registry);
       isStatorAboveRecommendedTemperature = new YoBoolean(jointName + "_isStatorAboveRecommendedTemperature", registry);
 
-      masterGain = new YoDouble(jointName + "_MasterGain", registry);
+      masterGain = new RateLimitedYoVariable(jointName + "_MasterGain", registry, MASTER_GAIN_MAX_RATE, estimatorDT);
 
       zeroAgainstLowerLimit = new YoBoolean(jointName + "_ZeroAgainstLowerLimit", registry);
       zeroAgainstUpperLimit = new YoBoolean(jointName + "_ZeroAgainstUpperLimit", registry);
@@ -357,10 +359,15 @@ public class CycloidMechanismManager implements MechanismManagerInterface
       // q_d = MathTools.clamp(q_d, jointLimitLower, jointLimitUpper);
 
       // Scale based on master gain
-      double masterGain = MathTools.clamp(this.masterGain.getDoubleValue(), 0.0, 1.0);
-      tau_d *= masterGain;
-      stiffness *= masterGain;
-      damping *= masterGain;
+      if (platinumTwitter.isMotorFaulted() || !platinumTwitter.isDriveEnabled())
+         masterGain.set(0.0);
+      else
+         masterGain.update(externallyRequestedMasterGain);
+
+      double masterGainClamped = MathTools.clamp(masterGain.getDoubleValue(), 0.0, 1.0);
+      tau_d *= masterGainClamped;
+      stiffness *= masterGainClamped;
+      damping *= masterGainClamped;
 
       // TODO (stefanfasano 202605) we may want to get rid of this, I think this is handled by servo and master gain
       double timeSinceWakeUp = Math.max(0.0, time.getValue() - wakeUpTime.getValue());
@@ -521,9 +528,9 @@ public class CycloidMechanismManager implements MechanismManagerInterface
    }
 
    @Override
-   public void setMasterGain(double masterGain)
+   public void setMasterGain(double desiredMasterGain)
    {
-      this.masterGain.set(masterGain);
+      externallyRequestedMasterGain = MathTools.clamp(desiredMasterGain, 0.0, 1.0);
    }
 
    @Override

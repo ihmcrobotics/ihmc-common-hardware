@@ -45,6 +45,7 @@ import us.ihmc.robotics.sensors.IMUDefinition;
 import us.ihmc.sensorProcessing.outputData.ImuData;
 import us.ihmc.sensorProcessing.outputData.LowLevelState;
 import us.ihmc.sensorProcessing.simulatedSensors.StateEstimatorSensorDefinitions;
+import us.ihmc.yoVariables.providers.BooleanProvider;
 import us.ihmc.yoVariables.providers.DoubleProvider;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -91,6 +92,7 @@ public abstract class AbstractHardwareMap
    protected final ArrayList<String> jointNames = new ArrayList<>();
    protected final Map<String, LowLevelState> measuredJointData = new HashMap<>();
    protected final Map<String, JointDesiredOutputBasics> desiredJointData = new HashMap<>();
+   protected final Map<String, BooleanProvider> jointFaultIndicators = new HashMap<>();
 
    protected final ArrayList<EtherSnacksBoardInterface> etherSnacksBoards = new ArrayList<>();
    protected final ArrayList<YoSensorInterface> yoEtherSnacksSensors = new ArrayList<>();
@@ -385,6 +387,7 @@ public abstract class AbstractHardwareMap
       mechanismManagers.add(cycloidMechanismManager);
       measuredJointData.put(cycloidMechanismManager.getName(), new LowLevelState(0.0, 0.0, 0.0, 0.0));
       desiredJointData.put(cycloidMechanismManager.getName(), new JointDesiredOutput());
+      jointFaultIndicators.put(cycloidMechanismManager.getName(), cycloidMechanismManager::isMotorFaulted);
    }
 
    protected CycloidMechanismManager createCycloidMechanismManager(String jointName,
@@ -623,6 +626,11 @@ public abstract class AbstractHardwareMap
    public Map<String, JointDesiredOutputBasics> getDesiredJointData()
    {
       return desiredJointData;
+   }
+
+   public Map<String, BooleanProvider> getJointFaultIndicators()
+   {
+      return jointFaultIndicators;
    }
 
    /**
