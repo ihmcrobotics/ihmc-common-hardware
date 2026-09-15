@@ -312,6 +312,16 @@ public abstract class AbstractHardwareMap
     * Create the platinum twitter object and register on the etherCAT line
     *
     * @param xmlPlatinumTwitter platinum twitter to be initialized from xml
+    */
+   protected void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter)
+   {
+      createPlatinumTwitter(xmlPlatinumTwitter, null);
+   }
+
+   /**
+    * Create the platinum twitter object and register on the etherCAT line
+    *
+    * @param xmlPlatinumTwitter platinum twitter to be initialized from xml
     * @param parameterDirectory directory where the actuator package parameters are stored
     */
    protected void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter, String parameterDirectory)

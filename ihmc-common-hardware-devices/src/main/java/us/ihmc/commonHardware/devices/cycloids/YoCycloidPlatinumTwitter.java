@@ -1,5 +1,7 @@
 package us.ihmc.commonHardware.devices.cycloids;
 
+import us.ihmc.commonHardware.thermal.MotorThermalParameters;
+import us.ihmc.commonHardware.thermal.YoMotorThermalModel;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterErrorCodeEnum;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.ElmoTwitterStatusRegisterProcessor;
 import us.ihmc.commonHardware.devices.etherCATDevices.elmo.YoGenericTwitter;
@@ -10,9 +12,12 @@ import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
 import us.ihmc.etherCAT.slaves.elmo.ElmoModeOfOperation;
 import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.hardwareStatusUI.controllerSide.ElmoTwitterDeviceStatusProvider;
-import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameterLoader;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlActuatorParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlCycloidParameters;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorParameters;
+import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorThermalParameters;
 import us.ihmc.log.LogTools;
+import us.ihmc.yoVariables.filters.AlphaFilterTools;
 import us.ihmc.yoVariables.filters.AlphaBasedOnBreakFrequencyProvider;
 import us.ihmc.yoVariables.filters.AlphaFilteredYoVariable;
 import us.ihmc.yoVariables.filters.SimpleMovingAverageFilteredYoVariable;
@@ -203,6 +208,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final TwitterEncoderStatusManager outputEncoderStatusManager;
    private final YoDouble errorPersistenceThreshold;
 
+   // Thermal model (estimate motor thermals from measured current)
+   private final YoMotorThermalModel thermalModel;
+
    private final String actuatorPackage;
 
    private final YoBoolean reverseMotorDirection;
@@ -293,12 +301,26 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       motorRegistry = new YoRegistry(name + "_Motor");
       XmlCycloidParameters cycloidParameters;
       if (actuatorDirectory != null)
-         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
+         cycloidParameters = XmlActuatorParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorDirectory, actuatorPackage);
       else
-         cycloidParameters = XmlCycloidParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
+         cycloidParameters = XmlActuatorParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
 
       this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
       this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
+
+      // Parse motor params from XML and set up thermal model if needed
+      XmlMotorParameters motorParameters = null;
+      YoMotorThermalModel thermalModel = null;
+
+      if (cycloidParameters.getMotor() != null)
+         motorParameters = XmlActuatorParameterLoader.getMotorParametersFromMotorName(cycloidParameters.getMotor());
+
+      if (motorParameters != null && motorParameters.getMotorThermalParameters() != null)
+         thermalModel = new YoMotorThermalModel(prefix + "_" + motorParameters.getManufacturer() + "-" + motorParameters.getModel(),
+                                                new MotorThermalParameters(motorParameters.getMotorThermalParameters()),
+                                                registry);
+      this.thermalModel = thermalModel;
+
       this.dynamicBrakingEnabled = new YoBoolean(name + "DynamicBrakingIsEnabled", registry);
       this.dynamicBrakingEnabled.set(dynamicBrakingEnabled);
 
@@ -364,8 +386,14 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       silTime = new YoDouble(prefix + "SILTime", registry);
       silDT = new YoDouble(prefix + "SILDT", registry);
 
+      // If a specific Kt is defined for a given actuator package (say it is found on via test stand) use that, otherwise use motor data sheet value
       this.kt = new YoDouble(prefix + "kt", registry);
-      this.kt.set(physicalParameters.getKt());
+      if (!Double.isNaN(cycloidParameters.getPhysicalParameters().getKt()))
+         this.kt.set(cycloidParameters.getPhysicalParameters().getKt());
+      else if (motorParameters != null)
+         this.kt.set(motorParameters.getKt());
+      else
+         throw new RuntimeException("No Kt provided for " + prefix);
 
       this.maxAllowableStatorTemperature = new YoInteger(prefix + "maxAllowableStatorTemperature", registry);
       setMaxAllowableStatorTemperature(90);
@@ -631,6 +659,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       currentModeOfOperation.set(mode);
 
       statorTemp.set(getStatorTemperature());
+
       firstOrderFilteredStatorTemp.update(statorTemp.getDoubleValue());
       secondOrderFilteredStatorTemp.update(firstOrderFilteredStatorTemp.getDoubleValue());
 
@@ -704,6 +733,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       //read the voltage on analog input 2
       measuredAnalogInput2InADCCounts.set(platinumTwitter.getMeasuredAnalogInput2());
       measuredAnalogInput1InADCCounts.set(platinumTwitter.getMeasuredAnalogInput1());
+
+      // Update thermal model to estimate motor temps from measured current
+      if (thermalModel != null)
+         thermalModel.update(measuredMotorCurrent.getDoubleValue(), dt);
 
       encoderDifferenceAtOutput.set(measuredOutputPositionFromMotor.getDoubleValue() - measuredOutputPosition.getDoubleValue());
       if (zeroEncoders.getBooleanValue())
