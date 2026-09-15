@@ -317,7 +317,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       if (motorParameters != null && motorParameters.getMotorThermalParameters() != null)
          thermalModel = new YoMotorThermalModel(prefix + "_" + motorParameters.getManufacturer() + "-" + motorParameters.getModel(),
-                                                constructMotorThermalParameters(motorParameters.getMotorThermalParameters()),
+                                                new MotorThermalParameters(motorParameters.getMotorThermalParameters()),
                                                 registry);
       this.thermalModel = thermalModel;
 
@@ -1033,54 +1033,6 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
          motorDirection.set(-1.0);
       else
          motorDirection.set(1.0);
-   }
-
-   private MotorThermalParameters constructMotorThermalParameters(XmlMotorThermalParameters motorThermalParameters)
-   {
-      return new MotorThermalParameters()
-      {
-         @Override
-         public double getHousingThermalCapacitance()
-         {
-            return motorThermalParameters.getHousingThermalCapacitance();
-         }
-
-         @Override
-         public double getWindingThermalCapacitance()
-         {
-            return motorThermalParameters.getWindingThermalCapacitance();
-         }
-
-         @Override
-         public double getWindingResistanceAtReferenceTemperature()
-         {
-            return motorThermalParameters.getWindingResistanceAtReferenceTemperature();
-         }
-
-         @Override
-         public double getReferenceTemperature()
-         {
-            return motorThermalParameters.getReferenceTemperature();
-         }
-
-         @Override
-         public double getMaxWindingTemperature()
-         {
-            return motorThermalParameters.getMaxWindingTemperature();
-         }
-
-         @Override
-         public double getHousingToAmbientThermalResistance()
-         {
-            return motorThermalParameters.getHousingToAmbientThermalResistance();
-         }
-
-         @Override
-         public double getWindingToHousingThermalResistance()
-         {
-            return motorThermalParameters.getWindingToHousingThermalResistance();
-         }
-      };
    }
 
    public void setEnableCompensationCurrents(boolean enableCompensationCurrents)
