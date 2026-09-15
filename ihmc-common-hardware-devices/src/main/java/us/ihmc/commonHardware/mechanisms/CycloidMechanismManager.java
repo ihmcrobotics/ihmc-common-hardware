@@ -580,7 +580,7 @@ public class CycloidMechanismManager implements MechanismManagerInterface
     */
    public double getTwitterAnalogTemperatureReading()
    {
-      return platinumTwitter.getStatorTemperature();
+      return platinumTwitter.getSecondOrderFilteredStatorTemp();
    }
 
    /**
