@@ -1,14 +1,18 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.novanta;
 
+import us.ihmc.commonHardware.devices.cycloids.TwitterEncoderStatusManager;
 import us.ihmc.commons.MathTools;
+import us.ihmc.etherCAT.master.Slave;
 import us.ihmc.etherCAT.slaves.DSP402Slave.ControlWord;
 import us.ihmc.etherCAT.slaves.DSP402Slave.StatusWord;
+import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.yoVariables.variable.YoLong;
+import us.ihmc.etherCAT.master.Slave.State;
 
 public class YoEverestMotorController
 {
@@ -20,6 +24,21 @@ public class YoEverestMotorController
    private final YoRegistry registry;
    private final YoRegistry maxConfigRegistery;
    private final EverestMotorController motorController;
+
+   private final YoBoolean DRIVE_FAULTED;
+   private final YoBoolean UNDER_VOLTAGE;
+   private final YoBoolean OVER_VOLTAGE;
+   private final YoBoolean STO_DISABLED;
+   private final YoBoolean CURRENT_SHORT;
+   private final YoBoolean OVER_TEMPERATURE;
+   private final YoBoolean MOTOR_FAULT;
+
+   private final TwitterEncoderStatusManager inputEncoderStatusManager;
+   private final TwitterEncoderStatusManager outputEncoderStatusManager;
+
+   private final YoEnum<State> etherCATState;
+
+   private final YoDouble errorPersistenceThreshold;
 
    // YoVariables to write to the drive
    private final YoEnum<ControlWord> requestedControlWord;
@@ -90,7 +109,7 @@ public class YoEverestMotorController
    private final YoBoolean dynamicBrakingEnabled;
 
    private final YoBoolean enableCompensationCurrents;
-   private final YoBoolean motorFaulted;
+   //private final YoBoolean motorFaulted;
 
    private final YoDouble outputPositionBreakFrequency;
    private final YoDouble outputVelocityBreakFrequency;
@@ -149,7 +168,23 @@ public class YoEverestMotorController
       actuatorPositionOffset = new YoDouble(prefix + "ActuatorPositionOffset", registry);
       findOffset = new YoBoolean(prefix + "FindPositionOffset", registry);
       enableCompensationCurrents = new YoBoolean(prefix + "EnableCompensationCurrents", registry);
-      motorFaulted = new YoBoolean(prefix + "MotorFaulted", registry);
+      //motorFaulted = new YoBoolean(prefix + "MotorFaulted", registry);
+
+      DRIVE_FAULTED = new YoBoolean(prefix + "_DRIVE_FAULTED", registry);
+      UNDER_VOLTAGE = new YoBoolean(prefix + "_UNDER_VOLTAGE", registry);
+      OVER_VOLTAGE =  new YoBoolean(prefix + "_OVER_VOLTAGE", registry);
+      STO_DISABLED = new YoBoolean(prefix + "_STO_DISABLED", registry);
+      CURRENT_SHORT = new YoBoolean(prefix + "_CURRENT_SHORT", registry);
+      OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
+      MOTOR_FAULT = new YoBoolean(prefix + "_MOTOR_FAULT", registry);
+
+      etherCATState = new YoEnum<>(prefix + "_EC_State", registry, State.class);
+
+      errorPersistenceThreshold = new YoDouble(prefix + "encoderErrorPersistenceThreshold", registry);
+      errorPersistenceThreshold.set(1.0);
+
+      inputEncoderStatusManager = new TwitterEncoderStatusManager(prefix + "_input", errorPersistenceThreshold, registry);
+      outputEncoderStatusManager = new TwitterEncoderStatusManager(prefix + "_output", errorPersistenceThreshold, registry);
 
       findOffset.addListener(s -> {
          if (findOffset.getBooleanValue())
@@ -291,6 +326,70 @@ public class YoEverestMotorController
       motorController.doStateControl();
    }
 
+   private void initializeFaultDiagnostics()
+   {
+      DRIVE_FAULTED.addListener(source ->
+      {
+         if (DRIVE_FAULTED.getBooleanValue() && isDriveEnabled())
+         {
+            LogTools.error(getName() + " just faulted");
+            MOTOR_FAULT.set(true);
+         }
+      });
+
+      etherCATState.addListener(source ->
+      {
+         if (etherCATState.getEnumValue() == Slave.State.OFFLINE)
+            LogTools.error(getName() + " just went OFFLINE");
+         else if (etherCATState.getEnumValue() == Slave.State.SAFE_OPERR)
+            LogTools.error(getName() + " just went to SAFE_OPERR");
+      });
+
+      UNDER_VOLTAGE.addListener(s ->
+      {
+         if (UNDER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
+            LogTools.error(getName() + " faulted due to under voltage, bus voltage dropped to " + busVoltage.getValue());
+      });
+
+      OVER_VOLTAGE.addListener(s ->
+      {
+         if (OVER_VOLTAGE.getBooleanValue() && !isMotorFaulted() && isDriveEnabled())
+            LogTools.error(getName() + " faulted due to over voltage, bus voltage rose to " + busVoltage.getValue());
+      });
+
+      CURRENT_SHORT.addListener(s ->
+      {
+         if (CURRENT_SHORT.getBooleanValue() && !isMotorFaulted())
+            LogTools.error(getName() + " faulted due to current short");
+      });
+
+      OVER_TEMPERATURE.addListener(s ->
+      {
+         if (OVER_TEMPERATURE.getBooleanValue() && !isMotorFaulted())
+            LogTools.error(getName() + " faulted due to drive overheating at " + measuredTemperature.getValue());
+      });
+
+      STO_DISABLED.addListener(s ->
+      {
+         if (STO_DISABLED.getBooleanValue() && !DRIVE_FAULTED.getBooleanValue())
+            LogTools.error(getName() + " faulted due to STO being disabled");
+      });
+   }
+
+   public void clearFaults()
+   {
+      clearFaults.set(true);
+      MOTOR_FAULT.set(false);
+      DRIVE_FAULTED.set(false);
+      UNDER_VOLTAGE.set(false);
+      OVER_VOLTAGE.set(false);
+      STO_DISABLED.set(false);
+      CURRENT_SHORT.set(false);
+      OVER_TEMPERATURE.set(false);
+      inputEncoderStatusManager.clearErrors();
+      outputEncoderStatusManager.clearErrors();
+   }
+
    public void setRequestedOperationMode(EverestOperationModes operationMode)
    {
       this.requestedOperationMode.set(operationMode);
@@ -321,7 +420,7 @@ public class YoEverestMotorController
       this.enableDrive.set(enableDrive);
    }
 
-   public boolean isEnableDrive()
+   public boolean isDriveEnabled()
    {
       return this.enableDrive.getBooleanValue();
    }
@@ -357,10 +456,6 @@ public class YoEverestMotorController
 
    public double getMeasuredTorque(){
       return measuredTorque.getDoubleValue();
-   }
-
-   public void clearFaults(){
-      this.clearFaults.set(true);
    }
 
    public double getMotorTemperature(){
@@ -406,7 +501,7 @@ public class YoEverestMotorController
    }
 
    public boolean isMotorFaulted(){
-      return this.motorFaulted.getBooleanValue();
+      return this.MOTOR_FAULT.getBooleanValue();
    }
 
    public void setEnableCompensationCurrents(boolean enableCompensationCurrents){
@@ -472,6 +567,11 @@ public class YoEverestMotorController
    public void zeroEncodersWithOffset(double offset){
       this.offsetFromZero.set(offset);
       this.findOffset.set(true);
+   }
+
+   public String getName()
+   {
+      return name;
    }
 
 }
