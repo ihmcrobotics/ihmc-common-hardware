@@ -42,10 +42,16 @@ public class YoEverestMotorController
    private final YoDouble measuredActuatorVelocity;
    private final YoDouble measuredTorque;
    private final YoDouble measuredTemperature;
+   private final YoDouble desiredTorque;
+   private final YoDouble desiredMotorDamping;
+   private final YoDouble desiredMotorStiffness;
+   private final YoDouble maxTorque;
 
    private final YoDouble motorPositionOffset;
    private final YoDouble actuatorPositionOffset;
    private final YoBoolean findOffset;
+   private final YoDouble offsetFromZero;
+
 
    private final YoDouble measuredMotorCurrent;
    private final YoDouble commandedMotorCurrent;
@@ -79,6 +85,19 @@ public class YoEverestMotorController
    private final YoDouble motorTempValue;
    private final YoDouble powerStageTemp1Value;
    private final YoDouble followingError;
+   private final YoDouble maxTemp;
+   private final YoDouble recommendedTemp;
+   private final YoBoolean dynamicBrakingEnabled;
+
+   private final YoBoolean enableCompensationCurrents;
+   private final YoBoolean motorFaulted;
+
+   private final YoDouble outputPositionBreakFrequency;
+   private final YoDouble outputVelocityBreakFrequency;
+   private final YoDouble motorVelocityBreakFrequency;
+   private final YoDouble motorPositionBreakFrequency;
+   private final YoDouble maxPositionFeedbackError;
+   private final YoDouble maxVelocityFeedbackError;
 
    private final String name;
 
@@ -104,6 +123,18 @@ public class YoEverestMotorController
       rawMeasuredActuatorPosition = new YoLong(prefix + "ActuatorPosition_bits", registry);
       rawMeasuredActuatorVelocity = new YoDouble(prefix + "ActuatorVelocity_rev_s", registry);
 
+      desiredTorque = new YoDouble(prefix + "DesiredTorque", registry);
+      desiredMotorDamping = new YoDouble(prefix + "DesiredMotorDamping", registry);
+      desiredMotorStiffness = new YoDouble(prefix + "DesiredMotorTorque", registry);
+      maxTorque = new YoDouble(prefix + "MaxTorque", registry);
+      outputPositionBreakFrequency = new YoDouble(prefix + "OutputPositionBreakFrequency", registry);
+      outputVelocityBreakFrequency = new YoDouble(prefix + "OutputVelocityBreakFrequency", registry);
+      motorPositionBreakFrequency = new YoDouble(prefix + "MotorPositionBreakFrequency", registry);
+      motorVelocityBreakFrequency = new YoDouble(prefix + "MotorVelocityBreakFrequency", registry);
+      maxPositionFeedbackError = new YoDouble(prefix + "MaxPositionFeedbackError", registry);
+      maxVelocityFeedbackError = new YoDouble(prefix + "MaxVelocityFeedbackError", registry);
+      offsetFromZero = new YoDouble(prefix + "OffsetFromZero", registry);
+
       measuredMotorPosition = new YoDouble(prefix + "MotorPosition_rad", registry);
       measuredMotorVelocity = new YoDouble(prefix + "MotorVelocity_rad_s", registry);
       measuredActuatorPosition = new YoDouble(prefix + "ActuatorPosition_rad", registry);
@@ -117,6 +148,8 @@ public class YoEverestMotorController
       motorPositionOffset = new YoDouble(prefix + "MotorPositionOffset", registry);
       actuatorPositionOffset = new YoDouble(prefix + "ActuatorPositionOffset", registry);
       findOffset = new YoBoolean(prefix + "FindPositionOffset", registry);
+      enableCompensationCurrents = new YoBoolean(prefix + "EnableCompensationCurrents", registry);
+      motorFaulted = new YoBoolean(prefix + "MotorFaulted", registry);
 
       findOffset.addListener(s -> {
          if (findOffset.getBooleanValue())
@@ -141,6 +174,13 @@ public class YoEverestMotorController
       clearFaults.set(CLEAR_FAULTS);
       stayDisabled = new YoBoolean(prefix + "stayDisabled", registry);
       stayDisabled.set(false);
+
+      maxTemp = new YoDouble(prefix + "MaxTemp", registry);
+      maxTemp.set(0);
+      recommendedTemp = new YoDouble(prefix + "RecommendedTemp", registry);
+      recommendedTemp.set(0);
+      dynamicBrakingEnabled = new YoBoolean(prefix + "DynamicBreakingEnabled", registry);
+      dynamicBrakingEnabled.set(false);
 
       parentRegistry.addChild(registry);
       if(maxConfig){
@@ -276,5 +316,162 @@ public class YoEverestMotorController
       return torqueConstant.getDoubleValue();
    }
 
+   public void setEnableDrive(boolean enableDrive)
+   {
+      this.enableDrive.set(enableDrive);
+   }
+
+   public boolean isEnableDrive()
+   {
+      return this.enableDrive.getBooleanValue();
+   }
+
+   public double getMeasuredMotorCurrent()
+   {
+      return measuredMotorCurrent.getValue();
+   }
+
+   public double getFilteredOutputPosition(){
+      return this.measuredMotorPosition.getValue();
+   }
+
+   public double getMeasuredOutputPosition(){
+      return this.rawMeasuredMotorPosition.getValue();
+   }
+
+   public double getFilteredOutputVelocity(){
+      return this.measuredMotorVelocity.getValue();
+   }
+
+   public double getMeasuredOutputVelocity(){
+      return this.rawMeasuredMotorVelocity.getValue();
+   }
+
+   public int getGearRatio(){
+      return 19;
+   }
+
+   public double getDesiredMotorPosition(){
+      return desiredMotorPosition.getValue();
+   }
+
+   public double getMeasuredTorque(){
+      return measuredTorque.getDoubleValue();
+   }
+
+   public void clearFaults(){
+      this.clearFaults.set(true);
+   }
+
+   public double getMotorTemperature(){
+      return this.motorTemperature.getValue();
+   }
+
+   public double getMaxMotorTemperature(){
+      return this.maxTemp.getValue();
+   }
+
+   public double getRecommendedMotorTemperature(){
+      return this.recommendedTemp.getValue();
+   }
+
+   public boolean isDynamicBrakingEnabled(){
+      return this.dynamicBrakingEnabled.getBooleanValue();
+   }
+
+   public void setDesiredMotorTorque(double torque)
+   {
+      this.desiredTorque.set(torque);
+   }
+
+   public double getDesiredMotorTorque(){
+      return this.desiredTorque.getValue();
+   }
+
+   public void setDesiredMotorDamping(double damping)
+   {
+      this.desiredMotorDamping.set(damping);
+   }
+
+   public double getDesiredMotorDamping(){
+      return this.desiredMotorDamping.getValue();
+   }
+
+   public void setDesiredMotorStiffness(double stiffness){
+      this.desiredMotorStiffness.set(stiffness);
+   }
+
+   public double getDesiredMotorStiffness(){
+      return this.desiredMotorStiffness.getValue();
+   }
+
+   public boolean isMotorFaulted(){
+      return this.motorFaulted.getBooleanValue();
+   }
+
+   public void setEnableCompensationCurrents(boolean enableCompensationCurrents){
+      this.enableCompensationCurrents.set(enableCompensationCurrents);
+   }
+
+   public boolean isEnableCompensationCurrents(){
+      return this.enableCompensationCurrents.getBooleanValue();
+   }
+
+   public double getMaxActuatorTorque(){
+      return this.maxTorque.getValue();
+   }
+
+   public void setOutputPositionBreakFrequency(double freq){
+      this.outputPositionBreakFrequency.set(freq);
+   }
+
+   public double getOutputPositionBreakFrequency(){
+      return this.outputPositionBreakFrequency.getValue();
+   }
+
+   public void setOutputVelocityBreakFrequency(double freq){
+      this.outputVelocityBreakFrequency.set(freq);
+   }
+
+   public double getOutputVelocityBreakFrequency(){
+      return this.outputVelocityBreakFrequency.getValue();
+   }
+
+   public void setMotorPositionBreakFrequency(double freq){
+      this.motorPositionBreakFrequency.set(freq);
+   }
+
+   public double getMotorPositionBreakFrequency(){
+      return this.motorPositionBreakFrequency.getValue();
+   }
+
+   public void setMotorVelocityBreakFrequency(double freq){
+      this.motorVelocityBreakFrequency.set(freq);
+   }
+
+   public double getMotorVelocityBreakFrequency(){
+      return this.motorVelocityBreakFrequency.getValue();
+   }
+
+   public void setMaxPositionFeedbackError(double error){
+      this.maxPositionFeedbackError.set(error);
+   }
+
+   public double getMaxPositionFeedbackError(){
+      return this.maxPositionFeedbackError.getValue();
+   }
+
+   public void setMaxVelocityFeedbackError(double error){
+      this.maxVelocityFeedbackError.set(error);
+   }
+
+   public double getMaxVelocityFeedbackError(){
+      return this.maxVelocityFeedbackError.getValue();
+   }
+
+   public void zeroEncodersWithOffset(double offset){
+      this.offsetFromZero.set(offset);
+      this.findOffset.set(true);
+   }
 
 }
