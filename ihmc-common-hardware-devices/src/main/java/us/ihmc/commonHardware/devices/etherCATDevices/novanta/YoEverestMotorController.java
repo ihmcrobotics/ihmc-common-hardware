@@ -326,6 +326,22 @@ public class YoEverestMotorController
       motorController.doStateControl();
    }
 
+   /**
+    * Apply limits to a {@code YoDouble} to bound possible values to [lowerLimit, upperLimit]
+    *
+    * @param variableToLimit variable to be limited
+    * @param lowerLimit      Lower value limit, inclusive
+    * @param upperLimit      Upper value limit, inclusiv
+    */
+   private void applyValueLimits(YoDouble variableToLimit, double lowerLimit, double upperLimit)
+   {
+      variableToLimit.addListener(yoVariable ->
+      {
+         double value = variableToLimit.getDoubleValue();
+         variableToLimit.set(MathTools.clamp(value, lowerLimit, upperLimit));
+      });
+   }
+
    private void initializeFaultDiagnostics()
    {
       DRIVE_FAULTED.addListener(source ->
