@@ -12,16 +12,19 @@ import org.knowm.xchart.style.markers.SeriesMarkers;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlActuatorParameterLoader;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorParameters;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlMotorThermalParameters;
+import us.ihmc.log.LogTools;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class ThermalModelTest
 {
    private static final double DEFAULT_TEMPERATURE = 25.0;
    private static final String PLOT_PATH = "build/reports/thermalModelTest/";
+   private static final Color[] modelColors = {Color.RED, Color.BLUE, new Color(0, 153, 0), Color.ORANGE, Color.MAGENTA, Color.CYAN};
 
    // Wide enough dashes/width to stay legible at any plot resolution, unlike XChart's default hairline SeriesLines.DASH_DASH
    private static final BasicStroke SOLID_LINE = new BasicStroke(2.5f);
@@ -33,8 +36,9 @@ public class ThermalModelTest
    @Test
    public void testThermalModels115() throws IOException
    {
-      XmlMotorParameters tq115MotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM115x25");
-      testThermalModelAtDifferentCurrents(tq115MotorParams);
+      XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM115x25");
+      double[] appliedCurrents = {16.0};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
    }
 
    /**
@@ -43,8 +47,9 @@ public class ThermalModelTest
    @Test
    public void testThermalModels85() throws IOException
    {
-      XmlMotorParameters tq115MotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM85x26");
-      testThermalModelAtDifferentCurrents(tq115MotorParams);
+      XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM85x26");
+      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
    }
 
    /**
@@ -53,8 +58,9 @@ public class ThermalModelTest
    @Test
    public void testThermalModels76() throws IOException
    {
-      XmlMotorParameters tq115MotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_07626C");
-      testThermalModelAtDifferentCurrents(tq115MotorParams);
+      XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_07626C");
+      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
    }
 
    /**
@@ -63,11 +69,12 @@ public class ThermalModelTest
    @Test
    public void testThermalModels68() throws IOException
    {
-      XmlMotorParameters tq115MotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_06826C");
-      testThermalModelAtDifferentCurrents(tq115MotorParams);
+      XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_06826C");
+      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
    }
 
-   private void testThermalModelAtDifferentCurrents(XmlMotorParameters xmlMotorParams) throws IOException
+   private void testThermalModelAtDifferentCurrents(XmlMotorParameters xmlMotorParams, double[] appliedCurrents) throws IOException
    {
       // Get important fields from XML
       XmlMotorThermalParameters xmlMotorThermalParameters = xmlMotorParams.getMotorThermalParameters();
@@ -75,47 +82,39 @@ public class ThermalModelTest
       String model = xmlMotorParams.getModel();
 
       // Construct model for each current level we will test
-      MotorThermalModel motorThermalModel25Percent = new MotorThermalModel(new MotorThermalParameters(xmlMotorThermalParameters), DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
-      MotorThermalModel motorThermalModel50Percent = new MotorThermalModel(new MotorThermalParameters(xmlMotorThermalParameters), DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
-      MotorThermalModel motorThermalModel75Percent = new MotorThermalModel(new MotorThermalParameters(xmlMotorThermalParameters), DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
-      MotorThermalModel motorThermalModel100Percent = new MotorThermalModel(new MotorThermalParameters(xmlMotorThermalParameters), DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
+      MotorThermalModel[] motorThermalModels = new MotorThermalModel[appliedCurrents.length];
+      String[] modelLabels = new String[appliedCurrents.length];
+      for (int i = 0; i < motorThermalModels.length; i++)
+         motorThermalModels[i] = new MotorThermalModel(new MotorThermalParameters(xmlMotorThermalParameters), DEFAULT_TEMPERATURE, DEFAULT_TEMPERATURE);
+      for (int i = 0; i < modelLabels.length; i++)
+         modelLabels[i] = appliedCurrents[i] + " A";
 
       // Params for our sim
-      double maxCurrent = xmlMotorParams.getMaxCurrentPeak();
       double dt = 0.001; // seconds
-      double simDuration = 180.0; //seconds
-
-      // Some arrays
-      MotorThermalModel[] models = {motorThermalModel25Percent, motorThermalModel50Percent, motorThermalModel75Percent, motorThermalModel100Percent};
-      Color[] modelColors = {Color.RED, Color.BLUE, new Color(0, 153, 0), Color.ORANGE};
-      double[] appliedCurrents = {0.25 * maxCurrent, 0.5 * maxCurrent, 0.75 * maxCurrent, maxCurrent};
-      String[] modelLabels = {"25% peak current (" + appliedCurrents[0] + " A)",
-                              "50% peak current (" + appliedCurrents[1] + " A)",
-                              "75% peak current (" + appliedCurrents[2] + " A)",
-                              "100% peak current (" + appliedCurrents[3] + " A)"};
+      double simDuration = 3000.0; //seconds
 
       // The series we will plot
       int totalSteps = (int) Math.round(simDuration / dt);
       double[] time = new double[totalSteps + 1];
-      double[][] windingTemperature = new double[models.length][time.length];
-      double[][] housingTemperature = new double[models.length][time.length];
+      double[][] windingTemperature = new double[motorThermalModels.length][time.length];
+      double[][] housingTemperature = new double[motorThermalModels.length][time.length];
 
       // Calculate the temps at t=0
-      for (int i = 0; i < models.length; i++)
+      for (int i = 0; i < motorThermalModels.length; i++)
       {
-         windingTemperature[i][0] = models[i].getWindingTemperature();
-         housingTemperature[i][0] = models[i].getHousingTemperature();
+         windingTemperature[i][0] = motorThermalModels[i].getWindingTemperature();
+         housingTemperature[i][0] = motorThermalModels[i].getHousingTemperature();
       }
 
       // Calculate the temps for the remainder of the simulation
       for (int step = 1; step <= totalSteps; step++)
       {
          time[step] = step * dt;
-         for (int i = 0; i < models.length; i++)
+         for (int i = 0; i < motorThermalModels.length; i++)
          {
-            models[i].update(appliedCurrents[i], dt);
-            windingTemperature[i][step] = models[i].getWindingTemperature();
-            housingTemperature[i][step] = models[i].getHousingTemperature();
+            motorThermalModels[i].update(appliedCurrents[i], dt);
+            windingTemperature[i][step] = motorThermalModels[i].getWindingTemperature();
+            housingTemperature[i][step] = motorThermalModels[i].getHousingTemperature();
          }
       }
 
@@ -133,20 +132,25 @@ public class ThermalModelTest
       int housingPlotPoints = 60;
 
       // Add the data to our chart
-      for (int i = 0; i < models.length; i++)
+      for (int i = 0; i < motorThermalModels.length; i++)
       {
-         addSeries(chart,
-                   modelLabels[i] + " - winding",
-                   downsample(time, windingPlotPoints),
-                   downsample(windingTemperature[i], windingPlotPoints),
-                   modelColors[i],
-                   SOLID_LINE);
-         addSeries(chart,
-                   modelLabels[i] + " - housing",
-                   downsample(time, housingPlotPoints),
-                   downsample(housingTemperature[i], housingPlotPoints),
-                   modelColors[i],
-                   DASHED_LINE);
+         if (i < modelColors.length)
+         {
+            addSeries(chart,
+                      modelLabels[i] + " - winding",
+                      downsample(time, windingPlotPoints),
+                      downsample(windingTemperature[i], windingPlotPoints),
+                      modelColors[i],
+                      SOLID_LINE);
+            addSeries(chart,
+                      modelLabels[i] + " - housing",
+                      downsample(time, housingPlotPoints),
+                      downsample(housingTemperature[i], housingPlotPoints),
+                      modelColors[i],
+                      DASHED_LINE);
+         }
+         else
+            LogTools.warn("NOT ENOUGH COLORS! Cannot plot this series");
       }
 
       // Export the plots as pngs
@@ -169,7 +173,7 @@ public class ThermalModelTest
    {
       double[] result = new double[targetCount];
       for (int i = 0; i < targetCount; i++)
-         result[i] = data[(int) Math.round(i * (data.length - 1) / (double) (targetCount - 1))];
+         result[i] = data[(int) Math.round(i * (double) (data.length - 1) / (targetCount - 1))];
       return result;
    }
 }
