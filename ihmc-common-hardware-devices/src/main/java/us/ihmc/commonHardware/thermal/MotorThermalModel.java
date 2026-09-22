@@ -54,7 +54,7 @@ public class MotorThermalModel
     */
    public void update(double current, double duration)
    {
-      double currentAtPhase = current * Math.sqrt(2.0);
+      double currentAtPhase = current / Math.sqrt(2.0 / 3.0);
       double newTw = ThermalModelingTools.evaluateWindingTemperature(
             parameters, currentAtPhase, ambientTemperature, windingTemperature, housingTemperature, duration);
       double newTh = ThermalModelingTools.evaluateHousingTemperature(
