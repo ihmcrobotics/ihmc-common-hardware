@@ -15,6 +15,7 @@ import java.util.List;
 public class XmlTransmissions
 {
    @XmlElements({@XmlElement(name = "XmlCycloidMechanism", type = XmlCycloidMechanism.class),
+                 @XmlElement(name = "XmlCycloidMechanismOld", type = XmlCycloidMechanismOld.class),
                  @XmlElement(name = "XmlSakeFingerMechanism", type = XmlSakeFingerMechanism.class),
                  @XmlElement(name = "XmlJointPairMechanism", type = XmlJointPairMechanism.class),
                  @XmlElement(name = "XmlHand", type = XmlHand.class)})

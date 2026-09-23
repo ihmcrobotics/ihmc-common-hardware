@@ -6,7 +6,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "XmlPlatinumTwitter")
+@XmlType(name = "XmlPlatinumTwitterOld")
 public class XmlPlatinumTwitterOld extends AbstractXmlEtherCATDevice
 {
    @XmlElement(required = true)

@@ -1,6 +1,7 @@
 package us.ihmc.commonHardware.devices.etherCATDevices.beckhoff;
 
 import us.ihmc.etherCAT.slaves.beckhoff.*;
+import us.ihmc.hardwareStatusUI.controllerSide.DeviceStatusProvider;
 import us.ihmc.yoVariables.listener.YoVariableChangedListener;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
@@ -12,7 +13,7 @@ import us.ihmc.yoVariables.variable.YoVariable;
  * 
  * @author Owen Winship (adapted from YoEL3356.java)
  */
-public class YoEL3356 implements VoltageSensor, YoLoadCellInterface
+public class YoEL3356 implements VoltageSensor, YoLoadCellInterface, DeviceStatusProvider
 {
    private String name = getClass().getSimpleName();
    private YoRegistry registry;
@@ -148,4 +149,9 @@ public class YoEL3356 implements VoltageSensor, YoLoadCellInterface
       yoValue.set(el3356.value());
    }
 
+   @Override
+   public boolean isResponding()
+   {
+      return el3356.isOperational();
+   }
 }

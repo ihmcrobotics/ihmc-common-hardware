@@ -7,7 +7,7 @@ import jakarta.xml.bind.annotation.XmlType;
 import us.ihmc.hardwareXMLToolkit.AbstractXmlObject;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "XmlCycloidMechanism")
+@XmlType(name = "XmlCycloidMechanismOld")
 public class XmlCycloidMechanismOld extends AbstractXmlObject
 {
    @XmlElement(required = true)
