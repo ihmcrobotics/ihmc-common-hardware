@@ -159,13 +159,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
    // error variables
    private final ElmoTwitterStatusRegisterProcessor statusRegisterProcessor;
-//   private final YoBoolean DRIVE_FAULTED;
    private final YoBoolean UNDER_VOLTAGE;
    private final YoBoolean OVER_VOLTAGE;
    private final YoBoolean STO_DISABLED;
    private final YoBoolean CURRENT_SHORT;
    private final YoBoolean OVER_TEMPERATURE;
-//   private final YoBoolean MOTOR_FAULT;
    private final YoBoolean singularMotorFault;
    private final GlitchFilteredYoBoolean MOTOR_FAULT;
 
@@ -676,6 +674,10 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
 
       singularMotorFault.set(isFaulted);
       MOTOR_FAULT.update(isFaulted && externalEnableDriveRequest);
+
+      // Immediately trigger fault if slave is offline TODO make watchdog timer to give extra time for slave to recover
+      if (!platinumTwitter.isOperational() && externalEnableDriveRequest)
+         MOTOR_FAULT.set(true);
 
       /** Motor Space Encoders **/
       // get the motor position on the previous tick. This is used to finite difference the motor position to get the motor velocity.
