@@ -51,7 +51,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    public static final double DEFAULT_SOFTWARE_BASED_OVER_FAULT_THRESHOLD = Double.POSITIVE_INFINITY; // Volts
    public static final double DEFAULT_SOFTWARE_BASED_UNDER_FAULT_THRESHOLD = 5.0;  // Volts
 
-   public static final double FAULT_DURATION_THRESHOLD = 2.0; // How many seconds consecutively we need to be faulted
+   public static final double FAULT_DURATION_THRESHOLD = 2.5; // How many seconds consecutively we need to be faulted
 
    private final double dt;
    private final String name;
