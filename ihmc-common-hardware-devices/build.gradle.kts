@@ -23,4 +23,5 @@ mainDependencies {
 
 testDependencies {
    api(ihmc.sourceSetProject("main"))
+   api("org.knowm.xchart:xchart:3.8.8")
 }
