@@ -168,6 +168,73 @@ public class ThermalModelingTools
       return c1 * (lambda1 - a22) * Math.exp(lambda1 * t) + c2 * (lambda2 - a22) * Math.exp(lambda2 * t) + Tssw;
    }
 
+   public static double evaluateWindingTemperatureEuler(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
+   {
+      double Rr = p.getWindingResistanceAtReferenceTemperature();
+      double Cw = p.getWindingThermalCapacitance();
+      double Ch = p.getHousingThermalCapacitance();
+      double Rha = p.getHousingToAmbientThermalResistance();
+      double iSqr = MathTools.square(current);
+      double Rwh = p.getWindingToHousingThermalResistance();
+      double Tr = p.getReferenceTemperature();
+
+      double TwDot = (Tw0 * (iSqr * Rr * Rwh * ALPHA_CU - 1) / (Cw * Rwh)) + (Th0 / (Cw * Rwh)) + (iSqr * Rr * (1 - ALPHA_CU * Tr) / Cw);
+//      double Th = Math.pow(1 + (t * (Rha + Rwh) / (Ch * Rwh * Rha)), -1.0) *
+//                  (t * Tw0 / (Ch * Rwh))
+//                  + (t * ambientTemp / Rha * Ch)
+//                  + Th0;
+
+//      double Tw = Math.pow((1 - t * (iSqr * Rr * Rwh * ALPHA_CU - 1) / (Cw * Rwh)), -1.0) *
+//                  ((t * Th0 / (Cw * Rwh))
+//                  + (t * iSqr * Rr * (1 - ALPHA_CU * Tr) / Cw)
+//                  + Tw0);
+
+      return TwDot * t + Tw0;
+   }
+
+   public static double evaluateWindingTemperatureEuler2(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
+   {
+      double[] b = calculateB(p, current, ambientTemp);
+      double[][] A = calculateA(p, current);
+      double A11 = A[0][0];
+      double A12 = A[0][1];
+      double A21 = A[1][0];
+      double A22 = A[1][1];
+      double b1 = b[0];
+      double b2 = b[1];
+
+      return Math.pow(1 - A11*t - ((A12*A21*t*t) / (1 - A22*t)), -1.0) * ((A12*t * (b2*t + Th0) / (1 - A22*t)) + b1*t + Tw0);
+   }
+
+   public static double evaluateHousingTemperatureEuler2(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
+   {
+      double[] b = calculateB(p, current, ambientTemp);
+      double[][] A = calculateA(p, current);
+      double A11 = A[0][0];
+      double A12 = A[0][1];
+      double A21 = A[1][0];
+      double A22 = A[1][1];
+      double b1 = b[0];
+      double b2 = b[1];
+
+      return Math.pow(1 - A22*t - ((A12*A21*t*t) / (1 - A11*t)), -1.0) * ((A21*t * (b1*t + Tw0) / (1 - A11*t)) + b2*t + Th0);
+   }
+
+   public static double evaluateHousingTemperatureEuler(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
+   {
+      double Rr = p.getWindingResistanceAtReferenceTemperature();
+      double Cw = p.getWindingThermalCapacitance();
+      double Ch = p.getHousingThermalCapacitance();
+      double Rha = p.getHousingToAmbientThermalResistance();
+      double iSqr = MathTools.square(current);
+      double Rwh = p.getWindingToHousingThermalResistance();
+      double Tr = p.getReferenceTemperature();
+
+      double ThDot = (Tw0 / (Ch * Rwh)) - (Th0 * (Rha + Rwh) / (Ch * Rwh * Rha)) + (ambientTemp / Rha * Ch);
+
+      return ThDot * t + Th0;
+   }
+
    public static double evaluateWindingTemperatureSimple(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double t)
    {
       double[] b = calculateB(p, current, ambientTemp);
