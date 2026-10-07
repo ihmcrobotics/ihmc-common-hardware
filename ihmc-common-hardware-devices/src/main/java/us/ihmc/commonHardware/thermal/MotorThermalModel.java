@@ -49,15 +49,15 @@ public class MotorThermalModel
     * solution of the linearized two-node ODE, with the current internal temperatures as initial
     * conditions.
     *
-    * @param current  applied current [A]
+    * @param current  applied current [A] (quadrature, then we convert to phase by dividing by sqrt(2/3)
     * @param duration time interval [s]
     */
    public void update(double current, double duration)
    {
       double currentAtPhase = current / Math.sqrt(2.0 / 3.0);
-      double newTw = ThermalModelingTools.evaluateWindingTemperatureEuler2(
+      double newTw = ThermalModelingTools.evaluateWindingTemperatureEuler(
             parameters, currentAtPhase, ambientTemperature, windingTemperature, housingTemperature, duration);
-      double newTh = ThermalModelingTools.evaluateHousingTemperatureEuler2(
+      double newTh = ThermalModelingTools.evaluateHousingTemperatureEuler(
             parameters, currentAtPhase, ambientTemperature, windingTemperature, housingTemperature, duration);
       windingTemperature = newTw;
       housingTemperature = newTh;

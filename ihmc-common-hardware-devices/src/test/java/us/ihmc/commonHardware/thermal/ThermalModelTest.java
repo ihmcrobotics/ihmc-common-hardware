@@ -1,12 +1,14 @@
 package us.ihmc.commonHardware.thermal;
 
+import blue.strategic.parquet.Hydrator;
+import blue.strategic.parquet.HydratorSupplier;
+import blue.strategic.parquet.ParquetReader;
 import org.junit.jupiter.api.Test;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.BitmapEncoder.BitmapFormat;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
-import org.knowm.xchart.style.Styler;
 import org.knowm.xchart.style.Styler.LegendPosition;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 import us.ihmc.hardwareXMLToolkit.devices.parameters.XmlActuatorParameterLoader;
@@ -18,7 +20,13 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 public class ThermalModelTest
 {
@@ -37,8 +45,8 @@ public class ThermalModelTest
    public void testThermalModels115() throws IOException
    {
       XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM115x25");
-      double[] appliedCurrents = {16.0};
-      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
+      double[] appliedCurrents = {16.0 * Math.sqrt(2.0 / 3.0)};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents, "115_current_1_umich_sub.parquet");
    }
 
    /**
@@ -48,8 +56,8 @@ public class ThermalModelTest
    public void testThermalModels85() throws IOException
    {
       XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("tq_ILM85x26");
-      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
-      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
+      double[] appliedCurrents = {11.0 * Math.sqrt(2.0 / 3.0)};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents, "85_current_1_umich_sub.parquet");
    }
 
    /**
@@ -59,8 +67,8 @@ public class ThermalModelTest
    public void testThermalModels76() throws IOException
    {
       XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_07626C");
-      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
-      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
+      double[] appliedCurrents = {5.0 * Math.sqrt(2.0 / 3.0)};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents, "76_current_1_umich_sub.parquet");
    }
 
    /**
@@ -70,11 +78,16 @@ public class ThermalModelTest
    public void testThermalModels68() throws IOException
    {
       XmlMotorParameters xmlMotorParams = XmlActuatorParameterLoader.getMotorParametersFromMotorName("kollmorgen_TBM2G_06826C");
-      double[] appliedCurrents = {0.25 * xmlMotorParams.getMaxCurrentPeak(), 0.5 * xmlMotorParams.getMaxCurrentPeak(), 0.75 * xmlMotorParams.getMaxCurrentPeak()};
-      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents);
+      double[] appliedCurrents = {5.0 * Math.sqrt(2.0 / 3.0)};
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents, "68_current_1_umich_sub.parquet");
    }
 
    private void testThermalModelAtDifferentCurrents(XmlMotorParameters xmlMotorParams, double[] appliedCurrents) throws IOException
+   {
+      testThermalModelAtDifferentCurrents(xmlMotorParams, appliedCurrents, null);
+   }
+
+   private void testThermalModelAtDifferentCurrents(XmlMotorParameters xmlMotorParams, double[] appliedCurrents, String measuredDataParquetFile) throws IOException
    {
       // Get important fields from XML
       XmlMotorThermalParameters xmlMotorThermalParameters = xmlMotorParams.getMotorThermalParameters();
@@ -91,7 +104,7 @@ public class ThermalModelTest
 
       // Params for our sim
       double dt = 0.001; // seconds
-      double simDuration = 3000.0; //seconds
+      double simDuration = 2700.0; //seconds
 
       // The series we will plot
       int totalSteps = (int) Math.round(simDuration / dt);
@@ -153,6 +166,25 @@ public class ThermalModelTest
             LogTools.warn("NOT ENOUGH COLORS! Cannot plot this series");
       }
 
+      // Overlay measured data from a parquet file, if provided
+      if (measuredDataParquetFile != null)
+      {
+         Map<String, double[]> measuredData = readParquetFile(measuredDataParquetFile);
+         addSeries(chart,
+                   "Measured - winding",
+                   downsample(measuredData.get("time"), windingPlotPoints),
+                   downsample(measuredData.get("T_w"), windingPlotPoints),
+                   Color.BLACK,
+                   SOLID_LINE);
+
+         addSeries(chart,
+                   "Measured - housing",
+                   downsample(measuredData.get("time"), housingPlotPoints),
+                   downsample(measuredData.get("temperature"), housingPlotPoints),
+                   Color.BLACK,
+                   DASHED_LINE);
+      }
+
       // Export the plots as pngs
       String plotName = "thermalModel_" + manufacturer + "_" + model;
       new File(PLOT_PATH + plotName).getParentFile().mkdirs();
@@ -175,5 +207,67 @@ public class ThermalModelTest
       for (int i = 0; i < targetCount; i++)
          result[i] = data[(int) Math.round(i * (double) (data.length - 1) / (targetCount - 1))];
       return result;
+   }
+
+   // Reads a generic .parquet file from the test resources directory, returning its columns by name
+   private static Map<String, double[]> readParquetFile(String fileName) throws IOException
+   {
+      File file = getTestResourceFile(fileName);
+
+      List<Map<String, Object>> rows = new ArrayList<>();
+      try (Stream<Map<String, Object>> stream = ParquetReader.streamContent(file, HydratorSupplier.constantly(new Hydrator<Map<String, Object>, Map<String, Object>>()
+      {
+         @Override
+         public Map<String, Object> start()
+         {
+            return new LinkedHashMap<>();
+         }
+
+         @Override
+         public Map<String, Object> add(Map<String, Object> target, String heading, Object value)
+         {
+            target.put(heading, value);
+            return target;
+         }
+
+         @Override
+         public Map<String, Object> finish(Map<String, Object> target)
+         {
+            return target;
+         }
+      })))
+      {
+         stream.forEach(rows::add);
+      }
+
+      Map<String, double[]> columns = new LinkedHashMap<>();
+      if (rows.isEmpty())
+         return columns;
+
+      for (String columnName : rows.get(0).keySet())
+      {
+         double[] columnData = new double[rows.size()];
+         for (int i = 0; i < rows.size(); i++)
+            columnData[i] = ((Number) rows.get(i).get(columnName)).doubleValue();
+         columns.put(columnName, columnData);
+      }
+      return columns;
+   }
+
+   // Resolves a file in the test resources directory via the classpath
+   private static File getTestResourceFile(String fileName) throws IOException
+   {
+      URL url = ThermalModelTest.class.getClassLoader().getResource(fileName);
+      if (url == null)
+         throw new IOException("Could not find test resource: " + fileName);
+
+      try
+      {
+         return new File(url.toURI());
+      }
+      catch (URISyntaxException e)
+      {
+         throw new IOException(e);
+      }
    }
 }
