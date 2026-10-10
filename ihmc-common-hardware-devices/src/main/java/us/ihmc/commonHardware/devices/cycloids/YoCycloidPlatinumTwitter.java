@@ -191,6 +191,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoInteger maxRecommendedStatorTemperature;
    private final YoDouble motorDirection;
    private final YoDouble gearRatio;
+   private final YoDouble torqueLimit;
 
    private final CycloidPhysicalParameters physicalParameters;
    private final CycloidSILParameters silParameters;
@@ -379,6 +380,9 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       gearRatio = new YoDouble(prefix + "gearRatio", registry);
       gearRatio.set(physicalParameters.getGearRatio());
 
+      torqueLimit = new YoDouble(prefix + "torqueLimit", registry);
+      torqueLimit.set(physicalParameters.getTorqueLimit());
+
       inputCountsPerRevolution = physicalParameters.getCountsPerMotorRevolution();
       motorEncoderCountsToMotorRadians = (2.0 * Math.PI) / inputCountsPerRevolution;
       motorRadiansToMotorEncoderCounts = 1.0 / motorEncoderCountsToMotorRadians;
@@ -427,6 +431,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       applyValueLimits(dahlFrictionForce, 0.0, Double.POSITIVE_INFINITY);
       applyValueLimits(dahlSlope, 0.0, Double.POSITIVE_INFINITY);
       applyValueLimits(linearDampingCompensationGain, 0.0, Double.POSITIVE_INFINITY);
+      applyValueLimits(desiredOutputTorque, () -> -torqueLimit.getDoubleValue(), torqueLimit::getDoubleValue);
+      applyValueLimits(desiredMotorTorque, () -> -torqueLimit.getDoubleValue() / gearRatio.getDoubleValue(), () -> torqueLimit.getDoubleValue() / gearRatio.getDoubleValue());
 
       coggingOutputScalar = new YoDouble(prefix + "coggingOutputScalar", registry); // Cogging Output Scalar
       //Compensation Scalars should only be between 0 and 1
@@ -788,6 +794,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       // setpoint of this drive and comes from the desired motor torque, and the velocity feedforward current. This is likely the same as the desired
       // feedforward motor current.
       desiredFeedForwardMotorCurrent.set(0.0); //TODO Figure out how to do this properly
+      // Make sure the motor torque stays within limits
+      desiredMotorTorque.set(MathTools.clamp(desiredMotorTorque.getDoubleValue(), torqueLimit.getDoubleValue() / gearRatio.getDoubleValue()), false);
       //      desiredMotorTorque.set(desiredOutputTorque.getDoubleValue() / gearRatio.getDoubleValue());
       desiredOutputTorque.set(desiredMotorTorque.getDoubleValue() * gearRatio.getDoubleValue());
       desiredMotorCurrent.set(desiredMotorTorque.getDoubleValue() / kt.getDoubleValue());
@@ -894,6 +902,19 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
                                   if (STO_DISABLED.getBooleanValue() && !singularMotorFault.getBooleanValue())
                                      LogTools.error(getName() + " faulted due to STO being disabled");
                                });
+   }
+
+   private void applyValueLimits(YoDouble variableToLimit, DoubleProvider lowerLimit, DoubleProvider upperLimit)
+   {
+      variableToLimit.addListener(new YoVariableChangedListener()
+      {
+         @Override
+         public void changed(YoVariable yoVariable)
+         {
+            double value = variableToLimit.getDoubleValue();
+            variableToLimit.set(MathTools.clamp(value, lowerLimit.getValue(), upperLimit.getValue()));
+         }
+      });
    }
 
    @Override

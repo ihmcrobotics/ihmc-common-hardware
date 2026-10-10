@@ -21,6 +21,9 @@ public class XmlCycloidPhysicalParameters
    @XmlElement(required = true)
    private int outputResolution;
 
+   @XmlElement(defaultValue = "Double.POSITIVE_INFINITY")
+   private double torqueLimit;
+
    public double getKt()
    {
       return kt;
@@ -39,5 +42,10 @@ public class XmlCycloidPhysicalParameters
    public int getOutputResolution()
    {
       return outputResolution;
+   }
+
+   public double getTorqueLimit()
+   {
+      return torqueLimit;
    }
 }
