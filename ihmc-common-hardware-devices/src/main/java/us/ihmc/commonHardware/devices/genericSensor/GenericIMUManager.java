@@ -327,4 +327,36 @@ public class GenericIMUManager implements IMUManagerInterface
    {
       return name;
    }
+
+   /**
+    * Sets the gyroscope bias and re-initializes the Mahony filter's internal bias term to match, the
+    * same way the hand-tuned averaging-based calibration path (see {@link #beginAveraging()}) already does.
+    */
+   @Override
+   public void setGyroscopeBias(Vector3DReadOnly bias)
+   {
+      yoIMU.setAngularVelocityBias(bias.getX(), bias.getY(), bias.getZ());
+      mahonyFilter.initialize(imuFrame.getTransformToRoot().getRotation(),
+                              yoIMU.getAngularVelocityBias().getX(),
+                              yoIMU.getAngularVelocityBias().getY(),
+                              yoIMU.getAngularVelocityBias().getZ());
+   }
+
+   @Override
+   public void setAccelerometerBias(Vector3DReadOnly bias)
+   {
+      yoIMU.setLinearAccelerationBias(bias.getX(), bias.getY(), bias.getZ());
+   }
+
+   @Override
+   public Vector3DReadOnly getGyroscopeBias()
+   {
+      return yoIMU.getAngularVelocityBias();
+   }
+
+   @Override
+   public Vector3DReadOnly getAccelerometerBias()
+   {
+      return yoIMU.getLinearAccelerationBias();
+   }
 }
