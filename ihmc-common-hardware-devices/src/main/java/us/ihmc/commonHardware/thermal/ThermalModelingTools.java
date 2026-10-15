@@ -185,6 +185,10 @@ public class ThermalModelingTools
       return c1 * a21 * Math.exp(lambda1 * t) + c2 * a21 * Math.exp(lambda2 * t) + Tssh;
    }
 
+   /**
+    * Winding temperature [°C] at time {@code t} seconds after applying {@code current} A, given
+    * initial conditions. Evaluated using Euler Integration.
+    */
    public static double evaluateWindingTemperatureEuler(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
    {
       double Rr = p.getWindingResistanceAtReferenceTemperature();
@@ -199,6 +203,10 @@ public class ThermalModelingTools
       return Tw0 + t * (P - Qwh) / Cw;
    }
 
+   /**
+    * Housing temperature [°C] at time {@code t} seconds after applying {@code current} A, given
+    * initial conditions. Evaluated using Euler Integration.
+    */
    public static double evaluateHousingTemperatureEuler(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
    {
       double Ch = p.getHousingThermalCapacitance();
