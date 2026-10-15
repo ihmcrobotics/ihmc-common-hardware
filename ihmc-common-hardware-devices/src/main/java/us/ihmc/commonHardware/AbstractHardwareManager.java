@@ -154,6 +154,12 @@ public abstract class AbstractHardwareManager
                                     }
                                  });
 
+      lowLevelMasterGain.addListener(value ->
+                                     {
+                                        for (MechanismManagerInterface mechanismManager : mechanismManagers)
+                                           mechanismManager.setMasterGain(value.getValueAsDouble());
+                                     });
+
       unservoQuickly.addListener(s ->
                                  {
                                     if(unservoQuickly.getBooleanValue() && !useRequestedMasterGain.getBooleanValue())
@@ -214,7 +220,9 @@ public abstract class AbstractHardwareManager
       {
          mechanismManager.read(measuredJointData);
 
-         areMotorsFaulted.set(areMotorsFaulted.getBooleanValue() || mechanismManager.isMotorFaulted());
+         boolean registerMotorFault = areMotorsFaulted.getBooleanValue() || mechanismManager.isMotorFaulted();
+         boolean notifyMotorFaultListeners = areMotorsFaulted.getBooleanValue() != registerMotorFault;
+         areMotorsFaulted.set(registerMotorFault, notifyMotorFaultListeners);
 
          //Checking if any motors have over-heated on robot side
          totalMeasuredMotorCurrent.add(mechanismManager.getTotalMeasuredMotorCurrent());
@@ -285,7 +293,6 @@ public abstract class AbstractHardwareManager
             mechanismManager.setPositionBreakFrequency(mainActuatorPositionBreakFrequency.getDoubleValue());
             mechanismManager.setVelocityBreakFrequency(mainActuatorVelocityBreakFrequency.getDoubleValue());
          }
-         mechanismManager.setMasterGain(lowLevelMasterGain.getValue());
          mechanismManager.write(desiredJointData); // this also ticks the low level controllers
       }
       mechanismWriteTime.set(RealtimeThread.getCurrentMonotonicClockTime() - mechanismWriteStartTime);
@@ -397,7 +404,8 @@ public abstract class AbstractHardwareManager
     */
    public void setLowLevelMasterGain(double desiredMasterGain)
    {
-      lowLevelMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
+      if (desiredMasterGain != lowLevelMasterGain.getDoubleValue())
+         lowLevelMasterGain.set(MathTools.clamp(desiredMasterGain, 0.0, 1.0));
    }
 
    public void setRequestedMasterGain(double desiredMasterGain)
