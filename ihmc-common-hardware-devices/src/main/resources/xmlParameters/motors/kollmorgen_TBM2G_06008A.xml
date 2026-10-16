@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<MotorParameters>
+    <manufacturer>Kollmorgen</manufacturer>
+    <model>TBM2G-06008A</model>
+
+    <kt>0.09545941546</kt>
+    <resistanceLineToLine>1.598985807</resistanceLineToLine>
+    <busVoltage>48.0</busVoltage>
+    <maxCurrentContinuous>3.66647960616</maxCurrentContinuous>
+    <maxCurrentPeak>12.7803003415</maxCurrentPeak>
+
+    <maxTorqueContinuous>0.35</maxTorqueContinuous>
+    <maxTorquePeak>1.22</maxTorquePeak>
+    <maxSpeed>8000</maxSpeed>
+    <polePairs>10</polePairs>
+    <mass>0.139</mass>
+</MotorParameters>
