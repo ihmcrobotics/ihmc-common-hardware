@@ -9,8 +9,8 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlType(name = "CycloidPhysicalParameters")
 public class XmlCycloidPhysicalParameters
 {
-   @XmlElement(defaultValue = "NaN")
-   private Double kt;
+   @XmlElement(defaultValue = "Double.NaN")
+   private double kt = Double.NaN;
 
    @XmlElement(required = true)
    private double gearRatio;

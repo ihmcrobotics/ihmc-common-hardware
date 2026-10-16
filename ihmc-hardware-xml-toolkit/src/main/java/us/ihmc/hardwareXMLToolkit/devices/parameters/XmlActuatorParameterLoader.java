@@ -76,18 +76,21 @@ public class XmlActuatorParameterLoader
       System.out.println("Acceleration/Integration Scalar: " + silParameters.getAccelerationIntegrationScalar());
       System.out.println("Motor: " + cycloidParameters.getMotor());
 
-      XmlMotorParameters motorParameters = getMotorParametersFromMotorName(exampleDirectory, cycloidParameters.getMotor());
-      System.out.println("Manufacturer: " + motorParameters.getManufacturer());
-      System.out.println("Model: " + motorParameters.getModel());
-      System.out.println("kt: " + motorParameters.getKt());
-      System.out.println("ResistanceLineToLine: " + motorParameters.getResistanceLineToLine());
-      System.out.println("BusVoltage: " + motorParameters.getBusVoltage());
-      System.out.println("MaxCurrentContinuous: " + motorParameters.getMaxCurrentContinuous());
-      System.out.println("MaxCurrentPeak: " + motorParameters.getMaxCurrentPeak());
-      System.out.println("MaxTorqueContinuous: " + motorParameters.getMaxTorqueContinuous());
-      System.out.println("MaxTorquePeak: " + motorParameters.getMaxTorquePeak());
-      System.out.println("MaxSpeed: " + motorParameters.getMaxSpeed());
-      System.out.println("PolePairs: " + motorParameters.getPolePairs());
-      System.out.println("Mass: " + motorParameters.getMass());
+      if (cycloidParameters.getMotor() != null)
+      {
+         XmlMotorParameters motorParameters = getMotorParametersFromMotorName(exampleDirectory, cycloidParameters.getMotor());
+         System.out.println("Manufacturer: " + motorParameters.getManufacturer());
+         System.out.println("Model: " + motorParameters.getModel());
+         System.out.println("kt: " + motorParameters.getKt());
+         System.out.println("ResistanceLineToLine: " + motorParameters.getResistanceLineToLine());
+         System.out.println("BusVoltage: " + motorParameters.getBusVoltage());
+         System.out.println("MaxCurrentContinuous: " + motorParameters.getMaxCurrentContinuous());
+         System.out.println("MaxCurrentPeak: " + motorParameters.getMaxCurrentPeak());
+         System.out.println("MaxTorqueContinuous: " + motorParameters.getMaxTorqueContinuous());
+         System.out.println("MaxTorquePeak: " + motorParameters.getMaxTorquePeak());
+         System.out.println("MaxSpeed: " + motorParameters.getMaxSpeed());
+         System.out.println("PolePairs: " + motorParameters.getPolePairs());
+         System.out.println("Mass: " + motorParameters.getMass());
+      }
    }
 }

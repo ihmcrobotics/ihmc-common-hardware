@@ -15,7 +15,7 @@ public class XmlCycloidParameters
    @XmlElement(required = true)
    private XmlCycloidSILParameters silParameters;
 
-   @XmlElement(required = true)
+   @XmlElement(defaultValue = "null")
    private String motor;
 
    public XmlCycloidPhysicalParameters getPhysicalParameters()

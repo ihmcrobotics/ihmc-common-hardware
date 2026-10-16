@@ -309,8 +309,8 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       else
          cycloidParameters = XmlActuatorParameterLoader.getCycloidParametersFromActuatorPackageName(actuatorPackage);
 
-      this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters()); //CycloidPhysicalParameters.createCycloidParameters(actuatorPackage);
-      this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters()); //CycloidSILParameters.createParameters(actuatorPackage);
+      this.physicalParameters = new CycloidPhysicalParameters(cycloidParameters.getPhysicalParameters());
+      this.silParameters = new CycloidSILParameters(cycloidParameters.getSilParameters());
 
       // Parse motor params from XML and set up thermal model if needed
       XmlMotorParameters motorParameters = null;

@@ -324,9 +324,9 @@ public abstract class AbstractHardwareMap
     * Create the platinum twitter object and register on the etherCAT line
     *
     * @param xmlPlatinumTwitter platinum twitter to be initialized from xml
-    * @param parameterDirectory directory where the actuator package parameters are stored
+    * @param actuatorParameterDirectory directory where the actuator package parameters are stored
     */
-   protected void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter, String parameterDirectory)
+   protected void createPlatinumTwitter(XmlPlatinumTwitter xmlPlatinumTwitter, String actuatorParameterDirectory)
    {
       String name = xmlPlatinumTwitter.getName();
       int alias = xmlPlatinumTwitter.getAlias();
@@ -347,7 +347,7 @@ public abstract class AbstractHardwareMap
       YoCycloidPlatinumTwitter yoCycloidPlatinumTwitter = new YoCycloidPlatinumTwitter(name,
                                                                                        cycloidPlatinumTwitter,
                                                                                        yoTime,
-                                                                                       parameterDirectory,
+                                                                                       actuatorParameterDirectory,
                                                                                        actuatorPackage,
                                                                                        reverseMotorDirection,
                                                                                        motorOffset,
