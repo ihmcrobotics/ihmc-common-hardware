@@ -35,9 +35,9 @@ public class XmlActuatorParameterLoader
       return getCycloidParametersFromActuatorPackageName(DEFAULT_ACTUATOR_PARAM_DIRECTORY, actuatorPackage);
    }
 
-   public static XmlMotorParameters getMotorParametersFromMotorName(String parameterDirectory, String actuatorPackage)
+   public static XmlMotorParameters getMotorParametersFromMotorName(String parameterDirectory, String motorName)
    {
-      InputStream parameterStream = XmlActuatorParameterLoader.class.getClassLoader().getResourceAsStream(parameterDirectory + actuatorPackage + ".xml");
+      InputStream parameterStream = XmlActuatorParameterLoader.class.getClassLoader().getResourceAsStream(parameterDirectory + motorName + ".xml");
       try
       {
          JAXBContext jaxbContext = JAXBContext.newInstance(XmlMotorParameters.class);
@@ -51,9 +51,9 @@ public class XmlActuatorParameterLoader
       }
    }
 
-   public static XmlMotorParameters getMotorParametersFromMotorName(String actuatorPackage)
+   public static XmlMotorParameters getMotorParametersFromMotorName(String motorName)
    {
-      return getMotorParametersFromMotorName(DEFAULT_MOTOR_PARAM_DIRECTORY, actuatorPackage);
+      return getMotorParametersFromMotorName(DEFAULT_MOTOR_PARAM_DIRECTORY, motorName);
    }
 
    public static void main(String[] args)
@@ -91,6 +91,17 @@ public class XmlActuatorParameterLoader
          System.out.println("MaxSpeed: " + motorParameters.getMaxSpeed());
          System.out.println("PolePairs: " + motorParameters.getPolePairs());
          System.out.println("Mass: " + motorParameters.getMass());
+
+         if (motorParameters.getMotorThermalParameters() != null)
+         {
+            System.out.println("housingThermalCapacitance: " + motorParameters.getMotorThermalParameters().getHousingThermalCapacitance());
+            System.out.println("windingThermalCapacitance: " + motorParameters.getMotorThermalParameters().getWindingThermalCapacitance());
+            System.out.println("windingResistanceAtReferenceTemperature: " + motorParameters.getMotorThermalParameters().getWindingResistanceAtReferenceTemperature());
+            System.out.println("referenceTemperature: " + motorParameters.getMotorThermalParameters().getReferenceTemperature());
+            System.out.println("maxWindingTemperature: " + motorParameters.getMotorThermalParameters().getMaxWindingTemperature());
+            System.out.println("housingToAmbientThermalResistance: " + motorParameters.getMotorThermalParameters().getHousingToAmbientThermalResistance());
+            System.out.println("windingToHousingThermalResistance: " + motorParameters.getMotorThermalParameters().getWindingToHousingThermalResistance());
+         }
       }
    }
 }
