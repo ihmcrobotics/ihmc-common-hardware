@@ -191,7 +191,7 @@ public class ThermalModelingTools
     */
    public static double evaluateWindingTemperatureEuler(MotorThermalParameters p, double current, double ambientTemp, double Tw0, double Th0, double t)
    {
-      double Rr = p.getWindingResistanceAtReferenceTemperature() / 2.0; // Divide by 2 to go from l-l to phase
+      double Rr = p.getWindingResistanceAtReferenceTemperature();
       double Cw = p.getWindingThermalCapacitance();
       double ii = MathTools.square(current);
       double Rwh = p.getWindingToHousingThermalResistance();

@@ -15,7 +15,7 @@ public class XmlMotorThermalParameters
    @XmlElement(defaultValue = "0.0")
    private double windingThermalCapacitance; // J/K
    @XmlElement(defaultValue = "0.0")
-   private double windingResistanceAtReferenceTemperature; // Ω
+   private double windingResistanceAtReferenceTemperature; // Ω (this is 1/2 the line-to-line resistance)
    @XmlElement(defaultValue = "0.0")
    private double referenceTemperature; // °C
    @XmlElement(defaultValue = "0.0")
