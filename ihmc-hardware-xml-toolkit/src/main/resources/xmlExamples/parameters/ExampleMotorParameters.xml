@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<MotorParameters>
+    <manufacturer>ExampleMan</manufacturer>
+    <model>ExampleModel</model>
+
+    <kt>0.21354624791</kt>
+    <resistanceLineToLine>0.579</resistanceLineToLine>
+    <busVoltage>48.0</busVoltage>
+    <maxCurrentContinuous>7.49252218505</maxCurrentContinuous>
+    <maxCurrentPeak>26.5047972296</maxCurrentPeak>
+
+    <maxTorqueContinuous>1.60</maxTorqueContinuous>
+    <maxTorquePeak>5.66</maxTorquePeak>
+    <maxSpeed>8000</maxSpeed>
+    <polePairs>10</polePairs>
+    <mass>0.596</mass>
+
+    <motorThermalParameters>
+        <housingThermalCapacitance>605.243673</housingThermalCapacitance>
+        <windingThermalCapacitance>15.593018</windingThermalCapacitance>
+        <windingResistanceAtReferenceTemperature>0.579</windingResistanceAtReferenceTemperature>
+        <referenceTemperature>28.596083444663</referenceTemperature>
+        <maxWindingTemperature>125.0</maxWindingTemperature>
+        <housingToAmbientThermalResistance>3.128629</housingToAmbientThermalResistance>
+        <windingToHousingThermalResistance>1.131617</windingToHousingThermalResistance>
+    </motorThermalParameters>
+</MotorParameters>

@@ -23,4 +23,6 @@ mainDependencies {
 
 testDependencies {
    api(ihmc.sourceSetProject("main"))
+   api("org.knowm.xchart:xchart:3.8.8")
+   api("blue.strategic.parquet:parquet-floor:1.51")
 }
