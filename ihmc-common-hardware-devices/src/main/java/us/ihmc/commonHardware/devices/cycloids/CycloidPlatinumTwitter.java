@@ -248,7 +248,7 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter
       Float64 filteredMotorVelocity = new Float64(); // R2[43] Filtered. R2[39] Unfiltered
       Float64 filteredOutputVelocity = new Float64(); // R2[44] Filtered. R2[40] Unfiltered
 //      Float64 controlTime = new Float64(); // R2[45]
-//      Float64 silTemp = new Float64(); // R2[46]
+      Float64 silTemp = new Float64(); // R2[46]
    }
 
    private void configure1A03()
@@ -259,8 +259,8 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter
       verifyWorkingCounter(writeSDO(0x1A03, 3, computePdoMapValue(R2, 43, 64)), "failed to write to 0x1A03 -- 0x22F4 43"); // R2[43]
       verifyWorkingCounter(writeSDO(0x1A03, 4, computePdoMapValue(R2, 44, 64)), "failed to write to 0x1A03 -- 0x22F4 44"); // R2[44]
 //      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 45, 64)), "failed to write to 0x1A03 -- 0x22F4 45"); // R2[45]
-//      verifyWorkingCounter(writeSDO(0x1A03, 6, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A03 -- 0x22F4 46"); // R2[46]
-      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 4), "failed to write to 0x1A03 -- 0x4"); // num elements in 0x1A03 (max 8)
+      verifyWorkingCounter(writeSDO(0x1A03, 5, computePdoMapValue(R2, 46, 64)), "failed to write to 0x1A03 -- 0x22F4 46"); // R2[46]
+      verifyWorkingCounter(writeSDO(0x1A03, 0, (byte) 5), "failed to write to 0x1A03 -- 0x4"); // num elements in 0x1A03 (max 8)
    }
 
    public CycloidPlatinumTwitter(int alias, int ringPosition)
@@ -646,10 +646,10 @@ public class CycloidPlatinumTwitter extends PlatinumTwitter
       return tpdo_1a02.sil_AnalogInput2.get();
    }
 
-//   public double getSILTemperature()
-//   {
-//      return tpdo_1a03.silTemp.get();
-//   }
+   public double getSILTemperature()
+   {
+      return tpdo_1a03.silTemp.get();
+   }
 //
 //   public double getSILControlTime()
 //   {
