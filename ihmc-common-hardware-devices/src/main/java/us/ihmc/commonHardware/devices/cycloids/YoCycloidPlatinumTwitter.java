@@ -704,8 +704,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
                           !platinumTwitter.isOperational();
 
       singularMotorFault.set(isFaulted);
-      if (platinumTwitter.isOperational())
-         isOperationalFiltered.update(platinumTwitter.isOperational());
+      isOperationalFiltered.update(platinumTwitter.isOperational());
       MOTOR_FAULT.update(isFaulted && externalEnableDriveRequest);
 
       // Immediately trigger fault if slave is offline TODO make watchdog timer to give extra time for slave to recover
