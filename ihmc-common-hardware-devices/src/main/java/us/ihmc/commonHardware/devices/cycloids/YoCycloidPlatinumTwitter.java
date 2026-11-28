@@ -170,6 +170,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
    private final YoBoolean CURRENT_SHORT;
    private final YoBoolean OVER_TEMPERATURE;
    private final YoBoolean singularMotorFault;
+   private final GlitchFilteredYoBoolean isOperationalFiltered;
    private final GlitchFilteredYoBoolean MOTOR_FAULT;
 
    private final YoDouble dahlFrictionForce; // Dahl Friction Force
@@ -585,6 +586,7 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
       OVER_TEMPERATURE = new YoBoolean(prefix + "_OVER_TEMPERATURE", registry);
       singularMotorFault = new YoBoolean(prefix + "_singularMotorFault", registry);
       MOTOR_FAULT = new GlitchFilteredYoBoolean(prefix + "_MOTOR_FAULT", registry, (int) (FAULT_DURATION_THRESHOLD / dt));
+      isOperationalFiltered = new GlitchFilteredYoBoolean(prefix + "_IsOperationalFiltered", registry,  5);
       MOTOR_FAULT.addListener(source ->
                               {
                                  if (MOTOR_FAULT.getBooleanValue())
@@ -702,10 +704,11 @@ public class YoCycloidPlatinumTwitter implements YoGenericTwitter, ElmoTwitterDe
                           !platinumTwitter.isOperational();
 
       singularMotorFault.set(isFaulted);
+      isOperationalFiltered.update(platinumTwitter.isOperational());
       MOTOR_FAULT.update(isFaulted && externalEnableDriveRequest);
 
       // Immediately trigger fault if slave is offline TODO make watchdog timer to give extra time for slave to recover
-      if (!platinumTwitter.isOperational() && externalEnableDriveRequest)
+      if (!isOperationalFiltered.getBooleanValue() && externalEnableDriveRequest)
          MOTOR_FAULT.set(true);
 
       /** Motor Space Encoders **/
